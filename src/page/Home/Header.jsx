@@ -1,14 +1,13 @@
-import { CarFront } from "lucide-react";
 import { Link } from "react-router";
-
+import logo from "../../assets/pic/logo.png";
 const Header = () => {
   return (
-    <header className="fixed top-0 left-0 w-full border-b border-white/10 bg-slate-900/40">
+    <header className="fixed top-0 left-0 w-full z-50 border-b border-white/10 bg-slate-900/40">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 text-white  ">
         {/* LOGO */}
         <div className="flex items-center gap-2">
-          <div className="rounded-xl bg-blue-600 p-2">
-            <CarFront size={22} />
+          <div className="rounded-2xl bg-white p-2">
+            <img src={logo} alt="" className="w-15 h-15" />
           </div>
 
           <h1 className="text-xl font-bold tracking-wide">Parking Manager</h1>
