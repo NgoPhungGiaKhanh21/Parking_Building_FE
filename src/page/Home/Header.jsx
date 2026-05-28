@@ -11,7 +11,9 @@ const Header = () => {
             <CarFront size={22} />
           </div>
 
-          <h1 className="text-xl font-bold tracking-wide">Parking Manager</h1>
+          <h1 className="text-xl font-bold tracking-wide">
+            Parking Management
+          </h1>
         </div>
 
         {/* NAV */}
