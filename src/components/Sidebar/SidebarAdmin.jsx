@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Avatar } from "antd";
 import { LogOut, ChevronLeft, User, CarFront } from "lucide-react";
 
 const SidebarAdmin = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("dashboard");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menuItems = [
     {
       id: "user-management",
       label: "User Management",
       icon: User,
-      to: "/admin/user-management",
+      to: "/admin",
     },
   ];
 
@@ -144,13 +144,12 @@ const SidebarAdmin = () => {
         <nav className="flex flex-col gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.id;
+            const isActive = location.pathname === item.to;
 
             return (
               <Link
                 key={item.id}
                 to={item.to}
-                onClick={() => setActiveItem(item.id)}
                 className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${
                   isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
                 } ${
