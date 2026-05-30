@@ -25,15 +25,12 @@ const Header = () => {
 
         {/* BUTTON */}
         <div className="flex gap-3">
-          <button className="border border-white/20 px-4 py-2 rounded-xl">
-            <Link to="/login" className="hover:text-white transition">
-              Login
-            </Link>
-          </button>
-
-          <button className="bg-blue-600 px-5 py-2 rounded-xl">
-            Get Started
-          </button>
+          <Link
+            to="/login"
+            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)]"
+          >
+            Login
+          </Link>
         </div>
       </div>
     </header>

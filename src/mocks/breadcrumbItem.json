@@ -1,0 +1,36 @@
+{
+    "home": "Home",
+    "Admin": {
+        "title": "Admin",
+        "pages": {
+            "user": "User Management"
+        }
+    },
+    "Manager": {
+        "title": "Manager",
+        "pages": {
+            "dashboard": "Dashboard",
+            "building": "Building Management",
+            "space": "Parking Space Management",
+            "revenue": "Revenue Management"
+        }
+    },
+    "Staff": {
+        "title": "Staff",
+        "pages": {
+            "entry": "Vehicle Entry",
+            "exit": "Vehicle Exit",
+            "ticket": "Parking Ticket Management",
+            "payment": "Payment Management"
+        }
+    },
+    "Driver": {
+        "title": "Driver",
+        "pages": {
+            "vehicle": "My Vehicles",
+            "available": "Available Parking Spaces",
+            "session": "Current Session",
+            "reservation": "My Reservations"
+        }
+    }
+}

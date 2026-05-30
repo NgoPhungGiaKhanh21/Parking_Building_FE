@@ -9,6 +9,7 @@ import ManagerLayout from "../page/Manager/ManagerLayout";
 import StaffLayout from "../page/Staff/StaffLayout";
 import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
+import UserManagement from "../page/Admin/UserManage/UserManagement";
 
 const router = createBrowserRouter([
   {
@@ -35,7 +36,7 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <AdminLayout />,
-        children: [{ path: "", element: <Dashboard /> }],
+        children: [{ path: "", element: <UserManagement /> }],
       },
     ],
   },

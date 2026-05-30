@@ -10,9 +10,9 @@ export const Introduction = () => {
             GIỚI THIỆU HỆ THỐNG
           </p>
 
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-            Hệ thống <br />
-            00 Quản lý Bãi đỗ xe Thông minh
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+            Hệ Thống Quản Lý <br />
+            Bãi Đỗ Xe Thông Minh
           </h1>
 
           <p className="text-slate-600 mb-8 max-w-lg">

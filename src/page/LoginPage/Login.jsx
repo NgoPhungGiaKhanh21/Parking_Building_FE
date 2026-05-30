@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
+import { jwtDecode } from "jwt-decode";
 
 import { Form, Input, Button } from "antd";
 
@@ -25,7 +26,35 @@ const Login = () => {
 
   useEffect(() => {
     if (token) {
-      navigate("/");
+      try {
+        const decodedToken = jwtDecode(token);
+
+        console.log("Toàn bộ token sau khi giải mã:", decodedToken);
+
+        const userRole = decodedToken.role;
+
+        switch (userRole) {
+          case "DRIVER":
+            navigate("/driver");
+            break;
+          case "MANAGER":
+            navigate("/manager");
+            break;
+          case "STAFF":
+            navigate("/staff");
+            break;
+          case "ADMIN":
+            navigate("/admin");
+            break;
+          default:
+            console.log("Không khớp role nào, quay về /"); // Báo log nếu lọt vào default
+            navigate("/");
+            break;
+        }
+      } catch (error) {
+        console.error("Lỗi khi giải mã token:", error);
+        navigate("/");
+      }
     }
   }, [token, navigate]);
 
