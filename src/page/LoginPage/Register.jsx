@@ -71,7 +71,6 @@ export default function Register() {
             </p>
           </div>
 
-          {/* FORM */}
           <Form
             form={form}
             layout="vertical"
@@ -88,31 +87,57 @@ export default function Register() {
                 },
               ]}
             >
-              <Input
-                size="large"
-                prefix={<BadgePlus size={18} className="text-slate-400" />}
-                placeholder="Enter full name"
-                className="rounded-xl py-2"
-              />
+              <Input size="large" placeholder="Enter full name" />
             </Form.Item>
 
             <Form.Item
-              label="Username"
-              name="username"
+              label="Gmail"
+              name="gmail"
               rules={[
                 {
                   required: true,
-                  message: "Please enter your username!",
+                  message: "Please enter gmail!",
+                },
+                {
+                  type: "email",
+                  message: "Invalid gmail format!",
                 },
               ]}
             >
-              <Input
-                size="large"
-                prefix={<User size={18} className="text-slate-400" />}
-                placeholder="Enter username"
-                className="rounded-xl py-2"
-              />
+              <Input size="large" placeholder="Enter gmail" />
             </Form.Item>
+            <div className="flex gap-4">
+              <Form.Item
+                label="Username"
+                name="userName"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter username!",
+                  },
+                ]}
+                className="w-[50%] "
+              >
+                <Input size="large" placeholder="Enter username" />
+              </Form.Item>
+              <Form.Item
+                label="Phone"
+                name="phone"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter phone number!",
+                  },
+                  {
+                    pattern: /^[0-9]{10}$/,
+                    message: "Phone must be 10 digits!",
+                  },
+                ]}
+                className="w-[50%] "
+              >
+                <Input size="large" placeholder="Enter phone number" />
+              </Form.Item>
+            </div>
 
             <Form.Item
               label="Password"
@@ -120,7 +145,7 @@ export default function Register() {
               rules={[
                 {
                   required: true,
-                  message: "Please enter your password!",
+                  message: "Please enter password!",
                 },
                 {
                   min: 6,
@@ -128,14 +153,9 @@ export default function Register() {
                 },
               ]}
             >
-              <Input.Password
-                size="large"
-                prefix={<Lock size={18} className="text-slate-400" />}
-                placeholder="Enter password"
-                className="rounded-xl py-2"
-              />
+              <Input.Password size="large" placeholder="Enter password" />
             </Form.Item>
-            {/* CONFIRM PASSWORD */}
+
             <Form.Item
               label="Confirm Password"
               name="confirmPassword"
@@ -143,7 +163,7 @@ export default function Register() {
               rules={[
                 {
                   required: true,
-                  message: "Please confirm your password!",
+                  message: "Please confirm password!",
                 },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
@@ -156,20 +176,16 @@ export default function Register() {
                 }),
               ]}
             >
-              <Input.Password
-                size="large"
-                prefix={<Lock size={18} className="text-slate-400" />}
-                placeholder="Confirm your password"
-                className="rounded-xl py-2"
-              />
+              <Input.Password size="large" placeholder="Confirm password" />
             </Form.Item>
-            <Form.Item className="mb-0 mt-6">
+
+            <Form.Item>
               <Button
                 htmlType="submit"
                 loading={loading}
                 type="primary"
                 size="large"
-                className="h-14 w-full rounded-xl !bg-blue-600 text-base font-semibold hover:!bg-blue-500"
+                className="w-full"
               >
                 Create Account
               </Button>

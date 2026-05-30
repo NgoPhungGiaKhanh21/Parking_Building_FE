@@ -29,8 +29,6 @@ const Login = () => {
       try {
         const decodedToken = jwtDecode(token);
 
-        console.log("Toàn bộ token sau khi giải mã:", decodedToken);
-
         const userRole = decodedToken.role;
 
         switch (userRole) {
@@ -47,7 +45,6 @@ const Login = () => {
             navigate("/admin");
             break;
           default:
-            console.log("Không khớp role nào, quay về /"); // Báo log nếu lọt vào default
             navigate("/");
             break;
         }
@@ -98,19 +95,19 @@ const Login = () => {
           >
             {/* USERNAME */}
             <Form.Item
-              label="Username"
-              name="username"
+              label="Gmail"
+              name="gmail"
               rules={[
                 {
                   required: true,
-                  message: "Please enter your username!",
+                  message: "Please enter your Gmail!",
                 },
               ]}
             >
               <Input
                 size="large"
                 prefix={<Mail size={18} className="text-slate-400" />}
-                placeholder="Enter your username"
+                placeholder="Enter your Gmail"
                 className="rounded-xl py-2"
               />
             </Form.Item>
