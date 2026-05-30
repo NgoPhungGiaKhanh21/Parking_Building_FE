@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Avatar } from "antd";
 import {
   Car,
@@ -16,7 +16,6 @@ import {
 const SidebarDriver = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("my-vehicle");
-  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -56,7 +55,10 @@ const SidebarDriver = () => {
   const handleLogout = () => {
     const confirmed = window.confirm("Do you want to log out of the system?");
     if (confirmed) {
-      navigate("/");
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+
+      window.location.href = "/";
     }
   };
 
@@ -65,20 +67,24 @@ const SidebarDriver = () => {
       className="relative z-10 flex h-screen flex-shrink-0 flex-col overflow-visible transition-all duration-300 ease-in-out"
       style={{
         width: isCollapsed ? "88px" : "280px",
-        background: "linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
+        background:
+          "linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
         boxShadow: "4px 0 24px rgba(0,0,0,0.35)",
       }}
     >
       {/* Decorative top accent */}
       <div
         className="absolute left-0 right-0 top-0 h-[3px]"
-        style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)" }}
+        style={{
+          background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)",
+        }}
       />
 
       {/* 1. Header & Logo */}
       <div
-        className={`relative flex min-h-[76px] items-center gap-3 border-b border-white/[0.07] px-4 pt-5 pb-4 ${isCollapsed ? "justify-center" : "justify-start"
-          }`}
+        className={`relative flex min-h-[76px] items-center gap-3 border-b border-white/[0.07] px-4 pt-5 pb-4 ${
+          isCollapsed ? "justify-center" : "justify-start"
+        }`}
       >
         <div
           className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[14px]"
@@ -115,20 +121,23 @@ const SidebarDriver = () => {
           className="absolute top-1/2 -right-4 z-20 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-slate-800 transition-all duration-200 hover:scale-110"
           style={{
             background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            boxShadow: "0 0 0 3px rgba(99,102,241,0.25), 0 4px 12px rgba(0,0,0,0.4)",
+            boxShadow:
+              "0 0 0 3px rgba(99,102,241,0.25), 0 4px 12px rgba(0,0,0,0.4)",
           }}
         >
           <ChevronLeft
-            className={`h-[15px] w-[15px] text-white transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
-              }`}
+            className={`h-[15px] w-[15px] text-white transition-transform duration-300 ${
+              isCollapsed ? "rotate-180" : ""
+            }`}
           />
         </button>
       </div>
 
       {/* 2. User Avatar & Role Info */}
       <div
-        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] ${isCollapsed ? "px-2 py-4" : "px-4 py-5"
-          }`}
+        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] ${
+          isCollapsed ? "px-2 py-4" : "px-4 py-5"
+        }`}
       >
         <div className="relative">
           <div
@@ -153,7 +162,8 @@ const SidebarDriver = () => {
             <span
               className="inline-block rounded-full px-3 py-[3px] text-[10px] font-bold uppercase tracking-widest text-indigo-300 border"
               style={{
-                background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))",
+                background:
+                  "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))",
                 borderColor: "rgba(99,102,241,0.4)",
               }}
             >
@@ -175,26 +185,34 @@ const SidebarDriver = () => {
                 key={item.id}
                 to={item.to}
                 onClick={() => setActiveItem(item.id)}
-                className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
-                  } ${isActive
+                className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${
+                  isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
+                } ${
+                  isActive
                     ? "border-indigo-500/35 bg-indigo-500/10"
                     : "border-transparent hover:border-white/[0.08] hover:bg-white/[0.05]"
-                  }`}
+                }`}
               >
                 {isActive && (
                   <div
                     className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-[3px]"
-                    style={{ background: "linear-gradient(180deg, #6366f1, #8b5cf6)" }}
+                    style={{
+                      background: "linear-gradient(180deg, #6366f1, #8b5cf6)",
+                    }}
                   />
                 )}
                 <Icon
-                  className={`h-[19px] w-[19px] flex-shrink-0 transition-colors duration-200 ${isActive ? "text-indigo-400" : "text-slate-400/70 group-hover:text-slate-300"
-                    }`}
+                  className={`h-[19px] w-[19px] flex-shrink-0 transition-colors duration-200 ${
+                    isActive
+                      ? "text-indigo-400"
+                      : "text-slate-400/70 group-hover:text-slate-300"
+                  }`}
                 />
                 {!isCollapsed && (
                   <span
-                    className={`whitespace-nowrap text-[13.5px] font-semibold ${isActive ? "text-indigo-200" : "text-slate-300/80"
-                      }`}
+                    className={`whitespace-nowrap text-[13.5px] font-semibold ${
+                      isActive ? "text-indigo-200" : "text-slate-300/80"
+                    }`}
                   >
                     {item.label}
                   </span>
@@ -209,8 +227,9 @@ const SidebarDriver = () => {
       <div className="border-t border-white/[0.07] px-[10px] py-3">
         <button
           onClick={handleLogout}
-          className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-transparent transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/10 ${isCollapsed ? "justify-center p-[11px]" : "px-3 py-[11px]"
-            }`}
+          className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-transparent transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/10 ${
+            isCollapsed ? "justify-center p-[11px]" : "px-3 py-[11px]"
+          }`}
         >
           <LogOut className="h-[19px] w-[19px] flex-shrink-0 text-red-400" />
           {!isCollapsed && (

@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
-import { jwtDecode } from "jwt-decode";
 
 import { Form, Input, Button } from "antd";
 
@@ -26,31 +25,29 @@ const Login = () => {
 
   useEffect(() => {
     if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
+      // 1. Lấy role trực tiếp từ localStorage (do Saga vừa set xong)
+      const userRole = localStorage.getItem("role");
 
-        const userRole = decodedToken.role;
+      console.log("Role lấy được không cần giải mã:", userRole);
 
-        switch (userRole) {
-          case "DRIVER":
-            navigate("/driver");
-            break;
-          case "MANAGER":
-            navigate("/manager");
-            break;
-          case "STAFF":
-            navigate("/staff");
-            break;
-          case "ADMIN":
-            navigate("/admin");
-            break;
-          default:
-            navigate("/");
-            break;
-        }
-      } catch (error) {
-        console.error("Lỗi khi giải mã token:", error);
-        navigate("/");
+      // 2. Điều hướng dựa trên role
+      switch (userRole) {
+        case "DRIVER":
+          navigate("/driver");
+          break;
+        case "MANAGER":
+          navigate("/manager");
+          break;
+        case "STAFF":
+          navigate("/staff");
+          break;
+        case "ADMIN":
+          navigate("/admin");
+          break;
+        default:
+          console.warn("Không khớp Role nào, trả về trang chủ /");
+          navigate("/");
+          break;
       }
     }
   }, [token, navigate]);

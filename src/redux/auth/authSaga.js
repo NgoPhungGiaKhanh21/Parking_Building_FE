@@ -17,6 +17,7 @@ function* handleLogin(action) {
     const data = response.data;
 
     localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
 
     yield put(loginSuccess(data));
     toast.success("Login successful");
