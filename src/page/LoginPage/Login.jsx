@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
-import { jwtDecode } from "jwt-decode";
 
 import { Form, Input, Button } from "antd";
 
@@ -26,34 +25,29 @@ const Login = () => {
 
   useEffect(() => {
     if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
+      // 1. Lấy role trực tiếp từ localStorage (do Saga vừa set xong)
+      const userRole = localStorage.getItem("role");
 
-        console.log("Toàn bộ token sau khi giải mã:", decodedToken);
+      console.log("Role lấy được không cần giải mã:", userRole);
 
-        const userRole = decodedToken.role;
-
-        switch (userRole) {
-          case "DRIVER":
-            navigate("/driver");
-            break;
-          case "MANAGER":
-            navigate("/manager");
-            break;
-          case "STAFF":
-            navigate("/staff");
-            break;
-          case "ADMIN":
-            navigate("/admin");
-            break;
-          default:
-            console.log("Không khớp role nào, quay về /"); // Báo log nếu lọt vào default
-            navigate("/");
-            break;
-        }
-      } catch (error) {
-        console.error("Lỗi khi giải mã token:", error);
-        navigate("/");
+      // 2. Điều hướng dựa trên role
+      switch (userRole) {
+        case "DRIVER":
+          navigate("/driver");
+          break;
+        case "MANAGER":
+          navigate("/manager");
+          break;
+        case "STAFF":
+          navigate("/staff");
+          break;
+        case "ADMIN":
+          navigate("/admin");
+          break;
+        default:
+          console.warn("Không khớp Role nào, trả về trang chủ /");
+          navigate("/");
+          break;
       }
     }
   }, [token, navigate]);
@@ -98,19 +92,19 @@ const Login = () => {
           >
             {/* USERNAME */}
             <Form.Item
-              label="Username"
-              name="username"
+              label="Gmail"
+              name="gmail"
               rules={[
                 {
                   required: true,
-                  message: "Please enter your username!",
+                  message: "Please enter your Gmail!",
                 },
               ]}
             >
               <Input
                 size="large"
                 prefix={<Mail size={18} className="text-slate-400" />}
-                placeholder="Enter your username"
+                placeholder="Enter your Gmail"
                 className="rounded-xl py-2"
               />
             </Form.Item>

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Avatar } from "antd";
 import { LogOut, ChevronLeft, User, CarFront } from "lucide-react";
 
 const SidebarAdmin = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
@@ -22,7 +21,10 @@ const SidebarAdmin = () => {
   const handleLogout = () => {
     const confirmed = window.confirm("Do you want to log out of the system?");
     if (confirmed) {
-      navigate("/");
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+
+      window.location.href = "/";
     }
   };
 
