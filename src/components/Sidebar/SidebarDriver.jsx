@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Avatar } from "antd";
 import {
@@ -13,11 +13,20 @@ import {
   CarFront,
 } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
+import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const SidebarDriver = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const location = useLocation();
+  const dispatch = useDispatch();
+
+  const { getProfileUser } = useSelector((state) => state.getProfileUser);
+
+  useEffect(() => {
+    dispatch(getProfileUserRequest());
+  }, [dispatch]);
 
   const menuItems = [
     {
@@ -137,20 +146,20 @@ const SidebarDriver = () => {
 
       {/* 2. User Avatar & Role Info */}
       <div
-        onClick={() => setIsProfileModalOpen(true)} // Mở modal khi click
+        onClick={() => setIsProfileModalOpen(true)}
         className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-colors duration-200 ${
           isCollapsed ? "px-2 py-4" : "px-4 py-5"
         }`}
       >
         <div className="relative">
           <div
-            className="rounded-full p-[3px]"
+            className="rounded-full p-[3px] overflow-hidden"
             style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
           >
             <Avatar
               size={isCollapsed ? 44 : 68}
-              icon={<User />}
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Driver"
+              icon={!getProfileUser?.avatarUrl && <User />}
+              src={getProfileUser?.avatarUrl}
               style={{ display: "block", border: "2px solid #0f172a" }}
             />
           </div>
