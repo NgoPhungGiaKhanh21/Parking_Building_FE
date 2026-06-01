@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Avatar } from "antd";
 import {
   Ticket,
@@ -11,10 +11,12 @@ import {
   User,
   CarFront,
 } from "lucide-react";
+import UserProfileModal from "./UserProfileModal";
 
 const SidebarStaff = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeItem, setActiveItem] = useState("vehicle-entry");
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const location = useLocation();
 
   const menuItems = [
     {
@@ -128,7 +130,8 @@ const SidebarStaff = () => {
 
       {/* 2. User Avatar & Role Info */}
       <div
-        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] ${
+        onClick={() => setIsProfileModalOpen(true)} // Mở modal khi click
+        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-colors duration-200 ${
           isCollapsed ? "px-2 py-4" : "px-4 py-5"
         }`}
       >
@@ -168,13 +171,12 @@ const SidebarStaff = () => {
         <nav className="flex flex-col gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.id;
+            const isActive = location.pathname === item.to;
 
             return (
               <Link
                 key={item.id}
                 to={item.to}
-                onClick={() => setActiveItem(item.id)}
                 className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${
                   isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
                 } ${
@@ -229,6 +231,10 @@ const SidebarStaff = () => {
           )}
         </button>
       </div>
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };

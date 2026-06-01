@@ -159,6 +159,17 @@ const UserManagement = () => {
       ),
       dataIndex: "role",
       key: "role",
+      sorter: (a, b) => {
+        const roleOrder = {
+          ROLE_DRIVER: 1,
+          ROLE_STAFF: 2,
+          ROLE_MANAGER: 3,
+        };
+        const orderA = roleOrder[a.role] || 99;
+        const orderB = roleOrder[b.role] || 99;
+
+        return orderA - orderB;
+      },
       render: (role, record) => {
         // Vô hiệu hóa toàn bộ nếu người dùng là ADMIN
         if (role === "ROLE_ADMIN") {

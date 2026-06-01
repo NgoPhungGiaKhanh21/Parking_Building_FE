@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { changeRoleUserApi } from "../../../service/admin/changeRoleUser";
+import { changeRoleUserApi } from "../../../service/admin/changeRoleUserApi";
 import {
   changeRoleUserFail,
   changeRoleUserRequest,
