@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
-import { jwtDecode } from "jwt-decode";
 
 import { Form, Input, Button } from "antd";
 

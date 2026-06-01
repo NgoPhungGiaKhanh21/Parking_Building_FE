@@ -4,7 +4,7 @@ import Home from "../page/Home/Home";
 import Login from "../page/LoginPage/Login";
 import Register from "../page/LoginPage/Register";
 import Dashboard from "../page/Manager/Dashboard/Dashboard";
-//import PrivateRoute from "./privateRouter";
+import PrivateRoute from "./privateRouter";
 import ManagerLayout from "../page/Manager/ManagerLayout";
 import StaffLayout from "../page/Staff/StaffLayout";
 import DriverLayout from "../page/Driver/DriverLayout";
@@ -31,7 +31,7 @@ const router = createBrowserRouter([
   //Admin router
   {
     path: "/admin",
-    //element: <PrivateRoute allowedRoles={["admin"]} />,
+    element: <PrivateRoute allowedRoles={["admin"]} />,
     children: [
       {
         path: "",
@@ -43,7 +43,7 @@ const router = createBrowserRouter([
   //Manager router
   {
     path: "/manager",
-    //element: <PrivateRoute allowedRoles={["manager"]} />,
+    element: <PrivateRoute allowedRoles={["manager"]} />,
     children: [
       {
         path: "",
@@ -55,7 +55,7 @@ const router = createBrowserRouter([
   //Staff router
   {
     path: "/staff",
-    //element: <PrivateRoute allowedRoles={["staff"]} />,
+    element: <PrivateRoute allowedRoles={["staff"]} />,
     children: [
       {
         path: "",
@@ -67,7 +67,7 @@ const router = createBrowserRouter([
   //Driver router
   {
     path: "/driver",
-    //element: <PrivateRoute allowedRoles={["driver"]} />,
+    element: <PrivateRoute allowedRoles={["driver"]} />,
     children: [
       {
         path: "",

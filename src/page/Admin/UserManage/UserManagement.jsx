@@ -32,6 +32,9 @@ const UserManagement = () => {
     dispatch(changeStatusUserRequest({ userId: userId, status: "ACTIVE" }));
   };
 
+  const filteredUsers =
+    getAllUser?.filter((user) => user.role !== "ADMIN") || [];
+
   const columns = [
     {
       title: "Full Name",
@@ -196,7 +199,7 @@ const UserManagement = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <Table
           columns={columns}
-          dataSource={getAllUser || []}
+          dataSource={filteredUsers}
           rowKey="userId"
           loading={loading}
           pagination={{

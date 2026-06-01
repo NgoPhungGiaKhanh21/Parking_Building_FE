@@ -2,13 +2,17 @@ import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = ({ allowedRoles }) => {
-  const { user } = useSelector((state) => state.account);
+  // Lấy token từ Redux, fallback sang localStorage để chống lỗi khi F5 reload trang
+  const { token } = useSelector((state) => state.auth);
+  const isAuthenticated = token || localStorage.getItem("token");
 
-  if (!user) {
+  // Nếu không có token (chưa đăng nhập) => Đá về trang login
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  const role = user.role?.toLowerCase();
+  // Lấy role từ localStorage và chuyển thành chữ thường để dễ so sánh
+  const currentRole = localStorage.getItem("role")?.toLowerCase();
 
   // Nếu route không cho phép role hiện tại
   if (allowedRoles && !allowedRoles.includes(role)) {
@@ -19,7 +23,7 @@ const PrivateRoute = ({ allowedRoles }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Nếu hợp lệ, cho render các route con
+  // Nếu hợp lệ, cho phép render các component con bên trong route
   return <Outlet />;
 };
 
