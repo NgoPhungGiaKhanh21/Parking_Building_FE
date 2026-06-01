@@ -148,9 +148,6 @@ const SidebarManager = () => {
 
         {!isCollapsed && (
           <div className="w-full overflow-hidden text-center">
-            <h2 className="mb-1.5 truncate text-sm font-bold text-slate-100">
-              Trần Gia Khánh
-            </h2>
             <span
               className="inline-block rounded-full px-3 py-[3px] text-[10px] font-bold uppercase tracking-widest text-indigo-300 border"
               style={{
