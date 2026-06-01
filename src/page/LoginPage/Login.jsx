@@ -26,9 +26,7 @@ const Login = () => {
   useEffect(() => {
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
-
-        const userRole = decodedToken.role;
+        const userRole = localStorage.getItem("role");
 
         switch (userRole) {
           case "ROLE_DRIVER":

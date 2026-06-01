@@ -31,7 +31,7 @@ const router = createBrowserRouter([
   //Admin router
   {
     path: "/admin",
-    element: <PrivateRoute allowedRoles={["admin"]} />,
+    element: <PrivateRoute allowedRoles={["ROLE_ADMIN"]} />,
     children: [
       {
         path: "",
@@ -43,7 +43,7 @@ const router = createBrowserRouter([
   //Manager router
   {
     path: "/manager",
-    element: <PrivateRoute allowedRoles={["manager"]} />,
+    element: <PrivateRoute allowedRoles={["ROLE_MANAGER"]} />,
     children: [
       {
         path: "",
@@ -55,7 +55,7 @@ const router = createBrowserRouter([
   //Staff router
   {
     path: "/staff",
-    element: <PrivateRoute allowedRoles={["staff"]} />,
+    element: <PrivateRoute allowedRoles={["ROLE_STAFF"]} />,
     children: [
       {
         path: "",
@@ -67,7 +67,7 @@ const router = createBrowserRouter([
   //Driver router
   {
     path: "/driver",
-    element: <PrivateRoute allowedRoles={["driver"]} />,
+    element: <PrivateRoute allowedRoles={["ROLE_DRIVER"]} />,
     children: [
       {
         path: "",
