@@ -5,6 +5,7 @@ import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUser
 import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
 import { watchGetProfileUser } from "./profileUser/getProfileUserSaga";
 import { watchChangePassword } from "./changePassword/changePasswordSaga";
+import { watchUpdateProfileUser } from "./updateProfileUser/updateProfileUserSaga";
 export default function* rootSaga() {
   yield all([
     authSaga(),
@@ -13,5 +14,6 @@ export default function* rootSaga() {
     watchChangeRoleUser(),
     watchGetProfileUser(),
     watchChangePassword(),
+    watchUpdateProfileUser(),
   ]);
 }

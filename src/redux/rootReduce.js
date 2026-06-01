@@ -6,6 +6,7 @@ import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSl
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";
 import changePasswordReducer from "./changePassword/changePasswordSlice";
+import updateProfileUserReducer from "./updateProfileUser/updateProfileUserSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
   changeRoleUser: changeRoleUserReducer,
   getProfileUser: getProfileUserReducer,
   changePassword: changePasswordReducer,
+  updateProfileUser: updateProfileUserReducer,
 });
 
 export default rootReducer;
