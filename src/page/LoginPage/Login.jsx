@@ -25,29 +25,29 @@ const Login = () => {
 
   useEffect(() => {
     if (token) {
-      // 1. Lấy role trực tiếp từ localStorage (do Saga vừa set xong)
-      const userRole = localStorage.getItem("role");
+      try {
+        const userRole = localStorage.getItem("role");
 
-      console.log("Role lấy được không cần giải mã:", userRole);
-
-      // 2. Điều hướng dựa trên role
-      switch (userRole) {
-        case "DRIVER":
-          navigate("/driver");
-          break;
-        case "MANAGER":
-          navigate("/manager");
-          break;
-        case "STAFF":
-          navigate("/staff");
-          break;
-        case "ADMIN":
-          navigate("/admin");
-          break;
-        default:
-          console.warn("Không khớp Role nào, trả về trang chủ /");
-          navigate("/");
-          break;
+        switch (userRole) {
+          case "ROLE_DRIVER":
+            navigate("/driver");
+            break;
+          case "ROLE_MANAGER":
+            navigate("/manager");
+            break;
+          case "ROLE_STAFF":
+            navigate("/staff");
+            break;
+          case "ROLE_ADMIN":
+            navigate("/admin");
+            break;
+          default:
+            navigate("/");
+            break;
+        }
+      } catch (error) {
+        console.error("Lỗi khi giải mã token:", error);
+        navigate("/");
       }
     }
   }, [token, navigate]);
@@ -92,12 +92,12 @@ const Login = () => {
           >
             {/* USERNAME */}
             <Form.Item
-              label="Gmail"
-              name="gmail"
+              label="Email"
+              name="email"
               rules={[
                 {
                   required: true,
-                  message: "Please enter your Gmail!",
+                  message: "Please enter your Email!",
                 },
               ]}
             >

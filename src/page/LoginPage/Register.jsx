@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { User, Lock, BadgePlus } from "lucide-react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { registerRequest } from "../../redux/auth/authSlice";
+import {
+  registerRequest,
+  resetRegisterState,
+} from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
 
@@ -22,8 +24,9 @@ export default function Register() {
   useEffect(() => {
     if (registerSuccess) {
       navigate("/");
+      dispatch(resetRegisterState());
     }
-  }, [registerSuccess, navigate]);
+  }, [registerSuccess, navigate, dispatch]);
 
   const handleSubmit = (values) => {
     dispatch(registerRequest(values));
@@ -92,24 +95,24 @@ export default function Register() {
 
             <Form.Item
               label="Gmail"
-              name="gmail"
+              name="email"
               rules={[
                 {
                   required: true,
-                  message: "Please enter gmail!",
+                  message: "Please enter email!",
                 },
                 {
                   type: "email",
-                  message: "Invalid gmail format!",
+                  message: "Invalid email format!",
                 },
               ]}
             >
-              <Input size="large" placeholder="Enter gmail" />
+              <Input size="large" placeholder="Enter Email" />
             </Form.Item>
             <div className="flex gap-4">
               <Form.Item
                 label="Username"
-                name="userName"
+                name="username"
                 rules={[
                   {
                     required: true,
@@ -122,7 +125,7 @@ export default function Register() {
               </Form.Item>
               <Form.Item
                 label="Phone"
-                name="phone"
+                name="phoneNumber"
                 rules={[
                   {
                     required: true,

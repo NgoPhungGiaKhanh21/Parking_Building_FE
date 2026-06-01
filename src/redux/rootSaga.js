@@ -2,7 +2,13 @@ import { all } from "redux-saga/effects";
 import authSaga from "./auth/authSaga";
 import { watchGetAllUser } from "./admin/GetAllUser/GetAllUserSaga";
 import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUserSaga";
+import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
 
 export default function* rootSaga() {
-  yield all([authSaga(), watchGetAllUser(), watchChangeStatusUser()]);
+  yield all([
+    authSaga(),
+    watchGetAllUser(),
+    watchChangeStatusUser(),
+    watchChangeRoleUser(),
+  ]);
 }
