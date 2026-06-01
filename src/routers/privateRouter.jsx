@@ -14,21 +14,13 @@ const PrivateRoute = ({ allowedRoles }) => {
   // Lấy role từ localStorage và chuyển thành chữ thường để dễ so sánh
   const currentRole = localStorage.getItem("role")?.toLowerCase();
 
-  // Nếu route có giới hạn quyền (allowedRoles) và role hiện tại không được phép
-  if (allowedRoles && !allowedRoles.includes(currentRole)) {
-    // Tự động đá user về đúng trang dashboard tương ứng với quyền của họ
-    switch (currentRole) {
-      case "admin":
-        return <Navigate to="/admin" replace />;
-      case "manager":
-        return <Navigate to="/manager" replace />;
-      case "staff":
-        return <Navigate to="/staff" replace />;
-      case "driver":
-        return <Navigate to="/driver" replace />;
-      default:
-        return <Navigate to="/" replace />;
-    }
+  // Nếu route không cho phép role hiện tại
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    if (role === "ROLE_ADMIN") return <Navigate to="/admin" replace />;
+    if (role === "ROLE_MANAGER") return <Navigate to="/manager" replace />;
+    if (role === "ROLE_STAFF") return <Navigate to="/staff" replace />;
+    if (role === "ROLE_DRIVER") return <Navigate to="/driver" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Nếu hợp lệ, cho phép render các component con bên trong route

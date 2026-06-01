@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { User, Lock, BadgePlus } from "lucide-react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerRequest } from "../../redux/auth/authSlice";
@@ -92,24 +91,24 @@ export default function Register() {
 
             <Form.Item
               label="Gmail"
-              name="gmail"
+              name="email"
               rules={[
                 {
                   required: true,
-                  message: "Please enter gmail!",
+                  message: "Please enter email!",
                 },
                 {
                   type: "email",
-                  message: "Invalid gmail format!",
+                  message: "Invalid email format!",
                 },
               ]}
             >
-              <Input size="large" placeholder="Enter gmail" />
+              <Input size="large" placeholder="Enter Email" />
             </Form.Item>
             <div className="flex gap-4">
               <Form.Item
                 label="Username"
-                name="userName"
+                name="username"
                 rules={[
                   {
                     required: true,
