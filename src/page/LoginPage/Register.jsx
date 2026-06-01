@@ -121,7 +121,7 @@ export default function Register() {
               </Form.Item>
               <Form.Item
                 label="Phone"
-                name="phone"
+                name="phoneNumber"
                 rules={[
                   {
                     required: true,
