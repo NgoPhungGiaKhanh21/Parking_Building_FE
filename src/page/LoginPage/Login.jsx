@@ -32,16 +32,16 @@ const Login = () => {
         const userRole = decodedToken.role;
 
         switch (userRole) {
-          case "DRIVER":
+          case "ROLE_DRIVER":
             navigate("/driver");
             break;
-          case "MANAGER":
+          case "ROLE_MANAGER":
             navigate("/manager");
             break;
-          case "STAFF":
+          case "ROLE_STAFF":
             navigate("/staff");
             break;
-          case "ADMIN":
+          case "ROLE_ADMIN":
             navigate("/admin");
             break;
           default:
@@ -95,12 +95,12 @@ const Login = () => {
           >
             {/* USERNAME */}
             <Form.Item
-              label="Gmail"
-              name="gmail"
+              label="Email"
+              name="email"
               rules={[
                 {
                   required: true,
-                  message: "Please enter your Gmail!",
+                  message: "Please enter your Email!",
                 },
               ]}
             >

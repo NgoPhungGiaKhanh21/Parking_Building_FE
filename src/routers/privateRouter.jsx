@@ -12,10 +12,10 @@ const PrivateRoute = ({ allowedRoles }) => {
 
   // Nếu route không cho phép role hiện tại
   if (allowedRoles && !allowedRoles.includes(role)) {
-    if (role === "admin") return <Navigate to="/admin" replace />;
-    if (role === "manager") return <Navigate to="/manager" replace />;
-    if (role === "staff") return <Navigate to="/staff" replace />;
-    if (role === "driver") return <Navigate to="/driver" replace />;
+    if (role === "ROLE_ADMIN") return <Navigate to="/admin" replace />;
+    if (role === "ROLE_MANAGER") return <Navigate to="/manager" replace />;
+    if (role === "ROLE_STAFF") return <Navigate to="/staff" replace />;
+    if (role === "ROLE_DRIVER") return <Navigate to="/driver" replace />;
     return <Navigate to="/" replace />;
   }
 
