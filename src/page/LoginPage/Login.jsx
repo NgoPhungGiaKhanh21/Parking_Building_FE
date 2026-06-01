@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
-import { jwtDecode } from "jwt-decode";
 
 import { Form, Input, Button } from "antd";
 
@@ -27,9 +26,7 @@ const Login = () => {
   useEffect(() => {
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
-
-        const userRole = decodedToken.role;
+        const userRole = localStorage.getItem("role");
 
         switch (userRole) {
           case "ROLE_DRIVER":

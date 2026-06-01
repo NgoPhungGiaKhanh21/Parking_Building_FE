@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Table, Tag, Tooltip, Popconfirm } from "antd";
-import { getAllUserRequest } from "../../../redux/admin/GetAllUser/getAllUserSlice";
-import { changeStatusUserRequest } from "../../../redux/admin/ChangeStatusUser/ChangeStatusUserSlice";
+import { Table, Tag, Tooltip, Popconfirm, Avatar, Select } from "antd";
+import { getAllUserRequest } from "../../../redux/admin/getAllUser/getAllUserSlice";
+import { changeStatusUserRequest } from "../../../redux/admin/changeStatusUser/ChangeStatusUserSlice";
+import { changeRoleUserRequest } from "../../../redux/admin/changeRoleUser/changeRoleUserSlice";
 import {
   Users,
   Mail,
@@ -11,6 +12,9 @@ import {
   Activity,
   Lock,
   Unlock,
+  User,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 
@@ -23,33 +27,117 @@ const UserManagement = () => {
     dispatch(getAllUserRequest());
   }, [dispatch]);
 
-  // CẬP NHẬT HÀM NÀY: Truyền payload là 1 object { userId, status }
   const handleBanUser = (userId) => {
-    dispatch(changeStatusUserRequest({ userId: userId, status: "BAN" }));
+    dispatch(changeStatusUserRequest({ userId: userId, status: "BANNED" }));
   };
 
   const handleUnbanUser = (userId) => {
     dispatch(changeStatusUserRequest({ userId: userId, status: "ACTIVE" }));
   };
 
+  const handleRoleChange = (userId, newRole) => {
+    dispatch(changeRoleUserRequest({ userId: userId, role: newRole }));
+  };
+
+  const userList = Array.isArray(getAllUser?.data) ? getAllUser.data : [];
+  const filteredUsers = userList.filter((user) => user.role !== "ROLE_ADMIN");
+
+  // 1. Định nghĩa sẵn UI của các Role để tái sử dụng
+  const roleDefinitions = {
+    ROLE_MANAGER: {
+      value: "ROLE_MANAGER",
+      label: (
+        <Tag
+          color="purple"
+          className="font-bold px-2 py-1 rounded border-0 uppercase text-[10px] w-full text-center m-0"
+        >
+          MANAGER
+        </Tag>
+      ),
+    },
+    ROLE_STAFF: {
+      value: "ROLE_STAFF",
+      label: (
+        <Tag
+          color="cyan"
+          className="font-bold px-2 py-1 rounded border-0 uppercase text-[10px] w-full text-center m-0"
+        >
+          STAFF
+        </Tag>
+      ),
+    },
+    ROLE_DRIVER: {
+      value: "ROLE_DRIVER",
+      label: (
+        <Tag
+          color="blue"
+          className="font-bold px-2 py-1 rounded border-0 uppercase text-[10px] w-full text-center m-0"
+        >
+          DRIVER
+        </Tag>
+      ),
+    },
+  };
+
+  // 2. Hàm xử lý logic hiển thị option theo Role hiện tại của user
+  const getDynamicRoleOptions = (currentRole) => {
+    // Luôn giữ role hiện tại trong mảng để Select render được UI, nhưng disable không cho chọn lại chính nó
+    const currentOption = { ...roleDefinitions[currentRole], disabled: true };
+    let allowedOptions = [currentOption];
+
+    if (currentRole === "ROLE_DRIVER") {
+      // Driver hiển thị thêm Staff và Manager
+      allowedOptions.push(
+        roleDefinitions.ROLE_STAFF,
+        roleDefinitions.ROLE_MANAGER,
+      );
+    } else if (currentRole === "ROLE_STAFF") {
+      // Staff chỉ hiển thị Manager (có thể bổ sung ROLE_DRIVER nếu bạn cho phép giáng chức về Driver)
+      allowedOptions.push(roleDefinitions.ROLE_MANAGER);
+    } else if (currentRole === "ROLE_MANAGER") {
+      // Manager sẽ về Staff
+      allowedOptions.push(roleDefinitions.ROLE_STAFF);
+    }
+
+    return allowedOptions;
+  };
+
   const columns = [
     {
-      title: "Full Name",
-      dataIndex: "fullName",
-      key: "fullName",
-      render: (text) => (
-        <span className="font-medium text-slate-800">{text || "N/A"}</span>
+      title: "User",
+      key: "userInfo",
+      fixed: "left",
+      render: (_, record) => (
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={record.avatarUrl}
+            icon={!record.avatarUrl && <User size={18} />}
+            size={42}
+            className="border border-slate-100 flex-shrink-0 bg-blue-50 text-blue-500"
+          />
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-800 leading-tight">
+              {record.fullName || "N/A"}
+            </span>
+          </div>
+        </div>
       ),
     },
     {
       title: (
         <span className="flex items-center gap-2">
-          <Mail size={16} className="text-slate-500" /> Username (Email)
+          <Mail size={16} className="text-slate-500" /> Account (Email)
         </span>
       ),
-      dataIndex: "username",
-      key: "username",
-      render: (text) => <span className="text-slate-600">{text}</span>,
+      key: "account",
+      render: (_, record) => (
+        <div className="flex flex-col">
+          <span className="text-slate-700 font-medium">
+            {record.email || "N/A"}
+          </span>
+          <span className="text-slate-400 text-xs">@{record.username}</span>
+        </div>
+      ),
     },
     {
       title: (
@@ -57,10 +145,10 @@ const UserManagement = () => {
           <Phone size={16} className="text-slate-500" /> Phone
         </span>
       ),
-      dataIndex: "phone",
-      key: "phone",
+      dataIndex: "phoneNumber",
+      key: "phoneNumber",
       render: (text) => (
-        <span className="text-slate-600">{text || "Not provided"}</span>
+        <span className="text-slate-600 font-medium">{text || "—"}</span>
       ),
     },
     {
@@ -71,31 +159,40 @@ const UserManagement = () => {
       ),
       dataIndex: "role",
       key: "role",
-      render: (role) => {
-        let color = "default";
-        switch (role) {
-          case "ADMIN":
-            color = "magenta";
-            break;
-          case "MANAGER":
-            color = "purple";
-            break;
-          case "STAFF":
-            color = "cyan";
-            break;
-          case "DRIVER":
-            color = "blue";
-            break;
-          default:
-            color = "default";
+      sorter: (a, b) => {
+        const roleOrder = {
+          ROLE_DRIVER: 1,
+          ROLE_STAFF: 2,
+          ROLE_MANAGER: 3,
+        };
+        const orderA = roleOrder[a.role] || 99;
+        const orderB = roleOrder[b.role] || 99;
+
+        return orderA - orderB;
+      },
+      render: (role, record) => {
+        // Vô hiệu hóa toàn bộ nếu người dùng là ADMIN
+        if (role === "ROLE_ADMIN") {
+          return (
+            <Tag
+              color="magenta"
+              className="font-bold px-3 py-1 rounded-full border-0 uppercase text-[10px]"
+            >
+              ADMIN
+            </Tag>
+          );
         }
+
         return (
-          <Tag
-            color={color}
-            className="font-semibold px-3 py-1 rounded-full border-transparent"
-          >
-            {role}
-          </Tag>
+          <Select
+            value={role}
+            onChange={(newRole) => handleRoleChange(record.userId, newRole)}
+            className="w-32"
+            bordered={false}
+            dropdownStyle={{ minWidth: "120px" }}
+            // 3. Truyền logic lấy Options vào đây
+            options={getDynamicRoleOptions(role)}
+          />
         );
       },
     },
@@ -108,16 +205,18 @@ const UserManagement = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        // Cập nhật lại UI dựa trên status thực tế của API
         const isActive = status === "ACTIVE";
-        const color = isActive ? "success" : "error";
         return (
-          <Tag
-            color={color}
-            className="font-semibold px-3 py-1 rounded-full border-transparent"
-          >
-            {status}
-          </Tag>
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${isActive ? "bg-green-500" : "bg-red-500"}`}
+            />
+            <span
+              className={`font-semibold ${isActive ? "text-green-600" : "text-red-600"}`}
+            >
+              {status}
+            </span>
+          </div>
         );
       },
     },
@@ -127,38 +226,70 @@ const UserManagement = () => {
       align: "center",
       render: (_, record) => {
         const isActive = record.status === "ACTIVE";
-
         return (
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2">
             {isActive ? (
               <Popconfirm
-                title="Ban this user?"
-                description="Are you sure you want to ban this user's access?"
+                title={
+                  <span className="font-bold text-slate-800 text-sm">
+                    Ban this user?
+                  </span>
+                }
+                description={
+                  <span className="text-slate-500 text-xs">
+                    They will lose access to the system.
+                  </span>
+                }
+                icon={<AlertCircle size={18} className="text-red-500 mt-0.5" />}
                 onConfirm={() => handleBanUser(record.userId)}
-                okText="Yes, Ban"
+                okText="Ban User"
                 cancelText="Cancel"
-                okButtonProps={{ danger: true }}
+                placement="topRight"
+                okButtonProps={{
+                  danger: true,
+                  className:
+                    "bg-red-500 hover:bg-red-600 border-none shadow-sm rounded-md font-medium text-xs px-3",
+                }}
+                cancelButtonProps={{
+                  className:
+                    "border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 hover:bg-slate-50 rounded-md font-medium text-xs px-3",
+                }}
               >
                 <Tooltip title="Ban User">
-                  <button className="flex items-center justify-center text-red-600 hover:text-red-700 transition-colors p-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-100">
-                    <Lock size={16} />
+                  <button className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                    <Lock size={18} />
                   </button>
                 </Tooltip>
               </Popconfirm>
             ) : (
               <Popconfirm
-                title="Unban this user?"
-                description="Allow this user to access the system again?"
+                title={
+                  <span className="font-bold text-slate-800 text-sm">
+                    Unban this user?
+                  </span>
+                }
+                description={
+                  <span className="text-slate-500 text-xs">
+                    Restore their access to the system.
+                  </span>
+                }
+                icon={<Info size={18} className="text-blue-500 mt-0.5" />}
                 onConfirm={() => handleUnbanUser(record.userId)}
-                okText="Yes, Unban"
+                okText="Unban"
                 cancelText="Cancel"
+                placement="topRight"
                 okButtonProps={{
-                  className: "!bg-green-500 hover:!bg-green-600",
+                  className:
+                    "bg-green-500 hover:bg-green-600 border-none shadow-sm rounded-md font-medium text-white text-xs px-3",
+                }}
+                cancelButtonProps={{
+                  className:
+                    "border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 hover:bg-slate-50 rounded-md font-medium text-xs px-3",
                 }}
               >
                 <Tooltip title="Unban User">
-                  <button className="flex items-center justify-center text-green-600 hover:text-green-700 transition-colors p-2 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100">
-                    <Unlock size={16} />
+                  <button className="p-2 text-green-500 hover:bg-green-50 rounded-full transition-colors">
+                    <Unlock size={18} />
                   </button>
                 </Tooltip>
               </Popconfirm>
@@ -196,7 +327,7 @@ const UserManagement = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <Table
           columns={columns}
-          dataSource={getAllUser || []}
+          dataSource={filteredUsers}
           rowKey="userId"
           loading={loading}
           pagination={{

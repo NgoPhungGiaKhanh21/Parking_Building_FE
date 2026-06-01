@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { registerRequest } from "../../redux/auth/authSlice";
+import {
+  registerRequest,
+  resetRegisterState,
+} from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
 
@@ -21,8 +24,9 @@ export default function Register() {
   useEffect(() => {
     if (registerSuccess) {
       navigate("/");
+      dispatch(resetRegisterState());
     }
-  }, [registerSuccess, navigate]);
+  }, [registerSuccess, navigate, dispatch]);
 
   const handleSubmit = (values) => {
     dispatch(registerRequest(values));
