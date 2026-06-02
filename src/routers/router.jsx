@@ -10,6 +10,7 @@ import StaffLayout from "../page/Staff/StaffLayout";
 import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
 import UserManagement from "../page/Admin/UserManage/UserManagement";
+import CreateBuilding from "../page/Manager/Building/CreateBuilding";
 
 const router = createBrowserRouter([
   {
@@ -48,7 +49,10 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <ManagerLayout />,
-        children: [{ path: "", element: <Dashboard /> }],
+        children: [
+          { path: "", element: <Dashboard /> },
+          { path: "building", element: <CreateBuilding /> },
+        ],
       },
     ],
   },

@@ -5,6 +5,14 @@ import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUser
 import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
 import { watchGetProfileUser } from "./profileUser/getProfileUserSaga";
 import { watchChangePassword } from "./changePassword/changePasswordSaga";
+import { watchCreateBuilding } from "./manager/Building/createBuildingSaga";
+import { watchGetBuildingList } from "./manager/Building/getBuildingListSaga";
+import { watchGetBuildingDetail } from "./manager/Building/getBuildingDetailSaga";
+import { watchUpdateBuilding } from "./manager/Building/updateBuildingSaga";
+import { watchGetBuildingFloors } from "./manager/Building/getBuildingFloorsSaga";
+import { watchCreateFloor } from "./manager/Building/createFloorSaga";
+import { watchGetVehicleTypeList } from "./manager/Building/getVehicleTypeListSaga";
+import { watchUpdateFloor } from "./manager/Building/updateFloorSaga";
 import { watchUpdateProfileUser } from "./updateProfileUser/updateProfileUserSaga";
 export default function* rootSaga() {
   yield all([
@@ -14,6 +22,14 @@ export default function* rootSaga() {
     watchChangeRoleUser(),
     watchGetProfileUser(),
     watchChangePassword(),
+    watchCreateBuilding(),
+    watchGetBuildingList(),
+    watchGetBuildingDetail(),
+    watchUpdateBuilding(),
+    watchGetBuildingFloors(),
+    watchCreateFloor(),
+    watchGetVehicleTypeList(),
+    watchUpdateFloor(),
     watchUpdateProfileUser(),
   ]);
 }

@@ -7,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// Thêm Interceptor: Trạm kiểm duyệt tự động gắn Token trước khi gửi request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -20,7 +19,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;
