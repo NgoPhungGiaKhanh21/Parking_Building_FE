@@ -6,7 +6,14 @@ import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSl
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";
 import changePasswordReducer from "./changePassword/changePasswordSlice";
-
+import createBuildingReducer from "./manager/Building/createBuildingSlice";
+import getBuildingListReducer from "./manager/Building/getBuildingListSlice";
+import getBuildingDetailReducer from "./manager/Building/getBuildingDetailSlice";
+import updateBuildingReducer from "./manager/Building/updateBuildingSlice";
+import getBuildingFloorsReducer from "./manager/Building/getBuildingFloorsSlice";
+import createFloorReducer from "./manager/Building/createFloorSlice";
+import getVehicleTypeListReducer from "./manager/Building/getVehicleTypeListSlice";
+import updateFloorReducer from "./manager/Building/updateFloorSlice";
 const rootReducer = combineReducers({
   auth: authReducer,
   getAllUser: getAllUserReducer,
@@ -14,6 +21,14 @@ const rootReducer = combineReducers({
   changeRoleUser: changeRoleUserReducer,
   getProfileUser: getProfileUserReducer,
   changePassword: changePasswordReducer,
+  createBuilding: createBuildingReducer,
+  getBuildingList: getBuildingListReducer,
+  getBuildingDetail: getBuildingDetailReducer,
+  updateBuilding: updateBuildingReducer,
+  getBuildingFloors: getBuildingFloorsReducer,
+  createFloor: createFloorReducer,
+  getVehicleTypeList: getVehicleTypeListReducer,
+  updateFloor: updateFloorReducer,
 });
 
 export default rootReducer;

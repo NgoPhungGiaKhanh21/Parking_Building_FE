@@ -58,11 +58,11 @@ const UserProfileModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { getProfileUser, loading: profileLoading } = useSelector(
-    (state) => state.getProfileUser,
+    (state) => state.getProfileUser
   );
 
   const { loading: passwordLoading, error } = useSelector(
-    (state) => state.changePassword,
+    (state) => state.changePassword
   );
 
   useEffect(() => {
@@ -94,7 +94,7 @@ const UserProfileModal = ({ isOpen, onClose }) => {
       changePasswordRequest({
         currentPassword: values.oldPassword,
         newPassword: values.newPassword,
-      }),
+      })
     );
   };
 
@@ -232,7 +232,7 @@ const UserProfileModal = ({ isOpen, onClose }) => {
                       return Promise.resolve();
                     }
                     return Promise.reject(
-                      new Error("The new passwords do not match!"),
+                      new Error("The new passwords do not match!")
                     );
                   },
                 }),
