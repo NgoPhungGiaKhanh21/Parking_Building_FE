@@ -14,8 +14,11 @@ function* handleGetProfileUser(action) {
     const data = response.data.data;
     yield put(getProfileUserSuccess(data));
   } catch (error) {
-    yield put(getProfileUserFail(error.message));
-    toast.error("Failed to fetch user profile");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to fetch user profile";
+    yield put(getProfileUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

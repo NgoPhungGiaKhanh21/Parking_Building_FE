@@ -13,8 +13,11 @@ function* handleGetVehicleById(action) {
     const data = response.data;
     yield put(getVehicleByIdSuccess(data));
   } catch (error) {
-    yield put(getVehicleByIdFail(error.message));
-    toast.error("Failed to fetch vehicle details");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to fetch vehicle details";
+    yield put(getVehicleByIdFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

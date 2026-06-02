@@ -14,8 +14,11 @@ function* handleCreateVehicle(action) {
     yield put(createVehicleSuccess(data));
     toast.success("Vehicle created successfully");
   } catch (error) {
-    yield put(createVehicleFail(error.response?.data?.message));
-    toast.error("Failed to create vehicle");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to create vehicle";
+    yield put(createVehicleFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

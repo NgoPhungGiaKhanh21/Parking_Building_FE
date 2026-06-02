@@ -1,7 +1,7 @@
 import { combineReducers } from "@reduxjs/toolkit";
 
 import authReducer from "./auth/authSlice";
-import getAllUserReducer from "./admin/GetAllUser/GetAllUserSlice";
+import getAllUserReducer from "./admin/GetAllUser/getAllUserSlice";
 import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSlice";
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";
@@ -21,6 +21,9 @@ import createVehicleReducer from "./driver/vehicleManagement/createVehicle/creat
 import getVehicleByIdReducer from "./driver/vehicleManagement/getVehicleById/getVehicleByIdSlice";
 import updateVehicleReducer from "./driver/vehicleManagement/updateVehicle/updateVehicleSlice";
 import deleteVehicleReducer from "./driver/vehicleManagement/deleteVehicle/deleteVehicleSlice";
+import getZoneByFloorReducer from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSlice";
+import createZoneReducer from "./manager/Building/zone/createZone/createZoneSlice";
+import getSlotByZoneReducer from "./manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -43,6 +46,9 @@ const rootReducer = combineReducers({
   getVehicleTypeList: getVehicleTypeListReducer,
   updateFloor: updateFloorReducer,
   updateProfileUser: updateProfileUserReducer,
+  getZoneByFloor: getZoneByFloorReducer,
+  createZone: createZoneReducer,
+  getSlotByZone: getSlotByZoneReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,

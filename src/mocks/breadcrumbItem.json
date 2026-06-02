@@ -11,6 +11,7 @@
         "pages": {
             "dashboard": "Dashboard",
             "building": "Building Management",
+            "floormanagement": "Floor Management",
             "space": "Parking Space Management",
             "revenue": "Revenue Management"
         }

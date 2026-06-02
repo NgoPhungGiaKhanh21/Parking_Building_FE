@@ -14,6 +14,7 @@ const FloorManagementModal = ({
   floorsLoading,
   onRefresh,
   onEditFloor,
+  onSelectFloor,
 }) => {
   return (
     <Modal
@@ -99,7 +100,19 @@ const FloorManagementModal = ({
           ) : (
             <div className="space-y-3">
               {(Array.isArray(floors) ? floors : []).map((floor) => (
-                <div key={floor.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div
+                  key={floor.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectFloor?.(floor)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectFloor?.(floor);
+                    }
+                  }}
+                  className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+                >
                   <div className="mb-1 flex items-center justify-between">
                     <p className="font-semibold text-slate-800">
                       {floor.name || floor.floorName || "N/A"}
@@ -110,7 +123,10 @@ const FloorManagementModal = ({
                         size="small"
                         type="text"
                         icon={<PenSquare size={14} />}
-                        onClick={() => onEditFloor(floor)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditFloor(floor);
+                        }}
                       >
                         Edit
                       </Button>
@@ -126,6 +142,7 @@ const FloorManagementModal = ({
                     Capacity:{" "}
                     <span className="font-medium text-slate-700">{floor.maxCapacity ?? 0}</span>
                   </p>
+                  <p className="mt-2 text-xs font-medium text-indigo-600">View zones →</p>
                 </div>
               ))}
             </div>

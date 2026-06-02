@@ -31,3 +31,15 @@ export const getVehicleTypesApi = () => {
 export const updateFloorApi = (floorId, data) => {
   return api.put(`/manager/setup/floors/${floorId}`, data);
 };
+
+export const getZoneListApi = (floorId, data) => {
+  return api.get(`/manager/setup/floors/${floorId}/zones`, data);
+};
+
+export const createZoneApi = (floorId, data) => {
+  return api.post(`/manager/setup/floors/${floorId}/zones`, data);
+};
+
+export const getSlotListApi = (zoneId, data) => {
+  return api.get(`/manager/setup/zones/${zoneId}/slots`, data);
+};

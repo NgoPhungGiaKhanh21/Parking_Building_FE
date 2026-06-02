@@ -17,8 +17,11 @@ function* handleDeleteVehicle(action) {
     yield put(getAllVehicleRequest());
     toast.success("Vehicle deleted successfully");
   } catch (error) {
-    yield put(deleteVehicleFail(error.message));
-    toast.error("Failed to delete vehicle");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to delete vehicle";
+    yield put(deleteVehicleFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

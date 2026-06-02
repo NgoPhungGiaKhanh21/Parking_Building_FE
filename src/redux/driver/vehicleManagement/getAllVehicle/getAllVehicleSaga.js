@@ -14,8 +14,11 @@ function* handleGetAllVehicle(action) {
     const data = response.data;
     yield put(getAllVehicleSuccess(data));
   } catch (error) {
-    yield put(getAllVehicleFail(error.message));
-    toast.error("Failed to fetch vehicles");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to fetch vehicles";
+    yield put(getAllVehicleFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

@@ -16,8 +16,11 @@ function* handleChangeRoleUser(action) {
     yield put(getAllUserRequest());
     toast.success("Role updated successfully!");
   } catch (error) {
-    yield put(changeRoleUserFail(error.message));
-    toast.error("Failed to update role.");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to update role";
+    yield put(changeRoleUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

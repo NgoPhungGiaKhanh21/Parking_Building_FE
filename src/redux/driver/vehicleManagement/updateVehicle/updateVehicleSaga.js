@@ -19,8 +19,11 @@ function* handleUpdateVehicle(action) {
     yield put(getAllVehicleRequest());
     toast.success("Vehicle updated successfully");
   } catch (error) {
-    yield put(updateVehicleFail(error.message));
-    toast.error("Failed to update vehicle");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to update vehicle";
+    yield put(updateVehicleFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 
