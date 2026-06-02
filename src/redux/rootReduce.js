@@ -14,6 +14,8 @@ import getBuildingFloorsReducer from "./manager/Building/getBuildingFloorsSlice"
 import createFloorReducer from "./manager/Building/createFloorSlice";
 import getVehicleTypeListReducer from "./manager/Building/getVehicleTypeListSlice";
 import updateFloorReducer from "./manager/Building/updateFloorSlice";
+import updateProfileUserReducer from "./updateProfileUser/updateProfileUserSlice";
+
 const rootReducer = combineReducers({
   auth: authReducer,
   getAllUser: getAllUserReducer,
@@ -29,6 +31,7 @@ const rootReducer = combineReducers({
   createFloor: createFloorReducer,
   getVehicleTypeList: getVehicleTypeListReducer,
   updateFloor: updateFloorReducer,
+  updateProfileUser: updateProfileUserReducer,
 });
 
 export default rootReducer;

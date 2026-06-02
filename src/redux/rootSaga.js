@@ -13,6 +13,7 @@ import { watchGetBuildingFloors } from "./manager/Building/getBuildingFloorsSaga
 import { watchCreateFloor } from "./manager/Building/createFloorSaga";
 import { watchGetVehicleTypeList } from "./manager/Building/getVehicleTypeListSaga";
 import { watchUpdateFloor } from "./manager/Building/updateFloorSaga";
+import { watchUpdateProfileUser } from "./updateProfileUser/updateProfileUserSaga";
 export default function* rootSaga() {
   yield all([
     authSaga(),
@@ -29,5 +30,6 @@ export default function* rootSaga() {
     watchCreateFloor(),
     watchGetVehicleTypeList(),
     watchUpdateFloor(),
+    watchUpdateProfileUser(),
   ]);
 }
