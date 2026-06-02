@@ -14,14 +14,25 @@ import { watchCreateFloor } from "./manager/Building/createFloorSaga";
 import { watchGetVehicleTypeList } from "./manager/Building/getVehicleTypeListSaga";
 import { watchUpdateFloor } from "./manager/Building/updateFloorSaga";
 import { watchUpdateProfileUser } from "./updateProfileUser/updateProfileUserSaga";
+import { watchGetAllVehicle } from "./driver/vehicleManagement/getAllVehicle/getAllVehicleSaga";
+import { watchGetAllVehicleType } from "./driver/vehicleManagement/createVehicle/getAllTypeVehicleSaga";
+import { watchCreateVehicle } from "./driver/vehicleManagement/createVehicle/createVehicleSaga";
+import { watchGetVehicleById } from "./driver/vehicleManagement/getVehicleById/getVehicleByIdSaga";
+import { watchUpdateVehicle } from "./driver/vehicleManagement/updateVehicle/updateVehicleSaga";
+import { watchDeleteVehicle } from "./driver/vehicleManagement/deleteVehicle/deleteVehicleSaga";
 export default function* rootSaga() {
   yield all([
+    //login - register
     authSaga(),
+
+    //admin
     watchGetAllUser(),
     watchChangeStatusUser(),
     watchChangeRoleUser(),
     watchGetProfileUser(),
     watchChangePassword(),
+
+    //manager
     watchCreateBuilding(),
     watchGetBuildingList(),
     watchGetBuildingDetail(),
@@ -31,5 +42,13 @@ export default function* rootSaga() {
     watchGetVehicleTypeList(),
     watchUpdateFloor(),
     watchUpdateProfileUser(),
+
+    //driver
+    watchGetAllVehicle(),
+    watchGetVehicleById(),
+    watchGetAllVehicleType(),
+    watchCreateVehicle(),
+    watchUpdateVehicle(),
+    watchDeleteVehicle(),
   ]);
 }

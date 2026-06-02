@@ -11,6 +11,7 @@ import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
 import UserManagement from "../page/Admin/UserManage/UserManagement";
 import CreateBuilding from "../page/Manager/Building/CreateBuilding";
+import VehicleManagement from "../page/Driver/VehicleManage/VehicleManagement";
 
 const router = createBrowserRouter([
   {
@@ -76,7 +77,7 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <DriverLayout />,
-        children: [{ path: "", element: <Dashboard /> }],
+        children: [{ path: "", element: <VehicleManagement /> }],
       },
     ],
   },
