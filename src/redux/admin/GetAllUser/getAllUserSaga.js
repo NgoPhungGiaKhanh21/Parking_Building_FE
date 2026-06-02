@@ -14,8 +14,11 @@ function* handleGetAllUser(action) {
     const data = response.data;
     yield put(getAllUserSuccess(data));
   } catch (error) {
-    yield put(getAllUserFail(error.message));
-    toast.error("Failed to fetch users");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to fetch users";
+    yield put(getAllUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

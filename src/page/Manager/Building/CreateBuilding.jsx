@@ -2,6 +2,7 @@ import { Building2, Eye, Pencil, Settings2 } from "lucide-react";
 import { Button, Form, Spin, Tag } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import {
   createBuildingRequest,
@@ -38,10 +39,13 @@ import {
   BUILDING_IMAGE,
   createTimeValue,
   mapVehicleTypeOptions,
+  floorNameToSlug,
+  FLOOR_CONTEXT_STORAGE_PREFIX,
 } from "./utils/buildingUtils";
 
 const CreateBuilding = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [createForm] = Form.useForm();
   const [updateForm] = Form.useForm();
   const [floorForm] = Form.useForm();
@@ -192,6 +196,27 @@ const CreateBuilding = () => {
     floorForm.resetFields();
     dispatch(resetCreateFloorStatus());
     dispatch(resetBuildingFloors());
+  };
+
+  const handleSelectFloor = (floor) => {
+    const floorName = floor?.name || floor?.floorName;
+    const slug = floorNameToSlug(floorName);
+    if (!slug || !floor?.id) return;
+
+    const floorContext = {
+      floorId: floor.id,
+      floorName,
+      buildingId: floorBuilding?.id,
+      buildingName: floorBuilding?.name,
+      maxCapacity: floor.maxCapacity ?? null,
+    };
+
+    sessionStorage.setItem(
+      `${FLOOR_CONTEXT_STORAGE_PREFIX}${slug}`,
+      JSON.stringify(floorContext)
+    );
+    setIsFloorModalOpen(false);
+    navigate(`/manager/building/${slug}`, { state: floorContext });
   };
 
   const handleCreateFloor = (values) => {
@@ -404,6 +429,7 @@ const CreateBuilding = () => {
           floorBuilding?.id && dispatch(getBuildingFloorsRequest(floorBuilding.id))
         }
         onEditFloor={handleOpenUpdateFloorModal}
+        onSelectFloor={handleSelectFloor}
       />
 
       <UpdateFloorModal

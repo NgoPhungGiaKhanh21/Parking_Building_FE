@@ -22,8 +22,11 @@ function* handleChangeStatusUser(action) {
 
     yield put(getAllUserRequest());
   } catch (error) {
-    yield put(changeStatusUserFail(error.message));
-    toast.error("Failed to change user status");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to change user status";
+    yield put(changeStatusUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

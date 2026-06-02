@@ -11,6 +11,9 @@ import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
 import UserManagement from "../page/Admin/UserManage/UserManagement";
 import CreateBuilding from "../page/Manager/Building/CreateBuilding";
+import ZoneByFloorManagement from "../page/Manager/Zone/ZoneByFloorManagement";
+import ParkingSpacePage from "../page/Manager/ParkingSpace/parking_page";
+import VehicleManagement from "../page/Driver/VehicleManage/VehicleManagement";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +55,8 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <Dashboard /> },
           { path: "building", element: <CreateBuilding /> },
+          { path: "building/:floorSlug", element: <ZoneByFloorManagement /> },
+          { path: "parking-space", element: <ParkingSpacePage /> },
         ],
       },
     ],
@@ -76,7 +81,7 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <DriverLayout />,
-        children: [{ path: "", element: <Dashboard /> }],
+        children: [{ path: "", element: <VehicleManagement /> }],
       },
     ],
   },

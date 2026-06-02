@@ -16,8 +16,11 @@ function* handleUpdateProfileUser(action) {
     toast.success("Profile updated successfully");
     yield put(getProfileUserRequest());
   } catch (error) {
-    yield put(updateProfileUserFail(error.message));
-    toast.error("Failed to update profile");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to update profile";
+    yield put(updateProfileUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 

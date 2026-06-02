@@ -14,8 +14,11 @@ function* handleChangePassword(action) {
     yield put(changePasswordSuccess(data));
     toast.success("Password changed successfully");
   } catch (error) {
-    yield put(changePasswordFail(error.message));
-    toast.error("Failed to change password");
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to change password";
+    yield put(changePasswordFail(errorData || errorMessage));
+    toast.error(errorMessage);
   }
 }
 
