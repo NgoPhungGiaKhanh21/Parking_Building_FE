@@ -16,6 +16,10 @@ export const updateBuildingApi = (buildingId, data) => {
   return api.put(`/manager/setup/buildings/${buildingId}`, data);
 };
 
+export const updateBuildingStatusApi = (buildingId, status) => {
+  return api.patch(`/manager/setup/buildings/${buildingId}/status`, { status });
+};
+
 export const getBuildingFloorsApi = (buildingId) => {
   return api.get(`/manager/setup/buildings/${buildingId}/floors`);
 };
@@ -30,6 +34,10 @@ export const getVehicleTypesApi = () => {
 
 export const updateFloorApi = (floorId, data) => {
   return api.put(`/manager/setup/floors/${floorId}`, data);
+};
+
+export const updateFloorStatusApi = (floorId, status) => {
+  return api.patch(`/manager/setup/floors/${floorId}/status`, { status });
 };
 
 export const getZoneListApi = (floorId, data) => {

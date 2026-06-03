@@ -57,6 +57,9 @@ const ZONE_FIELD_LABELS = {
   contactNumber: "Contact Number",
 };
 
+export const isActiveStatus = (status) =>
+  String(status || "").toUpperCase() === "ACTIVE";
+
 export const floorNameToSlug = (name) => {
   if (!name || typeof name !== "string") return "";
   const parts = name.trim().split(/\s+/).filter(Boolean);

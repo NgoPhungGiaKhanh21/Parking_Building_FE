@@ -9,10 +9,12 @@ import { watchCreateBuilding } from "./manager/Building/createBuildingSaga";
 import { watchGetBuildingList } from "./manager/Building/getBuildingListSaga";
 import { watchGetBuildingDetail } from "./manager/Building/getBuildingDetailSaga";
 import { watchUpdateBuilding } from "./manager/Building/updateBuildingSaga";
+import { watchUpdateBuildingStatus } from "./manager/Building/updateBuildingStatusSaga";
 import { watchGetBuildingFloors } from "./manager/Building/getBuildingFloorsSaga";
 import { watchCreateFloor } from "./manager/Building/createFloorSaga";
 import { watchGetVehicleTypeList } from "./manager/Building/getVehicleTypeListSaga";
 import { watchUpdateFloor } from "./manager/Building/updateFloorSaga";
+import { watchUpdateFloorStatus } from "./manager/Building/updateFloorStatusSaga";
 import { watchUpdateProfileUser } from "./updateProfileUser/updateProfileUserSaga";
 import { watchGetAllVehicle } from "./driver/vehicleManagement/getAllVehicle/getAllVehicleSaga";
 import { watchGetAllVehicleType } from "./driver/vehicleManagement/createVehicle/getAllTypeVehicleSaga";
@@ -41,10 +43,12 @@ export default function* rootSaga() {
     watchGetBuildingList(),
     watchGetBuildingDetail(),
     watchUpdateBuilding(),
+    watchUpdateBuildingStatus(),
     watchGetBuildingFloors(),
     watchCreateFloor(),
     watchGetVehicleTypeList(),
     watchUpdateFloor(),
+    watchUpdateFloorStatus(),
     watchUpdateProfileUser(),
     watchGetZoneByFloor(),
     watchCreateZone(),
