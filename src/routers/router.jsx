@@ -56,8 +56,8 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <Dashboard /> },
           { path: "building", element: <BuildingManager /> },
+          { path: "building/floors/:floorId/:floorSlug", element: <ZoneByFloorManagement /> },
           { path: "building/floors/:buildingId", element: <FloorManagement /> },
-          { path: "building/:floorSlug", element: <ZoneByFloorManagement /> },
           { path: "parking-space", element: <ParkingSpacePage /> },
         ],
       },

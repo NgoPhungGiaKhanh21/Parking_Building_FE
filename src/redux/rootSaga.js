@@ -23,6 +23,7 @@ import { watchDeleteVehicle } from "./driver/vehicleManagement/deleteVehicle/del
 import { watchGetZoneByFloor } from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSaga";
 import { watchCreateZone } from "./manager/Building/zone/createZone/createZoneSaga";
 import { watchGetSlotByZone } from "./manager/Building/zone/getSlotByZone/getSlotByZoneSaga";
+import { watchGetVehicleManage } from "./manager/Vehicle/getVehicleManage/getVehicleManageSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -48,6 +49,7 @@ export default function* rootSaga() {
     watchGetZoneByFloor(),
     watchCreateZone(),
     watchGetSlotByZone(),
+    watchGetVehicleManage(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

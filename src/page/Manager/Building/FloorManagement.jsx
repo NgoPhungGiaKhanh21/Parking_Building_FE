@@ -222,10 +222,10 @@ const FloorManagement = () => {
     };
 
     sessionStorage.setItem(
-      `${FLOOR_CONTEXT_STORAGE_PREFIX}${slug}`,
+      `${FLOOR_CONTEXT_STORAGE_PREFIX}${floor.id}`,
       JSON.stringify(floorContext)
     );
-    navigate(`/manager/building/${slug}`, { state: floorContext });
+    navigate(`/manager/building/floors/${floor.id}/${slug}`, { state: floorContext });
   };
 
   const vehicleTypeOptions = mapVehicleTypeOptions(vehicleTypes);
