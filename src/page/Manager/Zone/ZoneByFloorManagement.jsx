@@ -28,7 +28,9 @@ const readFloorContext = (floorSlug, locationState) => {
   if (locationState?.floorId) return locationState;
 
   try {
-    const stored = sessionStorage.getItem(`${FLOOR_CONTEXT_STORAGE_PREFIX}${floorSlug}`);
+    const stored = sessionStorage.getItem(
+      `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorSlug}`
+    );
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
@@ -84,7 +86,9 @@ const ZoneCard = ({ zone, index, onSelect }) => {
           {detailFields.length > 0 ? (
             detailFields.map((field) => (
               <p key={field.key}>
-                <span className="font-semibold text-slate-700">{field.label}: </span>
+                <span className="font-semibold text-slate-700">
+                  {field.label}:{" "}
+                </span>
                 {field.value}
               </p>
             ))
@@ -113,10 +117,11 @@ const ZoneByFloorManagement = () => {
     [floorSlug, location.state]
   );
 
-  const { loading, getZoneByFloor: zones } = useSelector((state) => state.getZoneByFloor);
-  const { loading: createZoneLoading, success: createZoneSuccess } = useSelector(
-    (state) => state.createZone
+  const { loading, getZoneByFloor: zones } = useSelector(
+    (state) => state.getZoneByFloor
   );
+  const { loading: createZoneLoading, success: createZoneSuccess } =
+    useSelector((state) => state.createZone);
   const { loading: slotsLoading, getSlotByZone: slots } = useSelector(
     (state) => state.getSlotByZone
   );
@@ -127,7 +132,10 @@ const ZoneByFloorManagement = () => {
   const buildingName = floorContext?.buildingName;
   const floorMaxCapacity = Number(floorContext?.maxCapacity);
   const usedCapacity = sumZoneCapacities(zoneList);
-  const remainingCapacity = getRemainingFloorCapacity(floorMaxCapacity, zoneList);
+  const remainingCapacity = getRemainingFloorCapacity(
+    floorMaxCapacity,
+    zoneList
+  );
   const canCreateZone =
     floorContext?.floorId &&
     Number.isFinite(floorMaxCapacity) &&
@@ -202,7 +210,11 @@ const ZoneByFloorManagement = () => {
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4">
-          <CommonBreadcrumb role="Manager" page="building" subPage="floormanagement" />
+          <CommonBreadcrumb
+            role="Manager"
+            page="building"
+            subPage="floormanagement"
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -220,11 +232,12 @@ const ZoneByFloorManagement = () => {
             </p>
             {Number.isFinite(floorMaxCapacity) && (
               <p className="mt-1 text-sm text-slate-500">
-                Capacity: {usedCapacity}/{floorMaxCapacity} used ({remainingCapacity} remaining)
+                Capacity: {usedCapacity}/{floorMaxCapacity} used (
+                {remainingCapacity} remaining)
               </p>
             )}
           </div>
-          <Link to="/manager/building">
+          <Link to="/manager/building/">
             <Button icon={<ArrowLeft size={16} />}>Back to Building</Button>
           </Link>
         </div>
@@ -234,7 +247,11 @@ const ZoneByFloorManagement = () => {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-800">Existing Zones</h2>
           <div className="flex items-center gap-2">
-            <Button size="small" onClick={handleRefresh} disabled={!floorContext?.floorId}>
+            <Button
+              size="small"
+              onClick={handleRefresh}
+              disabled={!floorContext?.floorId}
+            >
               Refresh
             </Button>
             <Button
@@ -250,8 +267,8 @@ const ZoneByFloorManagement = () => {
 
         {!floorContext?.floorId ? (
           <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-6 text-center text-sm text-amber-800">
-            Floor information is missing. Please open Floor Management from Building Management
-            and select a floor again.
+            Floor information is missing. Please open Floor Management from
+            Building Management and select a floor again.
           </div>
         ) : loading ? (
           <div className="flex min-h-[240px] items-center justify-center">

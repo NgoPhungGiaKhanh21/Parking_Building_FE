@@ -9,7 +9,13 @@ const BuildingDetailModal = ({
   buildingImage,
 }) => {
   return (
-    <Modal title="Building Detail" open={open} onCancel={onCancel} footer={null} width={640}>
+    <Modal
+      title={<div className="font-bold text-center">Building Detail</div>}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={640}
+    >
       {loading ? (
         <div className="flex min-h-[260px] items-center justify-center">
           <Spin size="large" />
@@ -28,13 +34,16 @@ const BuildingDetailModal = ({
             </p>
             <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
               <p>
-                <span className="font-semibold">Name:</span> {buildingDetail?.name || "N/A"}
+                <span className="font-semibold">Name:</span>{" "}
+                {buildingDetail?.name || "N/A"}
               </p>
               <p>
-                <span className="font-semibold">Status:</span> {buildingDetail?.status || "N/A"}
+                <span className="font-semibold">Status:</span>{" "}
+                {buildingDetail?.status || "N/A"}
               </p>
               <p>
-                <span className="font-semibold">Address:</span> {buildingDetail?.address || "N/A"}
+                <span className="font-semibold">Address:</span>{" "}
+                {buildingDetail?.address || "N/A"}
               </p>
               <p>
                 <span className="font-semibold">Contact:</span>{" "}
@@ -65,14 +74,17 @@ const BuildingDetailModal = ({
                 {buildingDetail?.floorCount ?? 0}
               </p>
               <p>
-                <span className="font-semibold">Zone Count:</span> {buildingDetail?.zoneCount ?? 0}
+                <span className="font-semibold">Zone Count:</span>{" "}
+                {buildingDetail?.zoneCount ?? 0}
               </p>
               <p>
-                <span className="font-semibold">Slot Count:</span> {buildingDetail?.slotCount ?? 0}
+                <span className="font-semibold">Slot Count:</span>{" "}
+                {buildingDetail?.slotCount ?? 0}
               </p>
               <p>
                 <span className="font-semibold">Occupancy:</span>{" "}
-                {buildingDetail?.currentOccupancy ?? 0}/{buildingDetail?.maxCapacity ?? 0}
+                {buildingDetail?.currentOccupancy ?? 0}/
+                {buildingDetail?.maxCapacity ?? 0}
               </p>
               <p>
                 <span className="font-semibold">Created Slots:</span>{" "}
@@ -80,7 +92,8 @@ const BuildingDetailModal = ({
               </p>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              These values are calculated by the system after you create floors, zones, and slots.
+              These values are calculated by the system after you create floors,
+              zones, and slots.
             </p>
           </div>
         </div>

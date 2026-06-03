@@ -2,7 +2,13 @@ import { Button, Form, Input, InputNumber, Modal, TimePicker } from "antd";
 
 const UpdateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
   return (
-    <Modal title="Update Building" open={open} onCancel={onCancel} footer={null} width={720}>
+    <Modal
+      title={<div className="font-bold text-center"> Update Building</div>}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={720}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -15,7 +21,10 @@ const UpdateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           label="Building Name"
           rules={[
             { required: true, message: "Please enter building name." },
-            { max: 120, message: "Building name must be under 120 characters." },
+            {
+              max: 120,
+              message: "Building name must be under 120 characters.",
+            },
           ]}
         >
           <Input size="large" placeholder="Enter building name" />
@@ -37,7 +46,11 @@ const UpdateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           label="Total Floors"
           rules={[
             { required: true, message: "Please enter total floors." },
-            { type: "number", min: 1, message: "Total floors must be at least 1." },
+            {
+              type: "number",
+              min: 1,
+              message: "Total floors must be at least 1.",
+            },
           ]}
         >
           <InputNumber
@@ -53,16 +66,31 @@ const UpdateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           <Form.Item
             name="operatingStartTime"
             label="Operating Start Time"
-            rules={[{ required: true, message: "Please select operating start time." }]}
+            rules={[
+              {
+                required: true,
+                message: "Please select operating start time.",
+              },
+            ]}
           >
-            <TimePicker format="HH:mm:ss" className="w-full" placeholder="Start time" />
+            <TimePicker
+              format="HH:mm:ss"
+              className="w-full"
+              placeholder="Start time"
+            />
           </Form.Item>
           <Form.Item
             name="operatingEndTime"
             label="Operating End Time"
-            rules={[{ required: true, message: "Please select operating end time." }]}
+            rules={[
+              { required: true, message: "Please select operating end time." },
+            ]}
           >
-            <TimePicker format="HH:mm:ss" className="w-full" placeholder="End time" />
+            <TimePicker
+              format="HH:mm:ss"
+              className="w-full"
+              placeholder="End time"
+            />
           </Form.Item>
         </div>
 
