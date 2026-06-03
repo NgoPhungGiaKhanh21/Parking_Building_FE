@@ -1,6 +1,6 @@
 import { Building2, Eye, Pencil, Settings2 } from "lucide-react";
 
-import { Button, Form, Spin, Tag } from "antd";
+import { Button, Form, Spin, Switch, Tag } from "antd";
 
 import { useEffect, useState } from "react";
 
@@ -33,7 +33,8 @@ import UpdateBuildingModal from "./modals/UpdateBuildingModal";
 
 import BuildingDetailModal from "./modals/BuildingDetailModal";
 
-import { BUILDING_IMAGE, createTimeValue } from "./utils/buildingUtils";
+import { updateBuildingStatusRequest } from "../../../redux/manager/Building/updateBuildingStatusSlice";
+import { BUILDING_IMAGE, createTimeValue, isActiveStatus } from "./utils/buildingUtils";
 
 export const BuildingManager = () => {
   const dispatch = useDispatch();
@@ -67,6 +68,7 @@ export const BuildingManager = () => {
   const { buildingDetail, loading: detailLoading } = useSelector(
     (state) => state.getBuildingDetail
   );
+  const { updatingBuildingId } = useSelector((state) => state.updateBuildingStatus);
 
   useEffect(() => {
     dispatch(getBuildingListRequest());
@@ -190,6 +192,15 @@ export const BuildingManager = () => {
     dispatch(resetBuildingDetail());
   };
 
+  const handleBuildingStatusChange = (buildingId, checked) => {
+    dispatch(
+      updateBuildingStatusRequest({
+        buildingId,
+        status: checked ? "ACTIVE" : "INACTIVE",
+      })
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -252,11 +263,21 @@ export const BuildingManager = () => {
                       {building.name || "N/A"}
                     </h3>
 
-                    <Tag
-                      color={building.status === "ACTIVE" ? "green" : "gold"}
-                    >
-                      {building.status || "N/A"}
-                    </Tag>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        size="small"
+                        checked={isActiveStatus(building.status)}
+                        loading={updatingBuildingId === building.id}
+                        checkedChildren="On"
+                        unCheckedChildren="Off"
+                        onChange={(checked) =>
+                          handleBuildingStatusChange(building.id, checked)
+                        }
+                      />
+                      <Tag color={isActiveStatus(building.status) ? "green" : "gold"}>
+                        {building.status || "N/A"}
+                      </Tag>
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-sm text-slate-600">

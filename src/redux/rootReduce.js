@@ -10,10 +10,12 @@ import createBuildingReducer from "./manager/Building/createBuildingSlice";
 import getBuildingListReducer from "./manager/Building/getBuildingListSlice";
 import getBuildingDetailReducer from "./manager/Building/getBuildingDetailSlice";
 import updateBuildingReducer from "./manager/Building/updateBuildingSlice";
+import updateBuildingStatusReducer from "./manager/Building/updateBuildingStatusSlice";
 import getBuildingFloorsReducer from "./manager/Building/getBuildingFloorsSlice";
 import createFloorReducer from "./manager/Building/createFloorSlice";
 import getVehicleTypeListReducer from "./manager/Building/getVehicleTypeListSlice";
 import updateFloorReducer from "./manager/Building/updateFloorSlice";
+import updateFloorStatusReducer from "./manager/Building/updateFloorStatusSlice";
 import updateProfileUserReducer from "./updateProfileUser/updateProfileUserSlice";
 import getAllVehicleReducer from "./driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
 import getAllVehicleTypeReducer from "./driver/vehicleManagement/createVehicle/getAllTypeVehicleSlice";
@@ -41,10 +43,12 @@ const rootReducer = combineReducers({
   getBuildingList: getBuildingListReducer,
   getBuildingDetail: getBuildingDetailReducer,
   updateBuilding: updateBuildingReducer,
+  updateBuildingStatus: updateBuildingStatusReducer,
   getBuildingFloors: getBuildingFloorsReducer,
   createFloor: createFloorReducer,
   getVehicleTypeList: getVehicleTypeListReducer,
   updateFloor: updateFloorReducer,
+  updateFloorStatus: updateFloorStatusReducer,
   updateProfileUser: updateProfileUserReducer,
   getZoneByFloor: getZoneByFloorReducer,
   createZone: createZoneReducer,
