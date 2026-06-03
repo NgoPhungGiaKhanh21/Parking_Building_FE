@@ -26,6 +26,7 @@ import deleteVehicleReducer from "./driver/vehicleManagement/deleteVehicle/delet
 import getZoneByFloorReducer from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSlice";
 import createZoneReducer from "./manager/Building/zone/createZone/createZoneSlice";
 import getSlotByZoneReducer from "./manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
+import getVehicleManageReducer from "./manager/Vehicle/getVehicleManage/getVehicleManageSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -53,6 +54,7 @@ const rootReducer = combineReducers({
   getZoneByFloor: getZoneByFloorReducer,
   createZone: createZoneReducer,
   getSlotByZone: getSlotByZoneReducer,
+  getVehicleManage: getVehicleManageReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,

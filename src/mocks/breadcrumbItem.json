@@ -12,6 +12,7 @@
             "dashboard": "Dashboard",
             "building": "Building Management",
             "floormanagement": "Floor Management",
+            "zonemanagement": "Zone Management",
             "space": "Parking Space Management",
             "revenue": "Revenue Management"
         }
