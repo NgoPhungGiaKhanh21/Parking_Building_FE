@@ -2,8 +2,19 @@ import { Button, Form, Input, InputNumber, Modal } from "antd";
 
 const UpdateFloorModal = ({ open, onCancel, form, loading, onSubmit }) => {
   return (
-    <Modal title="Update Floor" open={open} onCancel={onCancel} footer={null} width={560}>
-      <Form form={form} layout="vertical" requiredMark={false} onFinish={onSubmit}>
+    <Modal
+      title={<div className="font-bold text-center">Update Floor</div>}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={560}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        requiredMark={false}
+        onFinish={onSubmit}
+      >
         <Form.Item
           name="floorName"
           label="Floor Name"
@@ -20,7 +31,12 @@ const UpdateFloorModal = ({ open, onCancel, form, loading, onSubmit }) => {
           <InputNumber min={1} precision={0} className="w-full!" />
         </Form.Item>
 
-        <Button htmlType="submit" type="primary" loading={loading} className="w-full">
+        <Button
+          htmlType="submit"
+          type="primary"
+          loading={loading}
+          className="w-full"
+        >
           Update Floor
         </Button>
       </Form>

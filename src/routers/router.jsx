@@ -10,10 +10,11 @@ import StaffLayout from "../page/Staff/StaffLayout";
 import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
 import UserManagement from "../page/Admin/UserManage/UserManagement";
-import CreateBuilding from "../page/Manager/Building/CreateBuilding";
+import FloorManagement from "../page/Manager/Building/FloorManagement";
 import ZoneByFloorManagement from "../page/Manager/Zone/ZoneByFloorManagement";
 import ParkingSpacePage from "../page/Manager/ParkingSpace/parking_page";
 import VehicleManagement from "../page/Driver/VehicleManage/VehicleManagement";
+import BuildingManager from "../page/Manager/Building/BuildingManager";
 
 const router = createBrowserRouter([
   {
@@ -54,7 +55,8 @@ const router = createBrowserRouter([
         element: <ManagerLayout />,
         children: [
           { path: "", element: <Dashboard /> },
-          { path: "building", element: <CreateBuilding /> },
+          { path: "building", element: <BuildingManager /> },
+          { path: "building/floors/:buildingId", element: <FloorManagement /> },
           { path: "building/:floorSlug", element: <ZoneByFloorManagement /> },
           { path: "parking-space", element: <ParkingSpacePage /> },
         ],
