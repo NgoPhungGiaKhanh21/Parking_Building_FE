@@ -1,5 +1,5 @@
 import { ArrowLeft, PenSquare, Settings2, CarFront } from "lucide-react";
-import { Button, Form, Input, InputNumber, Select, Spin, Tag } from "antd";
+import { Button, Form, Input, InputNumber, Select, Spin, Switch, Tag } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -18,14 +18,16 @@ import {
   resetUpdateFloorStatus,
   updateFloorRequest,
 } from "../../../redux/manager/Building/updateFloorSlice";
+import { updateFloorStatusRequest } from "../../../redux/manager/Building/updateFloorStatusSlice";
 import UpdateFloorModal from "./modals/UpdateFloorModal";
 import {
   floorNameToSlug,
   FLOOR_CONTEXT_STORAGE_PREFIX,
+  isActiveStatus,
   mapVehicleTypeOptions,
 } from "./utils/buildingUtils";
 
-const FloorCard = ({ floor, onSelect, onEdit }) => {
+const FloorCard = ({ floor, onSelect, onEdit, onStatusChange, statusLoading }) => {
   const name = floor.name || floor.floorName || "N/A";
   const level = floor.level ?? floor.floorLevel ?? "N/A";
   const vehicleType = floor.vehicleTypeName || floor.vehicleType || "N/A";
@@ -55,12 +57,23 @@ const FloorCard = ({ floor, onSelect, onEdit }) => {
             {vehicleType}
           </p>
         </div>
-        <Tag
-          color="blue"
-          className="m-0 px-2 py-0.5 text-xs font-semibold rounded-md border-indigo-100 bg-indigo-50 text-indigo-600"
+        <div
+          className="flex flex-col items-end gap-1"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
         >
-          Level {level}
-        </Tag>
+          <Switch
+            size="small"
+            checked={isActiveStatus(floor.status)}
+            loading={statusLoading}
+            checkedChildren="On"
+            unCheckedChildren="Off"
+            onChange={(checked) => onStatusChange(floor.id, checked)}
+          />
+          <Tag color="blue" className="m-0">
+            Level {level}
+          </Tag>
+        </div>
       </div>
 
       <div className="mt-2 space-y-3">
@@ -118,6 +131,7 @@ const FloorManagement = () => {
   const { vehicleTypes, loading: vehicleTypesLoading } = useSelector(
     (state) => state.getVehicleTypeList
   );
+  const { updatingFloorId } = useSelector((state) => state.updateFloorStatus);
 
   const building = buildingFromState || buildingDetail;
   const buildingName = building?.name || "Building";
@@ -204,6 +218,16 @@ const FloorManagement = () => {
           floorName: values.floorName?.trim(),
           maxCapacity: values.maxCapacity,
         },
+      })
+    );
+  };
+
+  const handleFloorStatusChange = (floorId, checked) => {
+    dispatch(
+      updateFloorStatusRequest({
+        floorId,
+        buildingId,
+        status: checked ? "ACTIVE" : "INACTIVE",
       })
     );
   };
@@ -412,6 +436,8 @@ const FloorManagement = () => {
                   floor={floor}
                   onSelect={handleSelectFloor}
                   onEdit={handleOpenUpdateFloorModal}
+                  onStatusChange={handleFloorStatusChange}
+                  statusLoading={updatingFloorId === floor.id}
                 />
               ))}
             </div>
