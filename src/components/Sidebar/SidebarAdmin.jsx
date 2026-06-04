@@ -32,8 +32,8 @@ const SidebarAdmin = () => {
   const handleLogout = () => {
     const confirmed = window.confirm("Do you want to log out of the system?");
     if (confirmed) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("role");
 
       window.location.href = "/";
     }
