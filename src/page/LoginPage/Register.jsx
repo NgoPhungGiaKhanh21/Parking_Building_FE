@@ -95,7 +95,7 @@ export default function Register() {
 
             <Form.Item
               label="Gmail"
-              name="email"
+              name="gmail"
               rules={[
                 {
                   required: true,

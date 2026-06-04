@@ -4,7 +4,7 @@ import { Navigate, Outlet } from "react-router-dom";
 const PrivateRoute = ({ allowedRoles }) => {
   // Lấy token từ Redux, fallback sang localStorage để chống lỗi khi F5 reload trang
   const { token } = useSelector((state) => state.auth);
-  const isAuthenticated = token || localStorage.getItem("token");
+  const isAuthenticated = token || sessionStorage.getItem("token");
 
   // Nếu không có token (chưa đăng nhập) => Đá về trang login
   if (!isAuthenticated) {
@@ -12,7 +12,7 @@ const PrivateRoute = ({ allowedRoles }) => {
   }
 
   // Lấy role từ localStorage và chuyển thành chữ thường để dễ so sánh
-  const currentRole = localStorage.getItem("role");
+  const currentRole = sessionStorage.getItem("role");
 
   // Nếu route không cho phép role hiện tại
   if (allowedRoles && !allowedRoles.includes(currentRole)) {
