@@ -5,7 +5,7 @@ import {
   createBuildingSuccess,
 } from "./createBuildingSlice";
 import { toast } from "react-toastify";
-import { createBuildingApi } from "../../../service/manager/buildingApi";
+import { createBuildingApi } from "../../../../service/manager/buildingApi";
 
 function* handleCreateBuilding(action) {
   try {

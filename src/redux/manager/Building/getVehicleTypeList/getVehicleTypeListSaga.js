@@ -1,6 +1,6 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
-import { getVehicleTypesApi } from "../../../service/manager/buildingApi";
+import { getVehicleTypesApi } from "../../../../service/manager/buildingApi";
 import {
   getVehicleTypeListFail,
   getVehicleTypeListRequest,

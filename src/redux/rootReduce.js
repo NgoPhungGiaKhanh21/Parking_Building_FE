@@ -6,16 +6,16 @@ import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSl
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";
 import changePasswordReducer from "./changePassword/changePasswordSlice";
-import createBuildingReducer from "./manager/Building/createBuildingSlice";
-import getBuildingListReducer from "./manager/Building/getBuildingListSlice";
-import getBuildingDetailReducer from "./manager/Building/getBuildingDetailSlice";
-import updateBuildingReducer from "./manager/Building/updateBuildingSlice";
-import updateBuildingStatusReducer from "./manager/Building/updateBuildingStatusSlice";
-import getBuildingFloorsReducer from "./manager/Building/getBuildingFloorsSlice";
-import createFloorReducer from "./manager/Building/createFloorSlice";
-import getVehicleTypeListReducer from "./manager/Building/getVehicleTypeListSlice";
-import updateFloorReducer from "./manager/Building/updateFloorSlice";
-import updateFloorStatusReducer from "./manager/Building/updateFloorStatusSlice";
+import createBuildingReducer from "./manager/Building/createBuilding/createBuildingSlice";
+import getBuildingListReducer from "./manager/Building/getBuildingList/getBuildingListSlice";
+import getBuildingDetailReducer from "./manager/Building/getBuildingDetail/getBuildingDetailSlice";
+import updateBuildingReducer from "./manager/Building/updateBuilding/updateBuildingSlice";
+import updateBuildingStatusReducer from "./manager/Building/updateBuildingStatus/updateBuildingStatusSlice";
+import getBuildingFloorsReducer from "./manager/Building/getBuildingFloors/getBuildingFloorsSlice";
+import createFloorReducer from "./manager/Building/createFloor/createFloorSlice";
+import getVehicleTypeListReducer from "./manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
+import updateFloorReducer from "./manager/Building/updateFloor/updateFloorSlice";
+import updateFloorStatusReducer from "./manager/Building/updateFloorStatus/updateFloorStatusSlice";
 import updateProfileUserReducer from "./updateProfileUser/updateProfileUserSlice";
 import getAllVehicleReducer from "./driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
 import getAllVehicleTypeReducer from "./driver/vehicleManagement/createVehicle/getAllTypeVehicleSlice";
@@ -26,6 +26,11 @@ import deleteVehicleReducer from "./driver/vehicleManagement/deleteVehicle/delet
 import getZoneByFloorReducer from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSlice";
 import createZoneReducer from "./manager/Building/zone/createZone/createZoneSlice";
 import getSlotByZoneReducer from "./manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
+import getStaffListReducer from "./manager/StaffManagement/GetAllStaff/getAllStaffSlice";
+import postStaffToBuildingReducer from "./manager/StaffManagement/AssignStaffToBuilding/assignStaffSlice";
+import getStaffBuildingsReducer from "./manager/StaffManagement/GetStaffBuildings/getStaffBuildingsSlice";
+import getBuildingStaffReducer from "./manager/StaffManagement/GetBuildingStaff/getBuildingStaffSlice";
+import removeStaffFromBuildingReducer from "./manager/StaffManagement/RemoveStaffFromBuilding/removeStaffFromBuildingSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -53,6 +58,11 @@ const rootReducer = combineReducers({
   getZoneByFloor: getZoneByFloorReducer,
   createZone: createZoneReducer,
   getSlotByZone: getSlotByZoneReducer,
+  getAllStaff: getStaffListReducer,
+  postStaffToBuilding: postStaffToBuildingReducer,
+  getStaffBuildings: getStaffBuildingsReducer,
+  getBuildingStaff: getBuildingStaffReducer,
+  removeStaffFromBuilding: removeStaffFromBuildingReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,
