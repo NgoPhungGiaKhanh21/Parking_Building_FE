@@ -29,7 +29,7 @@ export const createBuildingFloorApi = (buildingId, data) => {
 };
 
 export const getVehicleTypesApi = () => {
-  return api.get("/manager/setup/vehicle-types");
+  return api.get("/vehicles/types");
 };
 
 export const updateFloorApi = (floorId, data) => {

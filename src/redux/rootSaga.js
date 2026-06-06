@@ -28,6 +28,9 @@ import { watchGetSlotByZone } from "./manager/Building/zone/getSlotByZone/getSlo
 import { watchGetVehicleManage } from "./manager/Vehicle/getVehicleManage/getVehicleManageSaga";
 import { watchGetAllDriver } from "./manager/Vehicle/getAllDriver/getAllDriverSaga";
 import { watchChangeStatusVehicle } from "./manager/Vehicle/changeStatusVehicle/changeStatusVehicleSaga";
+import { watchCreateVehicleType } from "./manager/Vehicle/createVehicleType/createVehicleTypeSaga";
+import { watchUpdateVehicleType } from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSaga";
+import { watchDeteVehicleType } from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -58,6 +61,9 @@ export default function* rootSaga() {
     watchGetVehicleManage(),
     watchGetAllDriver(),
     watchChangeStatusVehicle(),
+    watchCreateVehicleType(),
+    watchUpdateVehicleType(),
+    watchDeteVehicleType(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),
