@@ -13,3 +13,15 @@ export const changeStatusVehicleApi = (data) => {
     status: data.status,
   });
 };
+
+export const createVehicleTypeApi = (data) => {
+  return api.post("/vehicles/types", data);
+};
+
+export const updateVehicleTypeApi = (data) => {
+  return api.put(`/vehicles/types/${data.vehicleTypeId}`, data);
+};
+
+export const deleteVehicleTypeApi = (data) => {
+  return api.delete(`/vehicles/types/${data.vehicleTypeId}`, data);
+};
