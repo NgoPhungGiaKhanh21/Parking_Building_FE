@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 // Đảm bảo đường dẫn import action này chính xác với project của bạn
 import { updateVehicleTypeRequest } from "../../../redux/manager/Vehicle/updateVehicleType/updateVehicleTypeSlice";
-import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeListSlice";
+import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 
 const UpdateVehicleTypeModal = ({ visible, onClose, initialData }) => {
   const [form] = Form.useForm();

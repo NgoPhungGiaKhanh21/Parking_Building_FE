@@ -25,20 +25,17 @@ import { watchDeleteVehicle } from "./driver/vehicleManagement/deleteVehicle/del
 import { watchGetZoneByFloor } from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSaga";
 import { watchCreateZone } from "./manager/Building/zone/createZone/createZoneSaga";
 import { watchGetSlotByZone } from "./manager/Building/zone/getSlotByZone/getSlotByZoneSaga";
-<<<<<<< HEAD
 import { watchGetAllStaff } from "./manager/StaffManagement/GetAllStaff/getAllStaffSaga";
 import { watchAssignStaff } from "./manager/StaffManagement/AssignStaffToBuilding/assignStaffSaga";
 import { watchGetStaffBuildings } from "./manager/StaffManagement/GetStaffBuildings/getStaffBuildingsSaga";
 import { watchGetBuildingStaff } from "./manager/StaffManagement/GetBuildingStaff/getBuildingStaffSaga";
 import { watchRemoveStaffFromBuilding } from "./manager/StaffManagement/RemoveStaffFromBuilding/removeStaffFromBuildingSaga";
-=======
 import { watchGetVehicleManage } from "./manager/Vehicle/getVehicleManage/getVehicleManageSaga";
 import { watchGetAllDriver } from "./manager/Vehicle/getAllDriver/getAllDriverSaga";
 import { watchChangeStatusVehicle } from "./manager/Vehicle/changeStatusVehicle/changeStatusVehicleSaga";
 import { watchCreateVehicleType } from "./manager/Vehicle/createVehicleType/createVehicleTypeSaga";
 import { watchUpdateVehicleType } from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSaga";
 import { watchDeteVehicleType } from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSaga";
->>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -66,20 +63,17 @@ export default function* rootSaga() {
     watchGetZoneByFloor(),
     watchCreateZone(),
     watchGetSlotByZone(),
-<<<<<<< HEAD
     watchGetAllStaff(),
     watchAssignStaff(),
     watchGetStaffBuildings(),
     watchGetBuildingStaff(),
     watchRemoveStaffFromBuilding(),
-=======
     watchGetVehicleManage(),
     watchGetAllDriver(),
     watchChangeStatusVehicle(),
     watchCreateVehicleType(),
     watchUpdateVehicleType(),
     watchDeteVehicleType(),
->>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),
