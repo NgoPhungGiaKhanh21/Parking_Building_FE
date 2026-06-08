@@ -26,20 +26,17 @@ import deleteVehicleReducer from "./driver/vehicleManagement/deleteVehicle/delet
 import getZoneByFloorReducer from "./manager/Building/zone/getZoneByFloor/getZoneByFloorSlice";
 import createZoneReducer from "./manager/Building/zone/createZone/createZoneSlice";
 import getSlotByZoneReducer from "./manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
-<<<<<<< HEAD
 import getStaffListReducer from "./manager/StaffManagement/GetAllStaff/getAllStaffSlice";
 import postStaffToBuildingReducer from "./manager/StaffManagement/AssignStaffToBuilding/assignStaffSlice";
 import getStaffBuildingsReducer from "./manager/StaffManagement/GetStaffBuildings/getStaffBuildingsSlice";
 import getBuildingStaffReducer from "./manager/StaffManagement/GetBuildingStaff/getBuildingStaffSlice";
 import removeStaffFromBuildingReducer from "./manager/StaffManagement/RemoveStaffFromBuilding/removeStaffFromBuildingSlice";
-=======
 import getVehicleManageReducer from "./manager/Vehicle/getVehicleManage/getVehicleManageSlice";
 import getAllDriverReducer from "./manager/Vehicle/getAllDriver/getAllDriverSlice";
 import changeStatusVehicleReducer from "./manager/Vehicle/changeStatusVehicle/changeStatusVehicleSlice";
 import createVehicleTypeReducer from "./manager/Vehicle/createVehicleType/createVehicleTypeSlice";
 import updateVehicleTypeReducer from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSlice";
 import deleteVehicleTypeReducer from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSlice";
->>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
 
 const rootReducer = combineReducers({
   //login - register
@@ -67,20 +64,17 @@ const rootReducer = combineReducers({
   getZoneByFloor: getZoneByFloorReducer,
   createZone: createZoneReducer,
   getSlotByZone: getSlotByZoneReducer,
-<<<<<<< HEAD
   getAllStaff: getStaffListReducer,
   postStaffToBuilding: postStaffToBuildingReducer,
   getStaffBuildings: getStaffBuildingsReducer,
   getBuildingStaff: getBuildingStaffReducer,
   removeStaffFromBuilding: removeStaffFromBuildingReducer,
-=======
   getVehicleManage: getVehicleManageReducer,
   getAllDriver: getAllDriverReducer,
   changeStatusVehicle: changeStatusVehicleReducer,
   createVehicleType: createVehicleTypeReducer,
   updateVehicleType: updateVehicleTypeReducer,
   deleteVehicleType: deleteVehicleTypeReducer,
->>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
 
   //driver
   getAllVehicle: getAllVehicleReducer,
