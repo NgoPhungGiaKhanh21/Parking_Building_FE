@@ -13,19 +13,19 @@ import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbread
 import {
   createBuildingRequest,
   resetCreateBuildingStatus,
-} from "../../../redux/manager/Building/createBuildingSlice";
+} from "../../../redux/manager/Building/createBuilding/createBuildingSlice";
 
-import { getBuildingListRequest } from "../../../redux/manager/Building/getBuildingListSlice";
+import { getBuildingListRequest } from "../../../redux/manager/Building/getBuildingList/getBuildingListSlice";
 
 import {
   getBuildingDetailRequest,
   resetBuildingDetail,
-} from "../../../redux/manager/Building/getBuildingDetailSlice";
+} from "../../../redux/manager/Building/getBuildingDetail/getBuildingDetailSlice";
 
 import {
   resetUpdateBuildingStatus,
   updateBuildingRequest,
-} from "../../../redux/manager/Building/updateBuildingSlice";
+} from "../../../redux/manager/Building/updateBuilding/updateBuildingSlice";
 
 import CreateBuildingModal from "./modals/CreateBuildingModal";
 
@@ -33,7 +33,7 @@ import UpdateBuildingModal from "./modals/UpdateBuildingModal";
 
 import BuildingDetailModal from "./modals/BuildingDetailModal";
 
-import { updateBuildingStatusRequest } from "../../../redux/manager/Building/updateBuildingStatusSlice";
+import { updateBuildingStatusRequest } from "../../../redux/manager/Building/updateBuildingStatus/updateBuildingStatusSlice";
 import { BUILDING_IMAGE, createTimeValue, isActiveStatus } from "./utils/buildingUtils";
 
 export const BuildingManager = () => {

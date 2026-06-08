@@ -1,24 +1,33 @@
 import { ArrowLeft, PenSquare, Settings2, CarFront } from "lucide-react";
-import { Button, Form, Input, InputNumber, Select, Spin, Switch, Tag } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Spin,
+  Switch,
+  Tag,
+} from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
-import { getBuildingDetailRequest } from "../../../redux/manager/Building/getBuildingDetailSlice";
+import { getBuildingDetailRequest } from "../../../redux/manager/Building/getBuildingDetail/getBuildingDetailSlice";
 import {
   getBuildingFloorsRequest,
   resetBuildingFloors,
-} from "../../../redux/manager/Building/getBuildingFloorsSlice";
+} from "../../../redux/manager/Building/getBuildingFloors/getBuildingFloorsSlice";
 import {
   createFloorRequest,
   resetCreateFloorStatus,
-} from "../../../redux/manager/Building/createFloorSlice";
-import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeListSlice";
+} from "../../../redux/manager/Building/createFloor/createFloorSlice";
+import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 import {
   resetUpdateFloorStatus,
   updateFloorRequest,
-} from "../../../redux/manager/Building/updateFloorSlice";
-import { updateFloorStatusRequest } from "../../../redux/manager/Building/updateFloorStatusSlice";
+} from "../../../redux/manager/Building/updateFloor/updateFloorSlice";
+import { updateFloorStatusRequest } from "../../../redux/manager/Building/updateFloorStatus/updateFloorStatusSlice";
 import UpdateFloorModal from "./modals/UpdateFloorModal";
 import {
   floorNameToSlug,
@@ -27,7 +36,13 @@ import {
   mapVehicleTypeOptions,
 } from "./utils/buildingUtils";
 
-const FloorCard = ({ floor, onSelect, onEdit, onStatusChange, statusLoading }) => {
+const FloorCard = ({
+  floor,
+  onSelect,
+  onEdit,
+  onStatusChange,
+  statusLoading,
+}) => {
   const name = floor.name || floor.floorName || "N/A";
   const level = floor.level ?? floor.floorLevel ?? "N/A";
   const vehicleType = floor.vehicleTypeName || floor.vehicleType || "N/A";

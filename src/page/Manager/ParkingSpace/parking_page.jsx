@@ -3,11 +3,11 @@ import { Select, Spin } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
-import { getBuildingListRequest } from "../../../redux/manager/Building/getBuildingListSlice";
+import { getBuildingListRequest } from "../../../redux/manager/Building/getBuildingList/getBuildingListSlice";
 import {
   getBuildingFloorsRequest,
   resetBuildingFloors,
-} from "../../../redux/manager/Building/getBuildingFloorsSlice";
+} from "../../../redux/manager/Building/getBuildingFloors/getBuildingFloorsSlice";
 import { getZoneByFloorRequest } from "../../../redux/manager/Building/zone/getZoneByFloor/getZoneByFloorSlice";
 import {
   clearGetSlotByZone,

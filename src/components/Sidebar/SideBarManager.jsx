@@ -57,6 +57,12 @@ const SidebarManager = () => {
       icon: CircleDollarSign,
       to: "/manager/revenue",
     },
+    {
+      id: "manage-staff",
+      label: "Manage Staff",
+      icon: User,
+      to: "/manager/staff",
+    },
   ];
 
   const handleToggle = () => setIsCollapsed((prev) => !prev);

@@ -1,6 +1,6 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
-import { updateBuildingApi } from "../../../service/manager/buildingApi";
+import { updateBuildingApi } from "../../../../service/manager/buildingApi";
 import {
   updateBuildingFail,
   updateBuildingRequest,

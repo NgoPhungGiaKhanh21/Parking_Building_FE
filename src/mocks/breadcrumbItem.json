@@ -16,7 +16,8 @@
             "vehiclemanagement": "Vehicle Management",
             "vehicletypes": "Vehicle Types",
             "space": "Parking Space Management",
-            "revenue": "Revenue Management"
+            "revenue": "Revenue Management",
+            "staff": "Staff Management"
         }
     },
     "Staff": {
