@@ -46,6 +46,12 @@ const SidebarManager = () => {
       to: "/manager/parking-space",
     },
     {
+      id: "vehicle",
+      label: "Vehicle Management",
+      icon: CarFront,
+      to: "/manager/vehicle",
+    },
+    {
       id: "revenue",
       label: "Revenue",
       icon: CircleDollarSign,
@@ -64,8 +70,8 @@ const SidebarManager = () => {
   const handleLogout = () => {
     const confirmed = window.confirm("Do you want to log out of the system?");
     if (confirmed) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("role");
 
       window.location.href = "/";
     }

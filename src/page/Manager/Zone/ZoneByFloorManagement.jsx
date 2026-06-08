@@ -24,17 +24,25 @@ import {
   ZONE_FLOOR_BANNER_IMAGE,
 } from "../Building/utils/buildingUtils";
 
-const readFloorContext = (floorSlug, locationState) => {
+const readFloorContext = (floorId, floorSlug, locationState) => {
   if (locationState?.floorId) return locationState;
 
-  try {
-    const stored = sessionStorage.getItem(
-      `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorSlug}`
-    );
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
+  if (floorId) {
+    try {
+      const stored = sessionStorage.getItem(
+        `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorId}`
+      );
+      if (stored) return JSON.parse(stored);
+    } catch {
+      // fall through to URL fallback
+    }
+    return {
+      floorId,
+      floorName: floorSlug,
+    };
   }
+
+  return null;
 };
 
 const getZoneTitle = (zone, index) => {
@@ -105,7 +113,7 @@ const ZoneCard = ({ zone, index, onSelect }) => {
 
 const ZoneByFloorManagement = () => {
   const dispatch = useDispatch();
-  const { floorSlug } = useParams();
+  const { floorId, floorSlug } = useParams();
   const location = useLocation();
   const [zoneForm] = Form.useForm();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -113,8 +121,8 @@ const ZoneByFloorManagement = () => {
   const [selectedZoneName, setSelectedZoneName] = useState("");
 
   const floorContext = useMemo(
-    () => readFloorContext(floorSlug, location.state),
-    [floorSlug, location.state]
+    () => readFloorContext(floorId, floorSlug, location.state),
+    [floorId, floorSlug, location.state]
   );
 
   const { loading, getZoneByFloor: zones } = useSelector(
@@ -214,6 +222,7 @@ const ZoneByFloorManagement = () => {
             role="Manager"
             page="building"
             subPage="floormanagement"
+            thirdPage="zonemanagement"
           />
         </div>
 
@@ -237,8 +246,14 @@ const ZoneByFloorManagement = () => {
               </p>
             )}
           </div>
-          <Link to="/manager/building/">
-            <Button icon={<ArrowLeft size={16} />}>Back to Building</Button>
+          <Link
+            to={
+              floorContext?.buildingId
+                ? `/manager/building/floors/${floorContext.buildingId}`
+                : "/manager/building"
+            }
+          >
+            <Button icon={<ArrowLeft size={16} />}>Back to Floor Management</Button>
           </Link>
         </div>
       </div>

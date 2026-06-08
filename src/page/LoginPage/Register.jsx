@@ -94,7 +94,7 @@ export default function Register() {
             </Form.Item>
 
             <Form.Item
-              label="Email"
+              label="Gmail"
               name="email"
               rules={[
                 {

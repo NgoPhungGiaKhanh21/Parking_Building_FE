@@ -15,7 +15,11 @@ import ZoneByFloorManagement from "../page/Manager/Zone/ZoneByFloorManagement";
 import ParkingSpacePage from "../page/Manager/ParkingSpace/parking_page";
 import VehicleManagement from "../page/Driver/VehicleManage/VehicleManagement";
 import BuildingManager from "../page/Manager/Building/BuildingManager";
+<<<<<<< HEAD
 import StaffManagement from "../page/Manager/Building/StaffManagement";
+=======
+import VehicleManager from "../page/Manager/VehicleManage/vehicleManage";
+>>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
 
 const router = createBrowserRouter([
   {
@@ -57,10 +61,17 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <Dashboard /> },
           { path: "building", element: <BuildingManager /> },
+          {
+            path: "building/floors/:floorId/:floorSlug",
+            element: <ZoneByFloorManagement />,
+          },
           { path: "building/floors/:buildingId", element: <FloorManagement /> },
-          { path: "building/:floorSlug", element: <ZoneByFloorManagement /> },
           { path: "parking-space", element: <ParkingSpacePage /> },
+<<<<<<< HEAD
           { path: "staff", element: <StaffManagement /> },
+=======
+          { path: "vehicle", element: <VehicleManager /> },
+>>>>>>> 75dfc2097e9c88f934af5307e498d637091d9349
         ],
       },
     ],

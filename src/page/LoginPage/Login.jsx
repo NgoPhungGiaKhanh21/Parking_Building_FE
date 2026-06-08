@@ -26,7 +26,7 @@ const Login = () => {
   useEffect(() => {
     if (token) {
       try {
-        const userRole = localStorage.getItem("role");
+        const userRole = sessionStorage.getItem("role");
 
         switch (userRole) {
           case "ROLE_DRIVER":
@@ -93,7 +93,7 @@ const Login = () => {
             {/* USERNAME */}
             <Form.Item
               label="Email"
-              name="email"
+              name="gmail"
               rules={[
                 {
                   required: true,
