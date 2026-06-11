@@ -17,6 +17,7 @@ import VehicleManagement from "../page/Driver/VehicleManage/VehicleManagement";
 import BuildingManager from "../page/Manager/Building/BuildingManager";
 import StaffManagement from "../page/Manager/Building/StaffManagement";
 import VehicleManager from "../page/Manager/VehicleManage/vehicleManage";
+import PriceManager from "../page/Manager/PriceManager/PriceManager";
 
 const router = createBrowserRouter([
   {
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
           { path: "parking-space", element: <ParkingSpacePage /> },
           { path: "staff", element: <StaffManagement /> },
           { path: "vehicle", element: <VehicleManager /> },
+          { path: "price-policy", element: <PriceManager /> },
         ],
       },
     ],

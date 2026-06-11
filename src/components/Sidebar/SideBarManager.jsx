@@ -63,6 +63,12 @@ const SidebarManager = () => {
       icon: User,
       to: "/manager/staff",
     },
+    {
+      id: "price-policy",
+      label: "Manage Price Policy",
+      icon: User,
+      to: "/manager/price-policy",
+    },
   ];
 
   const handleToggle = () => setIsCollapsed((prev) => !prev);
