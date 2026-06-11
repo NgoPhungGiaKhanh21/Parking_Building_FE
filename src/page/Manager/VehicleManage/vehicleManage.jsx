@@ -36,8 +36,7 @@ import { createVehicleTypeRequest } from "../../../redux/manager/Vehicle/createV
 import { deleteVehicleTypeRequest } from "../../../redux/manager/Vehicle/deleteVehicleType/deleteVehicleTypeSlice";
 
 // Import Modal Update
-import UpdateVehicleTypeModal from "./UpdateVehicleTypeModal";
-
+import UpdateVehicleTypeModal from "./updateVehicleTypeModal";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 import { getAllDriverRequest } from "../../../redux/manager/Vehicle/getAllDriver/getAllDriverSlice";
@@ -307,7 +306,7 @@ const VehicleManagement = () => {
       key: "1",
       label: (
         <span className="flex items-center gap-2 font-medium px-2">
-          <CarFront className="w-4 h-4" /> Management
+          <CarFront className="w-4 h-4" /> Driver's vehicle
         </span>
       ),
       children: (
@@ -390,7 +389,7 @@ const VehicleManagement = () => {
       key: "2",
       label: (
         <span className="flex items-center gap-2 font-medium px-2">
-          <List className="w-4 h-4" /> Master Data (Types)
+          <List className="w-4 h-4" /> Vehicle Type
         </span>
       ),
       children: (
@@ -511,7 +510,7 @@ const VehicleManagement = () => {
             <p className="mt-1 font-medium text-slate-500">
               {activeTab === "1"
                 ? "Manage driver vehicles and oversee their current statuses"
-                : "Master data configuration for all supported vehicle classifications"}
+                : "Manage vehicle type for all supported vehicle classifications"}
             </p>
           </div>
         </div>

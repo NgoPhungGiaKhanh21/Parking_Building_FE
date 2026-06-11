@@ -37,6 +37,11 @@ import changeStatusVehicleReducer from "./manager/Vehicle/changeStatusVehicle/ch
 import createVehicleTypeReducer from "./manager/Vehicle/createVehicleType/createVehicleTypeSlice";
 import updateVehicleTypeReducer from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSlice";
 import deleteVehicleTypeReducer from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSlice";
+import getAllPricingPolicyReducer from "./manager/PricingPolicy/GetAllPricingPolicy/getAllPricingPolicySlice";
+import getPricingPolicyByIdReducer from "./manager/PricingPolicy/GetPricingPolicyById/getPricingPolicyByIdSlice";
+import createPricingPolicyReducer from "./manager/PricingPolicy/CreatePricingPolicy/createPricingPolicySlice";
+import updatePricingPolicyReducer from "./manager/PricingPolicy/UpdatePricingPolicy/updatePricingPolicySlice";
+import deletePricingPolicyReducer from "./manager/PricingPolicy/DeletePricingPolicy/deletePricingPolicySlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -75,6 +80,11 @@ const rootReducer = combineReducers({
   createVehicleType: createVehicleTypeReducer,
   updateVehicleType: updateVehicleTypeReducer,
   deleteVehicleType: deleteVehicleTypeReducer,
+  getAllPricingPolicy: getAllPricingPolicyReducer,
+  getPricingPolicyById: getPricingPolicyByIdReducer,
+  createPricingPolicy: createPricingPolicyReducer,
+  updatePricingPolicy: updatePricingPolicyReducer,
+  deletePricingPolicy: deletePricingPolicyReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,
