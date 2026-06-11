@@ -41,6 +41,11 @@ import { watchCreateReservations } from "./driver/reservationManagement/createRe
 import { watchGetMyReservations } from "./driver/reservationManagement/getMyReservations/getMyReservationsSaga";
 import { watchUpdateZoneStatus } from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSaga";
 
+import { watchGetAllPricingPolicy } from "./manager/PricingPolicy/GetAllPricingPolicy/getAllPricingPolicySaga";
+import { watchGetPricingPolicyById } from "./manager/PricingPolicy/GetPricingPolicyById/getPricingPolicyByIdSaga";
+import { watchCreatePricingPolicy } from "./manager/PricingPolicy/CreatePricingPolicy/createPricingPolicySaga";
+import { watchUpdatePricingPolicy } from "./manager/PricingPolicy/UpdatePricingPolicy/updatePricingPolicySaga";
+import { watchDeletePricingPolicy } from "./manager/PricingPolicy/DeletePricingPolicy/deletePricingPolicySaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -80,6 +85,11 @@ export default function* rootSaga() {
     watchCreateVehicleType(),
     watchUpdateVehicleType(),
     watchDeteVehicleType(),
+    watchGetAllPricingPolicy(),
+    watchGetPricingPolicyById(),
+    watchCreatePricingPolicy(),
+    watchUpdatePricingPolicy(),
+    watchDeletePricingPolicy(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

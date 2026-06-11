@@ -27,8 +27,6 @@ import {
 } from "lucide-react";
 
 // --- Import actions cho Vehicle (Tab 1) ---
-import { getAllDriverRequest } from "../../../redux/manager/Vehicle/getAllDriver/getAllDriverSlice";
-import { getVehicleManageRequest } from "../../../redux/manager/Vehicle/getVehicleManage/getVehicleManageSlice";
 import { changeStatusVehicleRequest } from "../../../redux/manager/Vehicle/changeStatusVehicle/changeStatusVehicleSlice";
 
 // --- Import actions cho Vehicle Types (Tab 2) ---
@@ -41,6 +39,8 @@ import { deleteVehicleTypeRequest } from "../../../redux/manager/Vehicle/deleteV
 import UpdateVehicleTypeModal from "./updateVehicleTypeModal";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
+import { getAllDriverRequest } from "../../../redux/manager/Vehicle/getAllDriver/getAllDriverSlice";
+import { getVehicleManageRequest } from "../../../redux/manager/Vehicle/getVehicleManage/getVehicleManageSlice";
 
 const VehicleManagement = () => {
   const dispatch = useDispatch();
@@ -55,23 +55,23 @@ const VehicleManagement = () => {
 
   // --- REDUX STATE ---
   const { getAllDriver: driversList, loading: isDriversLoading } = useSelector(
-    (state) => state.getAllDriver,
+    (state) => state.getAllDriver
   );
   const { getVehicleManage: vehiclesList, loading: isVehiclesLoading } =
     useSelector((state) => state.getVehicleManage);
   const { loading: isChangingStatus } = useSelector(
-    (state) => state.changeStatusVehicle,
+    (state) => state.changeStatusVehicle
   );
   const { vehicleTypes, loading: isVehicleTypesLoading } = useSelector(
-    (state) => state.getVehicleTypeList,
+    (state) => state.getVehicleTypeList
   );
   const { loading: isCreatingVehicleType } = useSelector(
-    (state) => state.createVehicleType || {},
+    (state) => state.createVehicleType || {}
   );
 
   // Lấy state loading của Delete để làm hiệu ứng loading trên bảng
   const { loading: isDeletingVehicleType } = useSelector(
-    (state) => state.deleteVehicleType || {},
+    (state) => state.deleteVehicleType || {}
   );
 
   // --- EFFECTS ---
@@ -93,7 +93,7 @@ const VehicleManagement = () => {
         vehicleId: vehicleId,
         status: newStatus,
         userId: selectedDriverId,
-      }),
+      })
     );
   };
 
@@ -333,7 +333,9 @@ const VehicleManagement = () => {
                   options={
                     driversList?.map((driver) => ({
                       value: driver.userId,
-                      label: `${driver.fullName || "No Name"} (${driver.username}) - ${driver.email}`,
+                      label: `${driver.fullName || "No Name"} (${
+                        driver.username
+                      }) - ${driver.email}`,
                     })) || []
                   }
                 />

@@ -41,6 +41,11 @@ import getAllSlotDriverReducer from "./driver/reservationManagement/getAllSlotDr
 import createReservationReducer from "./driver/reservationManagement/createReservations/createReservationsSlice";
 import getMyReservationsReducer from "./driver/reservationManagement/getMyReservations/getMyReservationsSlice";
 import updateZoneStatusReducer from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSlice";
+import getAllPricingPolicyReducer from "./manager/PricingPolicy/GetAllPricingPolicy/getAllPricingPolicySlice";
+import getPricingPolicyByIdReducer from "./manager/PricingPolicy/GetPricingPolicyById/getPricingPolicyByIdSlice";
+import createPricingPolicyReducer from "./manager/PricingPolicy/CreatePricingPolicy/createPricingPolicySlice";
+import updatePricingPolicyReducer from "./manager/PricingPolicy/UpdatePricingPolicy/updatePricingPolicySlice";
+import deletePricingPolicyReducer from "./manager/PricingPolicy/DeletePricingPolicy/deletePricingPolicySlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -80,6 +85,11 @@ const rootReducer = combineReducers({
   createVehicleType: createVehicleTypeReducer,
   updateVehicleType: updateVehicleTypeReducer,
   deleteVehicleType: deleteVehicleTypeReducer,
+  getAllPricingPolicy: getAllPricingPolicyReducer,
+  getPricingPolicyById: getPricingPolicyByIdReducer,
+  createPricingPolicy: createPricingPolicyReducer,
+  updatePricingPolicy: updatePricingPolicyReducer,
+  deletePricingPolicy: deletePricingPolicyReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,
