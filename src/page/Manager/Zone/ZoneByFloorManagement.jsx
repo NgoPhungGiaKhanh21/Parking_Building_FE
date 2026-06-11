@@ -1,5 +1,5 @@
 import { ArrowLeft, Layers } from "lucide-react";
-import { Button, Form, Spin, Tag, message } from "antd";
+import { Button, Form, Spin, message, Switch } from "antd"; // Đã thêm Switch
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -13,6 +13,8 @@ import {
   clearGetSlotByZone,
   getSlotByZoneRequest,
 } from "../../../redux/manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
+// Đảm bảo đường dẫn import updateZoneStatusRequest đúng với cấu trúc dự án của bạn
+import { updateZoneStatusRequest } from "../../../redux/manager/Building/zone/updateZoneStatus/updateZoneStatusSlice";
 import CreateZoneModal from "./modals/CreateZoneModal";
 import ZoneSlotListModal from "./modals/ZoneSlotListModal";
 import {
@@ -30,7 +32,7 @@ const readFloorContext = (floorId, floorSlug, locationState) => {
   if (floorId) {
     try {
       const stored = sessionStorage.getItem(
-        `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorId}`
+        `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorId}`,
       );
       if (stored) return JSON.parse(stored);
     } catch {
@@ -54,12 +56,13 @@ const getZoneTitle = (zone, index) => {
   );
 };
 
-const ZoneCard = ({ zone, index, onSelect }) => {
+// Đã thêm onToggleStatus prop
+const ZoneCard = ({ zone, index, onSelect, onToggleStatus }) => {
   const displayFields = pickZoneDisplayFields(zone);
   const title = getZoneTitle(zone, index);
   const statusField = displayFields.find((field) => field.key === "status");
   const detailFields = displayFields.filter(
-    (field) => field.key !== "name" && field.key !== "status"
+    (field) => field.key !== "name" && field.key !== "status",
   );
 
   return (
@@ -84,9 +87,20 @@ const ZoneCard = ({ zone, index, onSelect }) => {
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-base font-semibold text-slate-800">{title}</h3>
           {statusField ? (
-            <Tag color={statusField.value === "ACTIVE" ? "green" : "gold"}>
-              {statusField.value}
-            </Tag>
+            // Dùng stopPropagation để ngăn mở modal list slot khi click vào switch
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <Switch
+                checked={statusField.value === "ACTIVE"}
+                onChange={(checked) => {
+                  onToggleStatus(zone.id, checked ? "ACTIVE" : "INACTIVE");
+                }}
+                checkedChildren="Active"
+                unCheckedChildren="Inactive"
+              />
+            </div>
           ) : null}
         </div>
 
@@ -122,16 +136,16 @@ const ZoneByFloorManagement = () => {
 
   const floorContext = useMemo(
     () => readFloorContext(floorId, floorSlug, location.state),
-    [floorId, floorSlug, location.state]
+    [floorId, floorSlug, location.state],
   );
 
   const { loading, getZoneByFloor: zones } = useSelector(
-    (state) => state.getZoneByFloor
+    (state) => state.getZoneByFloor,
   );
   const { loading: createZoneLoading, success: createZoneSuccess } =
     useSelector((state) => state.createZone);
   const { loading: slotsLoading, getSlotByZone: slots } = useSelector(
-    (state) => state.getSlotByZone
+    (state) => state.getSlotByZone,
   );
 
   const zoneList = Array.isArray(zones) ? zones : [];
@@ -142,7 +156,7 @@ const ZoneByFloorManagement = () => {
   const usedCapacity = sumZoneCapacities(zoneList);
   const remainingCapacity = getRemainingFloorCapacity(
     floorMaxCapacity,
-    zoneList
+    zoneList,
   );
   const canCreateZone =
     floorContext?.floorId &&
@@ -184,7 +198,7 @@ const ZoneByFloorManagement = () => {
     const newCapacity = Number(values.maxCapacity);
     if (usedCapacity + newCapacity > floorMaxCapacity) {
       message.error(
-        `Total zone capacity cannot exceed floor capacity (${floorMaxCapacity}). Remaining: ${remainingCapacity}.`
+        `Total zone capacity cannot exceed floor capacity (${floorMaxCapacity}). Remaining: ${remainingCapacity}.`,
       );
       return;
     }
@@ -197,7 +211,7 @@ const ZoneByFloorManagement = () => {
           maxCapacity: newCapacity,
           slotPrefix: values.slotPrefix?.trim(),
         },
-      })
+      }),
     );
   };
 
@@ -212,6 +226,17 @@ const ZoneByFloorManagement = () => {
     setIsSlotModalOpen(false);
     setSelectedZoneName("");
     dispatch(clearGetSlotByZone());
+  };
+
+  const handleToggleStatus = (zoneId, newStatus) => {
+    if (!zoneId) return;
+    dispatch(
+      updateZoneStatusRequest({
+        zoneId: zoneId,
+        status: newStatus,
+        floorId: floorContext?.floorId,
+      }),
+    );
   };
 
   return (
@@ -253,7 +278,9 @@ const ZoneByFloorManagement = () => {
                 : "/manager/building"
             }
           >
-            <Button icon={<ArrowLeft size={16} />}>Back to Floor Management</Button>
+            <Button icon={<ArrowLeft size={16} />}>
+              Back to Floor Management
+            </Button>
           </Link>
         </div>
       </div>
@@ -302,6 +329,7 @@ const ZoneByFloorManagement = () => {
                 zone={zone}
                 index={index}
                 onSelect={handleSelectZone}
+                onToggleStatus={handleToggleStatus} // Truyền hàm Toggle xuống Card
               />
             ))}
           </div>

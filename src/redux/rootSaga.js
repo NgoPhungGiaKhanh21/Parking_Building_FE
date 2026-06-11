@@ -36,6 +36,11 @@ import { watchChangeStatusVehicle } from "./manager/Vehicle/changeStatusVehicle/
 import { watchCreateVehicleType } from "./manager/Vehicle/createVehicleType/createVehicleTypeSaga";
 import { watchUpdateVehicleType } from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSaga";
 import { watchDeteVehicleType } from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSaga";
+import { watchGetAllSlotDriver } from "./driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSaga";
+import { watchCreateReservations } from "./driver/reservationManagement/createReservations/createReservationsSaga";
+import { watchGetMyReservations } from "./driver/reservationManagement/getMyReservations/getMyReservationsSaga";
+import { watchUpdateZoneStatus } from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSaga";
+
 import { watchGetAllPricingPolicy } from "./manager/PricingPolicy/GetAllPricingPolicy/getAllPricingPolicySaga";
 import { watchGetPricingPolicyById } from "./manager/PricingPolicy/GetPricingPolicyById/getPricingPolicyByIdSaga";
 import { watchCreatePricingPolicy } from "./manager/PricingPolicy/CreatePricingPolicy/createPricingPolicySaga";
@@ -67,6 +72,7 @@ export default function* rootSaga() {
     watchUpdateProfileUser(),
     watchGetZoneByFloor(),
     watchCreateZone(),
+    watchUpdateZoneStatus(),
     watchGetSlotByZone(),
     watchGetAllStaff(),
     watchAssignStaff(),
@@ -91,5 +97,8 @@ export default function* rootSaga() {
     watchCreateVehicle(),
     watchUpdateVehicle(),
     watchDeleteVehicle(),
+    watchGetAllSlotDriver(),
+    watchCreateReservations(),
+    watchGetMyReservations(),
   ]);
 }

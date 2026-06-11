@@ -48,6 +48,10 @@ export const createZoneApi = (floorId, data) => {
   return api.post(`/manager/setup/floors/${floorId}/zones`, data);
 };
 
+export const updateZoneStatusApi = (zoneId, status) => {
+  return api.patch(`/manager/setup/zones/${zoneId}/status`, { status });
+};
+
 export const getSlotListApi = (zoneId, data) => {
   return api.get(`/manager/setup/zones/${zoneId}/slots`, data);
 };
