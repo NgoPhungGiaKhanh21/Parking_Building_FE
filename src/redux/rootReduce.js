@@ -37,6 +37,10 @@ import changeStatusVehicleReducer from "./manager/Vehicle/changeStatusVehicle/ch
 import createVehicleTypeReducer from "./manager/Vehicle/createVehicleType/createVehicleTypeSlice";
 import updateVehicleTypeReducer from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSlice";
 import deleteVehicleTypeReducer from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSlice";
+import getAllSlotDriverReducer from "./driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSlice";
+import createReservationReducer from "./driver/reservationManagement/createReservations/createReservationsSlice";
+import getMyReservationsReducer from "./driver/reservationManagement/getMyReservations/getMyReservationsSlice";
+import updateZoneStatusReducer from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -63,6 +67,7 @@ const rootReducer = combineReducers({
   updateProfileUser: updateProfileUserReducer,
   getZoneByFloor: getZoneByFloorReducer,
   createZone: createZoneReducer,
+  updateZoneStatus: updateZoneStatusReducer,
   getSlotByZone: getSlotByZoneReducer,
   getAllStaff: getStaffListReducer,
   postStaffToBuilding: postStaffToBuildingReducer,
@@ -83,6 +88,9 @@ const rootReducer = combineReducers({
   createVehicle: createVehicleReducer,
   updateVehicle: updateVehicleReducer,
   deleteVehicle: deleteVehicleReducer,
+  getAllSlotDriver: getAllSlotDriverReducer,
+  createReservation: createReservationReducer,
+  getMyReservations: getMyReservationsReducer,
 });
 
 export default rootReducer;
