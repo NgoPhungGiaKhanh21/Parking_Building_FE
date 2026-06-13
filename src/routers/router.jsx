@@ -20,6 +20,7 @@ import VehicleManager from "../page/Manager/VehicleManage/vehicleManage";
 import ReservationManage from "../page/Driver/ReservationManage/reservationManagement";
 import PriceManager from "../page/Manager/PriceManager/PriceManager";
 import VehicleEntry from "../page/Staff/vehicleEntry/vehicleEntry";
+import CurrentSession from "../page/Driver/CurrentSession/currentSession";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -96,6 +97,7 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <VehicleManagement /> },
           { path: "reservation", element: <ReservationManage /> },
+          { path: "current-session", element: <CurrentSession /> },
         ],
       },
     ],

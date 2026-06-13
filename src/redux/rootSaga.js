@@ -50,6 +50,7 @@ import { watchGetAllReservation } from "./staff/reservation/getAllReservation/ge
 import { watchApproveReservation } from "./staff/reservation/approvedReservation/approvedReservationSaga"
 import { watchCreateCheckin } from "./staff/parking_session/checkin/createCheckinSaga";
 import { watchUpdateZone } from "./manager/Building/zone/updateZone/updateZoneSaga";
+import { watchGetCurrentSession } from "./driver/session/currentSession/currentSessionSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -110,5 +111,6 @@ export default function* rootSaga() {
     watchGetAllSlotDriver(),
     watchCreateReservations(),
     watchGetMyReservations(),
+    watchGetCurrentSession(),
   ]);
 }
