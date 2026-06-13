@@ -49,9 +49,13 @@ import deletePricingPolicyReducer from "./manager/PricingPolicy/DeletePricingPol
 import getAllReservationReducer from "./staff/reservation/getAllReservation/getAllReservationSlice";
 import approvedReservationReducer from "./staff/reservation/approvedReservation/approvedReservationSlice";
 import createCheckinReducer from "./staff/parking_session/checkin/createCheckinSlice";
+import createCheckoutReducer from "./staff/parking_session/checkout/createCheckoutSlice";
 import updateZoneReducer from "./manager/Building/zone/updateZone/updateZoneSlice";
 import getCurrentSessionReducer from "./driver/session/currentSession/currentSessionSlice";
 import initiatePaymentReducer from "./driver/payment/initiatePayment/initiatePaymentSlice";
+import getAllPaymentsReducer from "./staff/payment/getAllPayments/getAllPaymentsSlice";
+import confirmPaymentByStaffReducer from "./staff/payment/confirmPaymentByStaff/confirmPaymentByStaffSlice";
+import getDriverPaymentsReducer from "./driver/payment/getDriverPayments/getDriverPaymentsSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -102,6 +106,9 @@ const rootReducer = combineReducers({
   getAllReservation: getAllReservationReducer,
   approvedReservation: approvedReservationReducer,
   createCheckin: createCheckinReducer,
+  createCheckout: createCheckoutReducer,
+  getAllPayments: getAllPaymentsReducer,
+  confirmPaymentByStaff: confirmPaymentByStaffReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,
@@ -115,6 +122,7 @@ const rootReducer = combineReducers({
   getMyReservations: getMyReservationsReducer,
   getCurrentSession: getCurrentSessionReducer,
   initiatePayment: initiatePaymentReducer,
+  getDriverPayments: getDriverPaymentsReducer,
 });
 
 export default rootReducer;

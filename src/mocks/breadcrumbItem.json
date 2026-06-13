@@ -37,7 +37,8 @@
             "available": "Available Parking Spaces",
             "session": "Current Session",
             "reservation": "My Reservations",
-            "payment": "Payment"
+            "payment": "Payment",
+            "payment-history": "Payment History"
         }
     }
 }

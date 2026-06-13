@@ -5,7 +5,7 @@ import {getCurrentSessionRequest, getCurrentSessionSuccess, getCurrentSessionFai
 export function* getCurrentSessionSaga(action){
     try {
         const response = yield call(getCurrentSessionApi, action.payload)
-        const data = response.data.data;
+        const data = response.data?.data ?? response.data;
         yield put(getCurrentSessionSuccess(data))
     } catch (error) {
         const errorData = error.response?.data;

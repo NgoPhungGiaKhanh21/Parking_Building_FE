@@ -49,9 +49,13 @@ import { watchDeletePricingPolicy } from "./manager/PricingPolicy/DeletePricingP
 import { watchGetAllReservation } from "./staff/reservation/getAllReservation/getAllReservationSaga";
 import { watchApproveReservation } from "./staff/reservation/approvedReservation/approvedReservationSaga"
 import { watchCreateCheckin } from "./staff/parking_session/checkin/createCheckinSaga";
+import { watchCreateCheckout } from "./staff/parking_session/checkout/createCheckoutSaga";
 import { watchUpdateZone } from "./manager/Building/zone/updateZone/updateZoneSaga";
 import { watchGetCurrentSession } from "./driver/session/currentSession/currentSessionSaga";
 import { watchInitiatePayment } from "./driver/payment/initiatePayment/initiatePaymentSaga";
+import { watchGetAllPayments } from "./staff/payment/getAllPayments/getAllPaymentsSaga";
+import { watchConfirmPaymentByStaff } from "./staff/payment/confirmPaymentByStaff/confirmPaymentByStaffSaga";
+import { watchGetDriverPayments } from "./driver/payment/getDriverPayments/getDriverPaymentsSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -102,6 +106,9 @@ export default function* rootSaga() {
     watchGetAllReservation(),
     watchApproveReservation(),
     watchCreateCheckin(),
+    watchCreateCheckout(),
+    watchGetAllPayments(),
+    watchConfirmPaymentByStaff(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),
@@ -114,5 +121,6 @@ export default function* rootSaga() {
     watchGetMyReservations(),
     watchGetCurrentSession(),
     watchInitiatePayment(),
+    watchGetDriverPayments(),
   ]);
 }
