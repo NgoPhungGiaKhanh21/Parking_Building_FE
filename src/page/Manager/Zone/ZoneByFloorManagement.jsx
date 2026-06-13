@@ -1,5 +1,5 @@
-import { ArrowLeft, Layers } from "lucide-react";
-import { Button, Form, Spin, message, Switch } from "antd"; // Đã thêm Switch
+import { ArrowLeft, Layers, Pencil } from "lucide-react";
+import { Button, Form, Spin, message, Switch } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -13,9 +13,13 @@ import {
   clearGetSlotByZone,
   getSlotByZoneRequest,
 } from "../../../redux/manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
-// Đảm bảo đường dẫn import updateZoneStatusRequest đúng với cấu trúc dự án của bạn
 import { updateZoneStatusRequest } from "../../../redux/manager/Building/zone/updateZoneStatus/updateZoneStatusSlice";
+import {
+  updateZoneRequest,
+  resetUpdateZoneStatus,
+} from "../../../redux/manager/Building/zone/updateZone/updateZoneSlice";
 import CreateZoneModal from "./modals/CreateZoneModal";
+import EditZoneModal from "./modals/EditZoneModal";
 import ZoneSlotListModal from "./modals/ZoneSlotListModal";
 import {
   FLOOR_CONTEXT_STORAGE_PREFIX,
@@ -57,7 +61,7 @@ const getZoneTitle = (zone, index) => {
 };
 
 // Đã thêm onToggleStatus prop
-const ZoneCard = ({ zone, index, onSelect, onToggleStatus }) => {
+const ZoneCard = ({ zone, index, onSelect, onToggleStatus, onEdit }) => {
   const displayFields = pickZoneDisplayFields(zone);
   const title = getZoneTitle(zone, index);
   const statusField = displayFields.find((field) => field.key === "status");
@@ -119,7 +123,21 @@ const ZoneCard = ({ zone, index, onSelect, onToggleStatus }) => {
           )}
         </div>
 
-        <p className="mt-3 text-xs font-medium text-indigo-600">View slots →</p>
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-xs font-medium text-indigo-600">View slots →</p>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="small"
+              icon={<Pencil size={14} />}
+              onClick={() => onEdit(zone)}
+            >
+              Edit
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -130,7 +148,10 @@ const ZoneByFloorManagement = () => {
   const { floorId, floorSlug } = useParams();
   const location = useLocation();
   const [zoneForm] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedEditZone, setSelectedEditZone] = useState(null);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [selectedZoneName, setSelectedZoneName] = useState("");
 
@@ -144,6 +165,8 @@ const ZoneByFloorManagement = () => {
   );
   const { loading: createZoneLoading, success: createZoneSuccess } =
     useSelector((state) => state.createZone);
+  const { loading: updateZoneLoading, success: updateZoneSuccess } =
+    useSelector((state) => state.updateZone);
   const { loading: slotsLoading, getSlotByZone: slots } = useSelector(
     (state) => state.getSlotByZone,
   );
@@ -177,6 +200,15 @@ const ZoneByFloorManagement = () => {
       setTimeout(() => setIsCreateModalOpen(false), 0);
     }
   }, [createZoneSuccess, dispatch, zoneForm]);
+
+  useEffect(() => {
+    if (updateZoneSuccess) {
+      editForm.resetFields();
+      dispatch(resetUpdateZoneStatus());
+      setSelectedEditZone(null);
+      setTimeout(() => setIsEditModalOpen(false), 0);
+    }
+  }, [updateZoneSuccess, dispatch, editForm]);
 
   const handleRefresh = () => {
     if (floorContext?.floorId) {
@@ -235,6 +267,24 @@ const ZoneByFloorManagement = () => {
         zoneId: zoneId,
         status: newStatus,
         floorId: floorContext?.floorId,
+      }),
+    );
+  };
+
+  const handleOpenEditModal = (zone) => {
+    setSelectedEditZone(zone);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateZone = (values) => {
+    if (!selectedEditZone?.id || !floorContext?.floorId) return;
+    dispatch(
+      updateZoneRequest({
+        zoneId: selectedEditZone.id,
+        floorId: floorContext.floorId,
+        zoneName: values.zoneName?.trim(),
+        maxCapacity: Number(values.maxCapacity),
+        slotPrefix: values.slotPrefix?.trim(),
       }),
     );
   };
@@ -329,7 +379,8 @@ const ZoneByFloorManagement = () => {
                 zone={zone}
                 index={index}
                 onSelect={handleSelectZone}
-                onToggleStatus={handleToggleStatus} // Truyền hàm Toggle xuống Card
+                onToggleStatus={handleToggleStatus}
+                onEdit={handleOpenEditModal}
               />
             ))}
           </div>
@@ -350,6 +401,21 @@ const ZoneByFloorManagement = () => {
         floorMaxCapacity={floorMaxCapacity}
         usedCapacity={usedCapacity}
         remainingCapacity={remainingCapacity}
+      />
+
+      <EditZoneModal
+        open={isEditModalOpen}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setSelectedEditZone(null);
+          editForm.resetFields();
+          dispatch(resetUpdateZoneStatus());
+        }}
+        form={editForm}
+        loading={updateZoneLoading}
+        onSubmit={handleUpdateZone}
+        zone={selectedEditZone}
+        floorName={floorName}
       />
 
       <ZoneSlotListModal

@@ -19,7 +19,7 @@ import StaffManagement from "../page/Manager/Building/StaffManagement";
 import VehicleManager from "../page/Manager/VehicleManage/vehicleManage";
 import ReservationManage from "../page/Driver/ReservationManage/reservationManagement";
 import PriceManager from "../page/Manager/PriceManager/PriceManager";
-
+import VehicleEntry from "../page/Staff/vehicleEntry/vehicleEntry";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -81,7 +81,7 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <StaffLayout />,
-        children: [{ path: "", element: <Dashboard /> }],
+        children: [{ path: "", element: <VehicleEntry /> }],
       },
     ],
   },

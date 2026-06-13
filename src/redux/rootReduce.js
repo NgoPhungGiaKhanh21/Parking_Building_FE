@@ -46,6 +46,10 @@ import getPricingPolicyByIdReducer from "./manager/PricingPolicy/GetPricingPolic
 import createPricingPolicyReducer from "./manager/PricingPolicy/CreatePricingPolicy/createPricingPolicySlice";
 import updatePricingPolicyReducer from "./manager/PricingPolicy/UpdatePricingPolicy/updatePricingPolicySlice";
 import deletePricingPolicyReducer from "./manager/PricingPolicy/DeletePricingPolicy/deletePricingPolicySlice";
+import getAllReservationReducer from "./staff/reservation/getAllReservation/getAllReservationSlice";
+import approvedReservationReducer from "./staff/reservation/approvedReservation/approvedReservationSlice";
+import createCheckinReducer from "./staff/parking_session/checkin/createCheckinSlice";
+import updateZoneReducer from "./manager/Building/zone/updateZone/updateZoneSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -90,6 +94,12 @@ const rootReducer = combineReducers({
   createPricingPolicy: createPricingPolicyReducer,
   updatePricingPolicy: updatePricingPolicyReducer,
   deletePricingPolicy: deletePricingPolicyReducer,
+  updateZone: updateZoneReducer,
+
+  //staff
+  getAllReservation: getAllReservationReducer,
+  approvedReservation: approvedReservationReducer,
+  createCheckin: createCheckinReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,
