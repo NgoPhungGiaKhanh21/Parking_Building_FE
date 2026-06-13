@@ -157,6 +157,12 @@ const PriceManager = () => {
       render: formatCurrency,
     },
     {
+      title: "Phụ phí/ngày",
+      dataIndex: "perDayPrice",
+      key: "perDayPrice",
+      render: (v) => (v != null ? `+${formatCurrency(v)}` : "—"),
+    },
+    {
       title: "Max Daily Fee",
       dataIndex: "maxDailyFee",
       key: "maxDailyFee",

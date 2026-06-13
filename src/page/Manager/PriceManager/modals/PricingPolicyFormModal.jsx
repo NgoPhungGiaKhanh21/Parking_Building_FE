@@ -1,14 +1,16 @@
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from "antd";
+import { Button, DatePicker, Divider, Form, Input, InputNumber, Modal, Select } from "antd";
+import { TIER_PRICING_CONFIG } from "../utils/pricingPolicyUtils";
 
 const PRICING_TYPES = [
-  { value: "HOURLY", label: "Hourly" },
-  { value: "DAILY", label: "Daily" },
-  { value: "FLAT", label: "Flat" },
+  { value: "TIERED", label: "Theo bậc (Tiered)" },
+  { value: "HOURLY", label: "Theo giờ (Hourly)" },
+  { value: "DAILY", label: "Theo ngày (Daily)" },
+  { value: "FLAT", label: "Giá cố định (Flat)" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "INACTIVE", label: "Inactive" },
+  { value: "ACTIVE", label: "Đang áp dụng" },
+  { value: "INACTIVE", label: "Ngừng áp dụng" },
 ];
 
 const PricingPolicyFormModal = ({
@@ -26,26 +28,33 @@ const PricingPolicyFormModal = ({
   }));
 
   return (
-    <Modal title={title} open={open} onCancel={onCancel} footer={null} width={720}>
+    <Modal
+      title={title}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={820}
+      styles={{ body: { maxHeight: "70vh", overflowY: "auto" } }}
+    >
       <Form form={form} layout="vertical" requiredMark={false} onFinish={onSubmit}>
         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
           <Form.Item
             name="policyName"
-            label="Policy Name"
-            rules={[{ required: true, message: "Please enter policy name." }]}
+            label="Tên chính sách"
+            rules={[{ required: true, message: "Vui lòng nhập tên chính sách." }]}
             className="md:col-span-2"
           >
-            <Input size="large" placeholder="Enter policy name" />
+            <Input size="large" placeholder="VD: Motorbike Standard Pricing" />
           </Form.Item>
 
           <Form.Item
             name="vehicleTypeId"
-            label="Vehicle Type"
-            rules={[{ required: true, message: "Please select vehicle type." }]}
+            label="Loại xe"
+            rules={[{ required: true, message: "Vui lòng chọn loại xe." }]}
           >
             <Select
               size="large"
-              placeholder="Select vehicle type"
+              placeholder="Chọn loại xe"
               options={vehicleTypeOptions}
               showSearch
               optionFilterProp="label"
@@ -54,73 +63,125 @@ const PricingPolicyFormModal = ({
 
           <Form.Item
             name="pricingType"
-            label="Pricing Type"
-            rules={[{ required: true, message: "Please select pricing type." }]}
+            label="Kiểu tính phí"
+            rules={[{ required: true, message: "Vui lòng chọn kiểu tính phí." }]}
           >
-            <Select size="large" placeholder="Select pricing type" options={PRICING_TYPES} />
+            <Select size="large" placeholder="Chọn kiểu tính phí" options={PRICING_TYPES} />
           </Form.Item>
 
           <Form.Item
             name="basePrice"
-            label="Base Price"
-            rules={[{ required: true, message: "Please enter base price." }]}
+            label="Giá cơ bản"
+            rules={[{ required: true, message: "Vui lòng nhập giá cơ bản." }]}
           >
-            <InputNumber size="large" min={0} className="w-full" />
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
           </Form.Item>
 
           <Form.Item
             name="hourlyRate"
-            label="Hourly Rate"
-            rules={[{ required: true, message: "Please enter hourly rate." }]}
+            label="Giá mỗi giờ"
+            rules={[{ required: true, message: "Vui lòng nhập giá mỗi giờ." }]}
           >
-            <InputNumber size="large" min={0} className="w-full" />
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
           </Form.Item>
 
-          <Form.Item name="overnightFee" label="Overnight Fee">
-            <InputNumber size="large" min={0} className="w-full" />
+          <Form.Item name="overnightFee" label="Phí qua đêm">
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
           </Form.Item>
 
-          <Form.Item name="lostTicketFee" label="Lost Ticket Fee">
-            <InputNumber size="large" min={0} className="w-full" />
+          <Form.Item name="lostTicketFee" label="Phí mất vé">
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
           </Form.Item>
 
-          <Form.Item name="peakHourMultiplier" label="Peak Hour Multiplier">
+          <Form.Item name="peakHourMultiplier" label="Hệ số giờ cao điểm">
             <InputNumber size="large" min={0} step={0.1} className="w-full" />
           </Form.Item>
 
-          <Form.Item name="maxDailyFee" label="Max Daily Fee">
-            <InputNumber size="large" min={0} className="w-full" />
+          <Form.Item name="maxDailyFee" label="Phí tối đa / ngày">
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
+          </Form.Item>
+
+          <Form.Item
+            name="perDayPrice"
+            label="Phụ phí mỗi ngày tiếp theo"
+            tooltip="Sau 24 giờ, mỗi ngày gửi thêm sẽ cộng thêm mức phí này"
+          >
+            <InputNumber size="large" min={0} className="w-full" addonAfter="đ/ngày" />
           </Form.Item>
 
           <Form.Item
             name="effectiveFrom"
-            label="Effective From"
-            rules={[{ required: true, message: "Please select start date." }]}
+            label="Hiệu lực từ"
+            rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu." }]}
           >
             <DatePicker showTime size="large" className="w-full" />
           </Form.Item>
 
           <Form.Item
             name="effectiveTo"
-            label="Effective To"
-            rules={[{ required: true, message: "Please select end date." }]}
+            label="Hiệu lực đến"
+            rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc." }]}
           >
             <DatePicker showTime size="large" className="w-full" />
           </Form.Item>
 
           <Form.Item
             name="status"
-            label="Status"
-            rules={[{ required: true, message: "Please select status." }]}
+            label="Trạng thái"
+            rules={[{ required: true, message: "Vui lòng chọn trạng thái." }]}
           >
             <Select size="large" options={STATUS_OPTIONS} />
           </Form.Item>
         </div>
 
+        <Divider className="!my-4">Cách tính phí theo bậc</Divider>
+
+        <div className="mb-4 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">Bảng tham khảo:</p>
+          <ul className="mt-1 list-inside list-disc space-y-0.5">
+            <li>≤ 2 giờ → phí bậc 1</li>
+            <li>&gt; 2h – 6h → phí bậc 2</li>
+            <li>&gt; 6h – 12h → phí bậc 3</li>
+            <li>&gt; 12h – 24h → phí bậc 4</li>
+            <li>Mỗi ngày tiếp theo → cộng thêm phụ phí/ngày</li>
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {TIER_PRICING_CONFIG.map((tier) => (
+            <div
+              key={tier.hours}
+              className="rounded-xl border border-slate-200 bg-slate-50/50 p-3"
+            >
+              <p className="font-semibold text-slate-800">{tier.rangeLabel}</p>
+              <p className="mb-3 text-xs text-slate-500">{tier.description}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Form.Item name={tier.hours} label={tier.hoursLabel}>
+                  <InputNumber
+                    size="large"
+                    min={0}
+                    precision={0}
+                    className="w-full"
+                    addonAfter="giờ"
+                  />
+                </Form.Item>
+                <Form.Item name={tier.price} label={tier.priceLabel}>
+                  <InputNumber
+                    size="large"
+                    min={0}
+                    className="w-full"
+                    addonAfter="đ"
+                  />
+                </Form.Item>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="mt-4 flex justify-end gap-3">
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel}>Hủy</Button>
           <Button type="primary" htmlType="submit" loading={loading}>
-            Save
+            Lưu
           </Button>
         </div>
       </Form>
