@@ -21,6 +21,7 @@ import ReservationManage from "../page/Driver/ReservationManage/reservationManag
 import PriceManager from "../page/Manager/PriceManager/PriceManager";
 import VehicleEntry from "../page/Staff/vehicleEntry/vehicleEntry";
 import CurrentSession from "../page/Driver/CurrentSession/currentSession";
+import Payment from "../page/Driver/Payment/Payment";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
           { path: "", element: <VehicleManagement /> },
           { path: "reservation", element: <ReservationManage /> },
           { path: "current-session", element: <CurrentSession /> },
+          { path: "payment", element: <Payment /> },
         ],
       },
     ],

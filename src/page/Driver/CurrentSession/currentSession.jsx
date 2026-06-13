@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Spin, Empty, Tag, Tooltip } from "antd";
+import { useNavigate } from "react-router-dom";
+import { Spin, Empty, Tag, Tooltip, Button } from "antd";
 import {
     Car,
     Building2,
@@ -68,6 +69,7 @@ const useLiveTimer = (checkinTime) => {
 // ─── Main component ────────────────────────────────────────────────────────────
 const CurrentSession = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { currentSession, loading, error } = useSelector(
         (state) => state.getCurrentSession
@@ -185,6 +187,16 @@ const CurrentSession = () => {
                         >
                             {paymentCfg.label}
                         </Tag>
+                        {session.paymentStatus === "UNPAID" && (
+                            <Button
+                                type="primary"
+                                icon={<CreditCard size={16} />}
+                                onClick={() => navigate("/driver/payment")}
+                                className="!font-semibold"
+                            >
+                                Pay Now
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
