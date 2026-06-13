@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Spin, Empty, Tag, Tooltip, Button } from "antd";
+import { Spin, Empty, Tag, Button } from "antd";
 import {
     Car,
     Building2,
@@ -16,7 +16,6 @@ import {
     MapPin,
     CreditCard,
     TrendingUp,
-    Info,
     Palette,
     Hash,
 } from "lucide-react";
@@ -41,23 +40,22 @@ const paymentStatusConfig = {
     PARTIAL: { color: "orange", label: "Partial" },
 };
 
-// ─── Live timer hook ───────────────────────────────────────────────────────────
-const useLiveTimer = (checkinTime) => {
+// ─── Shared live tick (1 interval for all cards) ───────────────────────────────
+const useLiveTick = () => {
     const [now, setNow] = useState(dayjs());
-
     useEffect(() => {
-        if (!checkinTime) return;
         const interval = setInterval(() => setNow(dayjs()), 1000);
         return () => clearInterval(interval);
-    }, [checkinTime]);
+    }, []);
+    return now;
+};
 
+const formatDuration = (checkinTime, now) => {
     if (!checkinTime) return { hours: 0, minutes: 0, seconds: 0, display: "00:00:00" };
-
     const diff = dayjs.duration(now.diff(dayjs(checkinTime)));
     const totalHours = Math.floor(diff.asHours());
     const minutes = diff.minutes();
     const seconds = diff.seconds();
-
     return {
         hours: totalHours,
         minutes,
@@ -66,10 +64,205 @@ const useLiveTimer = (checkinTime) => {
     };
 };
 
+// ─── Single Session Card ───────────────────────────────────────────────────────
+const SessionCard = ({ session, now }) => {
+    const navigate = useNavigate();
+    const timer = formatDuration(session.checkinTime, now);
+    const sessionCfg = sessionStatusConfig[session.sessionStatus] || { color: "default", label: session.sessionStatus, icon: null };
+    const paymentCfg = paymentStatusConfig[session.paymentStatus] || { color: "default", label: session.paymentStatus };
+
+    const activeTierIndex = useMemo(() => {
+        if (!session.pricingTiers) return 0;
+        const totalHours = timer.hours + timer.minutes / 60;
+        for (let i = 0; i < session.pricingTiers.length; i++) {
+            if (totalHours <= session.pricingTiers[i].maxHours) return i;
+        }
+        return session.pricingTiers.length - 1;
+    }, [session.pricingTiers, timer.hours, timer.minutes]);
+
+    return (
+        <div className="rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            {/* ── Timer Hero ── */}
+            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-5 text-white">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+                            <Clock size={24} className="text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+                                Parking Duration
+                            </p>
+                            <p className="text-3xl font-black tracking-tight font-mono">
+                                {timer.display}
+                            </p>
+                            <p className="text-xs text-emerald-200">
+                                Since{" "}
+                                <span className="font-bold text-white">
+                                    {dayjs(session.checkinTime).format("DD/MM/YYYY HH:mm")}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center rounded-xl bg-white/10 backdrop-blur-sm px-5 py-3 border border-white/20">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+                            Current Fee
+                        </p>
+                        <p className="text-2xl font-black">
+                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
+                        </p>
+                        {session.currentFeeExplanation && (
+                            <p className="text-[10px] text-emerald-200">
+                                {session.currentFeeExplanation}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+                {/* ── Status Tags ── */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Tag icon={sessionCfg.icon} color={sessionCfg.color} className="flex items-center gap-1 !text-xs !font-semibold !px-3 !py-1">
+                        {sessionCfg.label}
+                    </Tag>
+                    <Tag color={paymentCfg.color} className="!text-xs !font-semibold !px-3 !py-1">
+                        {paymentCfg.label}
+                    </Tag>
+                    {session.ticketCode && (
+                        <code className="ml-auto rounded bg-emerald-50 px-2.5 py-1 text-xs font-mono font-bold text-emerald-700">
+                            {session.ticketCode}
+                        </code>
+                    )}
+                </div>
+
+                {/* ── Location + Vehicle Grid ── */}
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 col-span-2 md:col-span-1">
+                        <p className="text-[10px] font-bold uppercase text-blue-400 mb-0.5 flex items-center gap-1">
+                            <ParkingCircle size={10} /> Slot
+                        </p>
+                        <p className="text-xl font-black text-blue-600">{session.slotName}</p>
+                        <p className="text-[10px] text-blue-500">
+                            Zone {session.zoneName} · {session.floorName}
+                        </p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5 flex items-center gap-1">
+                            <Building2 size={10} /> Building
+                        </p>
+                        <p className="text-xs font-bold text-slate-700">{session.buildingName}</p>
+                    </div>
+                    <div className="rounded-xl bg-indigo-50 p-3">
+                        <p className="text-[10px] font-bold uppercase text-indigo-400 mb-0.5 flex items-center gap-1">
+                            <Hash size={10} /> Plate
+                        </p>
+                        <p className="text-sm font-black font-mono text-indigo-700">{session.vehiclePlate}</p>
+                    </div>
+                    <div className="rounded-xl bg-indigo-50 p-3">
+                        <p className="text-[10px] font-bold uppercase text-indigo-400 mb-0.5 flex items-center gap-1">
+                            <Car size={10} /> Vehicle
+                        </p>
+                        <p className="text-xs font-bold text-indigo-700">
+                            {session.vehicleBrand} {session.vehicleModel}
+                        </p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <span
+                                className="h-2.5 w-2.5 rounded-full border border-indigo-200"
+                                style={{ backgroundColor: session.vehicleColor?.toLowerCase() || "#ccc" }}
+                            />
+                            <span className="text-[10px] text-indigo-500 capitalize">{session.vehicleColor}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Pricing Tiers ── */}
+                {session.pricingTiers && session.pricingTiers.length > 0 && (
+                    <div>
+                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-2 flex items-center gap-1.5">
+                            <DollarSign size={10} /> Pricing Tiers
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {session.pricingTiers.map((tier, idx) => {
+                                const isActive = idx === activeTierIndex;
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`relative flex flex-col items-center rounded-xl border-2 px-3 py-2 min-w-[80px] transition-all ${
+                                            isActive
+                                                ? "border-emerald-400 bg-emerald-50 shadow-sm scale-105"
+                                                : "border-slate-100 bg-gradient-to-b from-slate-50 to-white"
+                                        }`}
+                                    >
+                                        {isActive && (
+                                            <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0 text-[8px] font-bold uppercase tracking-wider text-white">
+                                                Now
+                                            </span>
+                                        )}
+                                        <span className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${isActive ? "text-emerald-600" : "text-blue-500"}`}>
+                                            {tier.tierLabel}
+                                        </span>
+                                        <span className={`text-sm font-extrabold ${isActive ? "text-emerald-700" : "text-slate-800"}`}>
+                                            {tier.price.toLocaleString("vi-VN")}đ
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Fee Summary ── */}
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 border-t border-slate-100 pt-3">
+                    <div className="rounded-lg bg-emerald-50 p-2.5">
+                        <p className="text-[9px] font-bold uppercase text-emerald-500">Current Fee</p>
+                        <p className="text-sm font-black text-emerald-700">
+                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
+                        </p>
+                    </div>
+                    <div className="rounded-lg bg-violet-50 p-2.5">
+                        <p className="text-[9px] font-bold uppercase text-violet-500">Estimated</p>
+                        <p className="text-sm font-black text-violet-700">
+                            {(session.estimatedFee || 0).toLocaleString("vi-VN")}đ
+                        </p>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-2.5">
+                        <p className="text-[9px] font-bold uppercase text-slate-400">Base</p>
+                        <p className="text-sm font-bold text-slate-700">
+                            {(session.basePrice || 0).toLocaleString("vi-VN")}đ
+                        </p>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-2.5">
+                        <p className="text-[9px] font-bold uppercase text-slate-400">Max Daily</p>
+                        <p className="text-sm font-bold text-slate-700">
+                            {(session.maxDailyFee || 0).toLocaleString("vi-VN")}đ
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── Pay Button (if unpaid) ── */}
+                {session.paymentStatus === "UNPAID" && (
+                    <div className="border-t border-slate-100 pt-3">
+                        <Button
+                            type="primary"
+                            icon={<CreditCard size={16} />}
+                            onClick={() => navigate("/driver/payment")}
+                            className="!font-semibold w-full"
+                            size="large"
+                        >
+                            Pay Now
+                        </Button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // ─── Main component ────────────────────────────────────────────────────────────
 const CurrentSession = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
+    const now = useLiveTick();
 
     const { currentSession, loading, error } = useSelector(
         (state) => state.getCurrentSession
@@ -79,36 +272,29 @@ const CurrentSession = () => {
         dispatch(getCurrentSessionRequest());
     }, [dispatch]);
 
-    const session = currentSession;
-    const timer = useLiveTimer(session?.checkinTime);
-
-    const sessionCfg = sessionStatusConfig[session?.sessionStatus] || {
-        color: "default",
-        label: session?.sessionStatus,
-        icon: null,
-    };
-    const paymentCfg = paymentStatusConfig[session?.paymentStatus] || {
-        color: "default",
-        label: session?.paymentStatus,
-    };
-
-    // Find active pricing tier
-    const activeTierIndex = useMemo(() => {
-        if (!session?.pricingTiers || !timer.hours && !timer.minutes) return 0;
-        const totalHours = timer.hours + timer.minutes / 60;
-        for (let i = 0; i < session.pricingTiers.length; i++) {
-            if (totalHours <= session.pricingTiers[i].maxHours) return i;
+    // Handle API response: { totalActiveSessions, sessions: [...] }
+    const sessions = useMemo(() => {
+        if (!currentSession) return [];
+        if (currentSession.sessions && Array.isArray(currentSession.sessions)) {
+            return currentSession.sessions;
         }
-        return session.pricingTiers.length - 1;
-    }, [session?.pricingTiers, timer.hours, timer.minutes]);
+        // Fallback: single session object
+        if (currentSession.sessionId) return [currentSession];
+        return [];
+    }, [currentSession]);
+
+    const totalFee = useMemo(
+        () => sessions.reduce((sum, s) => sum + (s.currentAccumulatedFee || 0), 0),
+        [sessions]
+    );
 
     // ── No active session
-    if (!loading && (error || !session)) {
+    if (!loading && (error || sessions.length === 0)) {
         return (
             <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
                 <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
                     <div className="mb-4">
-                        <CommonBreadcrumb role="Driver" page="current-session" />
+                        <CommonBreadcrumb role="Driver" page="session" />
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-600">
@@ -116,7 +302,7 @@ const CurrentSession = () => {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-                                Current Session
+                                Current Sessions
                             </h1>
                             <p className="mt-1 font-medium text-slate-500">
                                 View your active parking session details.
@@ -130,10 +316,10 @@ const CurrentSession = () => {
                         description={
                             <div className="text-center">
                                 <p className="text-base font-semibold text-slate-500 mb-1">
-                                    No Active Session
+                                    No Active Sessions
                                 </p>
                                 <p className="text-sm text-slate-400">
-                                    You don't have any active parking session right now.
+                                    You don't have any active parking sessions right now.
                                 </p>
                             </div>
                         }
@@ -166,293 +352,43 @@ const CurrentSession = () => {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-                                Current Session
+                                Current Sessions
                             </h1>
                             <p className="mt-1 font-medium text-slate-500">
-                                Your vehicle is currently parked.
+                                You have{" "}
+                                <span className="font-bold text-emerald-600">
+                                    {sessions.length}
+                                </span>{" "}
+                                active parking {sessions.length === 1 ? "session" : "sessions"}.
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Tag
-                            icon={sessionCfg.icon}
-                            color={sessionCfg.color}
-                            className="flex items-center gap-1 !text-sm !font-semibold !px-4 !py-1.5"
-                        >
-                            {sessionCfg.label}
-                        </Tag>
-                        <Tag
-                            color={paymentCfg.color}
-                            className="!text-sm !font-semibold !px-4 !py-1.5"
-                        >
-                            {paymentCfg.label}
-                        </Tag>
-                        {session.paymentStatus === "UNPAID" && (
-                            <Button
-                                type="primary"
-                                icon={<CreditCard size={16} />}
-                                onClick={() => navigate("/driver/payment")}
-                                className="!font-semibold"
-                            >
-                                Pay Now
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Live Timer Card ── */}
-            <div className="mb-6 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-6 shadow-lg text-white">
-                <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-                            <Clock size={32} className="text-white" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-emerald-200">
-                                Parking Duration
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-center">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                                Total Fee
                             </p>
-                            <p className="text-4xl font-black tracking-tight md:text-5xl font-mono">
-                                {timer.display}
-                            </p>
-                            <p className="text-sm text-emerald-200 mt-1">
-                                Checked in at{" "}
-                                <span className="font-bold text-white">
-                                    {dayjs(session.checkinTime).format("DD/MM/YYYY HH:mm")}
-                                </span>
+                            <p className="text-xl font-black text-emerald-700">
+                                {totalFee.toLocaleString("vi-VN")}đ
                             </p>
                         </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 rounded-2xl bg-white/10 backdrop-blur-sm px-8 py-4 border border-white/20">
-                        <p className="text-xs font-bold uppercase tracking-widest text-emerald-200">
-                            Current Fee
-                        </p>
-                        <p className="text-3xl font-black md:text-4xl">
-                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                        {session.currentFeeExplanation && (
-                            <p className="text-xs text-emerald-200 mt-0.5">
-                                {session.currentFeeExplanation}
+                        <div className="rounded-xl bg-blue-50 border border-blue-200 px-5 py-3 text-center">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">
+                                Sessions
                             </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* ── Location Info ── */}
-                <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                        <MapPin size={14} className="text-blue-500" />
-                        Parking Location
-                    </h2>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 col-span-2">
-                            <p className="text-[10px] font-bold uppercase text-blue-400 mb-1 flex items-center gap-1">
-                                <ParkingCircle size={10} /> Slot
+                            <p className="text-xl font-black text-blue-700">
+                                {sessions.length}
                             </p>
-                            <p className="text-3xl font-black text-blue-600">
-                                {session.slotName}
-                            </p>
-                            <p className="text-xs text-blue-500 mt-0.5">
-                                Zone {session.zoneName} · {session.floorName}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5 flex items-center gap-1">
-                                <Building2 size={10} /> Building
-                            </p>
-                            <p className="text-sm font-bold text-slate-700">
-                                {session.buildingName}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5 flex items-center gap-1">
-                                <Layers size={10} /> Floor
-                            </p>
-                            <p className="text-sm font-bold text-slate-700">
-                                {session.floorName}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Vehicle Info ── */}
-                <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                        <Car size={14} className="text-indigo-500" />
-                        Vehicle Information
-                    </h2>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4 col-span-2">
-                            <p className="text-[10px] font-bold uppercase text-indigo-400 mb-1 flex items-center gap-1">
-                                <Hash size={10} /> Plate Number
-                            </p>
-                            <p className="text-2xl font-black font-mono text-indigo-700 tracking-wider">
-                                {session.vehiclePlate}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
-                                Brand & Model
-                            </p>
-                            <p className="text-sm font-bold text-slate-700">
-                                {session.vehicleBrand} {session.vehicleModel}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5 flex items-center gap-1">
-                                <Palette size={10} /> Color
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                                <span
-                                    className="h-3.5 w-3.5 rounded-full border border-slate-200 shadow-sm"
-                                    style={{
-                                        backgroundColor:
-                                            session.vehicleColor?.toLowerCase() || "#ccc",
-                                    }}
-                                />
-                                <span className="text-sm font-bold text-slate-700 capitalize">
-                                    {session.vehicleColor}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
-                                Vehicle Type
-                            </p>
-                            <p className="text-sm font-bold text-slate-700">
-                                {session.vehicleTypeName}
-                            </p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5 flex items-center gap-1">
-                                <Ticket size={10} /> Ticket
-                            </p>
-                            <code className="text-sm font-bold font-mono text-emerald-700">
-                                {session.ticketCode}
-                            </code>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ── Pricing Tiers ── */}
-            {session.pricingTiers && session.pricingTiers.length > 0 && (
-                <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                        <DollarSign size={14} className="text-amber-500" />
-                        Pricing Tiers
-                    </h2>
-                    <div className="flex flex-wrap gap-3">
-                        {session.pricingTiers.map((tier, idx) => {
-                            const isActive = idx === activeTierIndex;
-                            return (
-                                <div
-                                    key={idx}
-                                    className={`relative flex flex-col items-center rounded-2xl border-2 px-5 py-4 min-w-[100px] transition-all ${
-                                        isActive
-                                            ? "border-emerald-400 bg-emerald-50 shadow-md scale-105"
-                                            : "border-slate-100 bg-gradient-to-b from-slate-50 to-white"
-                                    }`}
-                                >
-                                    {isActive && (
-                                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                            Current
-                                        </span>
-                                    )}
-                                    <span
-                                        className={`text-xs font-bold uppercase tracking-wide mb-1 ${
-                                            isActive ? "text-emerald-600" : "text-blue-500"
-                                        }`}
-                                    >
-                                        {tier.tierLabel}
-                                    </span>
-                                    <span
-                                        className={`text-lg font-black ${
-                                            isActive ? "text-emerald-700" : "text-slate-800"
-                                        }`}
-                                    >
-                                        {tier.price.toLocaleString("vi-VN")}đ
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Fee Breakdown ── */}
-            <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                    <TrendingUp size={14} className="text-violet-500" />
-                    Fee Details
-                </h2>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4">
-                        <p className="text-[10px] font-bold uppercase text-emerald-500 mb-1">
-                            Current Fee
-                        </p>
-                        <p className="text-xl font-black text-emerald-700">
-                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                    </div>
-                    <div className="rounded-xl bg-violet-50 border border-violet-100 p-4">
-                        <p className="text-[10px] font-bold uppercase text-violet-500 mb-1">
-                            Estimated Fee
-                        </p>
-                        <p className="text-xl font-black text-violet-700">
-                            {(session.estimatedFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                        {session.estimatedHours && (
-                            <p className="text-[10px] text-violet-400 mt-0.5">
-                                ~{session.estimatedHours}h estimated
-                            </p>
-                        )}
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-4">
-                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">
-                            Base Price
-                        </p>
-                        <p className="text-lg font-bold text-slate-700">
-                            {(session.basePrice || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-4">
-                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">
-                            Max Daily
-                        </p>
-                        <p className="text-lg font-bold text-slate-700">
-                            {(session.maxDailyFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                    </div>
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-3">
-                    <div className="rounded-xl bg-amber-50 border border-amber-100 p-3">
-                        <p className="text-[10px] font-bold uppercase text-amber-500 mb-0.5">
-                            Hourly Rate
-                        </p>
-                        <p className="text-sm font-bold text-amber-700">
-                            {(session.hourlyRate || 0).toLocaleString("vi-VN")}đ/h
-                        </p>
-                    </div>
-                    <div className="rounded-xl bg-orange-50 border border-orange-100 p-3">
-                        <p className="text-[10px] font-bold uppercase text-orange-500 mb-0.5">
-                            Peak Multiplier
-                        </p>
-                        <p className="text-sm font-bold text-orange-700">
-                            ×{session.peakHourMultiplier || 1}
-                        </p>
-                    </div>
-                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-3">
-                        <p className="text-[10px] font-bold uppercase text-indigo-500 mb-0.5">
-                            Overnight Fee
-                        </p>
-                        <p className="text-sm font-bold text-indigo-700">
-                            {(session.overnightFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                    </div>
-                </div>
+            {/* ── Session Cards ── */}
+            <div className="space-y-6">
+                {sessions.map((session) => (
+                    <SessionCard key={session.sessionId} session={session} now={now} />
+                ))}
             </div>
         </div>
     );
