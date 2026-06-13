@@ -22,6 +22,10 @@ import PriceManager from "../page/Manager/PriceManager/PriceManager";
 import VehicleEntry from "../page/Staff/vehicleEntry/vehicleEntry";
 import CurrentSession from "../page/Driver/CurrentSession/currentSession";
 import Payment from "../page/Driver/Payment/Payment";
+import PaymentHistory from "../page/Driver/PaymentHistory/PaymentHistory";
+import { PaymentSuccessReturn, PaymentCancelReturn } from "../page/Driver/Payment/PaymentReturn";
+import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
+import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -83,7 +87,11 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <StaffLayout />,
-        children: [{ path: "", element: <VehicleEntry /> }],
+        children: [
+          { path: "", element: <VehicleEntry /> },
+          { path: "vehicle-exit", element: <VehicleExit /> },
+          { path: "payments", element: <PaymentManagement /> },
+        ],
       },
     ],
   },
@@ -100,6 +108,9 @@ const router = createBrowserRouter([
           { path: "reservation", element: <ReservationManage /> },
           { path: "current-session", element: <CurrentSession /> },
           { path: "payment", element: <Payment /> },
+          { path: "payment/success", element: <PaymentSuccessReturn /> },
+          { path: "payment/cancel", element: <PaymentCancelReturn /> },
+          { path: "payment-history", element: <PaymentHistory /> },
         ],
       },
     ],
