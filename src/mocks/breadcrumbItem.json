@@ -36,7 +36,8 @@
             "vehicle": "My Vehicles",
             "available": "Available Parking Spaces",
             "session": "Current Session",
-            "reservation": "My Reservations"
+            "reservation": "My Reservations",
+            "payment": "Payment"
         }
     }
 }

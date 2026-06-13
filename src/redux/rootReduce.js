@@ -51,6 +51,7 @@ import approvedReservationReducer from "./staff/reservation/approvedReservation/
 import createCheckinReducer from "./staff/parking_session/checkin/createCheckinSlice";
 import updateZoneReducer from "./manager/Building/zone/updateZone/updateZoneSlice";
 import getCurrentSessionReducer from "./driver/session/currentSession/currentSessionSlice";
+import initiatePaymentReducer from "./driver/payment/initiatePayment/initiatePaymentSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -113,6 +114,7 @@ const rootReducer = combineReducers({
   createReservation: createReservationReducer,
   getMyReservations: getMyReservationsReducer,
   getCurrentSession: getCurrentSessionReducer,
+  initiatePayment: initiatePaymentReducer,
 });
 
 export default rootReducer;
