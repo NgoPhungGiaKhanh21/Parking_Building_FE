@@ -52,6 +52,10 @@ export const updateZoneStatusApi = (zoneId, status) => {
   return api.patch(`/manager/setup/zones/${zoneId}/status`, { status });
 };
 
+export const updateZoneApi = (data) => {
+  return api.put(`/manager/setup/zones/${data.zoneId}`, data);
+};
+
 export const getSlotListApi = (zoneId, data) => {
   return api.get(`/manager/setup/zones/${zoneId}/slots`, data);
 };
