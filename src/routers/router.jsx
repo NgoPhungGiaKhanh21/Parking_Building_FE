@@ -23,7 +23,8 @@ import VehicleEntry from "../page/Staff/vehicleEntry/vehicleEntry";
 import CurrentSession from "../page/Driver/CurrentSession/currentSession";
 import Payment from "../page/Driver/Payment/Payment";
 import PaymentHistory from "../page/Driver/PaymentHistory/PaymentHistory";
-import { PaymentSuccessReturn, PaymentCancelReturn } from "../page/Driver/Payment/PaymentReturn";
+import PaymentSuccess from "../page/Driver/Payment/PaymentSuccess";
+import PaymentCancel from "../page/Driver/Payment/PaymentCancel";
 import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
 import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
 const router = createBrowserRouter([
@@ -40,6 +41,17 @@ const router = createBrowserRouter([
         path: "register",
         element: <Register />,
       },
+    ],
+  },
+
+  // PayOS redirect — BE trả về /payment/success|cancel (không có prefix /driver)
+  {
+    path: "/payment",
+    element: <PrivateRoute allowedRoles={["ROLE_DRIVER"]} />,
+    children: [
+      { path: "success", element: <PaymentSuccess /> },
+      { path: "failed", element: <PaymentCancel /> },
+      { path: "cancel", element: <PaymentCancel /> },
     ],
   },
 
@@ -108,8 +120,8 @@ const router = createBrowserRouter([
           { path: "reservation", element: <ReservationManage /> },
           { path: "current-session", element: <CurrentSession /> },
           { path: "payment", element: <Payment /> },
-          { path: "payment/success", element: <PaymentSuccessReturn /> },
-          { path: "payment/cancel", element: <PaymentCancelReturn /> },
+          { path: "payment/success", element: <PaymentSuccess /> },
+          { path: "payment/cancel", element: <PaymentCancel /> },
           { path: "payment-history", element: <PaymentHistory /> },
         ],
       },

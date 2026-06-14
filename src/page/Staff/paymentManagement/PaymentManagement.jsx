@@ -24,17 +24,37 @@ const canStaffConfirm = (record) => {
   return true;
 };
 
+const PAYMENT_STATUS_COLORS = {
+  CONFIRMED: "green",
+  PAID: "green",
+  UNPAID: "gold",
+  PENDING: "orange",
+  FAILED: "red",
+};
+
+const renderPaymentStatusTag = (record) => {
+  const status = normalizeStatus(record.paymentStatus);
+  if (!record.paymentStatus) return "—";
+  return (
+    <Tag color={PAYMENT_STATUS_COLORS[status] || "default"}>
+      {record.paymentStatus}
+    </Tag>
+  );
+};
+
 const renderPaidStatusTag = (record) => {
   const paid = getPaidStatus(record);
   const colors = {
     PAID: "cyan",
     UNPAID: "gold",
-    CONFIRMED: "green",
     PENDING: "orange",
   };
   if (!record.paidStatus) return "—";
   return <Tag color={colors[paid] || "default"}>{record.paidStatus}</Tag>;
 };
+
+const resolveDriverName = (record) =>
+  record.driverName ?? record.fullName ?? record.driver?.fullName ?? "—";
 
 const buildConfirmPayload = (payment, staffProfile) => ({
   paymentId: payment.paymentId,
@@ -100,11 +120,13 @@ const PaymentManagement = () => {
       ),
     },
     {
-      title: "Driver ID",
-      dataIndex: "driverId",
-      key: "driverId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
+      title: "Driver Name",
+      dataIndex: "driverName",
+      key: "driverName",
+      render: (_, record) => (
+        <span className="font-semibold text-slate-700">
+          {resolveDriverName(record)}
+        </span>
       ),
     },
     {
@@ -128,6 +150,12 @@ const PaymentManagement = () => {
       dataIndex: "paidStatus",
       key: "paidStatus",
       render: (_, record) => renderPaidStatusTag(record),
+    },
+    {
+      title: "Status",
+      dataIndex: "paymentStatus",
+      key: "paymentStatus",
+      render: (_, record) => renderPaymentStatusTag(record),
     },
     {
       title: "Transaction",

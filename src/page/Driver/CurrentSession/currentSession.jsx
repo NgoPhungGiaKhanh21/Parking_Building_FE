@@ -23,6 +23,8 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 
 import { getCurrentSessionRequest } from "../../../redux/driver/session/currentSession/currentSessionSlice";
+import { getProfileUserRequest } from "../../../redux/profileUser/getProfileUserSlice";
+import { getDriverPaymentsRequest } from "../../../redux/driver/payment/getDriverPayments/getDriverPaymentsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 
 dayjs.extend(duration);
@@ -36,8 +38,30 @@ const sessionStatusConfig = {
 
 const paymentStatusConfig = {
     UNPAID: { color: "gold", label: "Unpaid" },
+    FAILED: { color: "gold", label: "Unpaid" },
     PAID: { color: "green", label: "Paid" },
+    CONFIRMED: { color: "green", label: "Confirmed" },
     PARTIAL: { color: "orange", label: "Partial" },
+};
+
+const confirmationStatusConfig = {
+    CONFIRMED: { color: "green", label: "Confirmed" },
+    PENDING: { color: "orange", label: "Pending" },
+    FAILED: { color: "red", label: "Failed" },
+};
+
+const canPaySession = (status) => status === "UNPAID" || status === "FAILED";
+
+const findLatestPaymentForSession = (payments, sessionId) => {
+    if (!sessionId || !payments?.length) return null;
+    return (
+        [...payments]
+            .filter((p) => p.sessionId === sessionId)
+            .sort(
+                (a, b) =>
+                    dayjs(b.paymentTime).valueOf() - dayjs(a.paymentTime).valueOf(),
+            )[0] ?? null
+    );
 };
 
 // ─── Shared live tick (1 interval for all cards) ───────────────────────────────
@@ -65,11 +89,18 @@ const formatDuration = (checkinTime, now) => {
 };
 
 // ─── Single Session Card ───────────────────────────────────────────────────────
-const SessionCard = ({ session, now }) => {
+const SessionCard = ({ session, now, latestPayment }) => {
     const navigate = useNavigate();
     const timer = formatDuration(session.checkinTime, now);
     const sessionCfg = sessionStatusConfig[session.sessionStatus] || { color: "default", label: session.sessionStatus, icon: null };
     const paymentCfg = paymentStatusConfig[session.paymentStatus] || { color: "default", label: session.paymentStatus };
+    const confirmStatus = latestPayment?.paymentStatus;
+    const confirmCfg = confirmStatus
+        ? confirmationStatusConfig[confirmStatus] || {
+              color: "default",
+              label: confirmStatus,
+          }
+        : null;
 
     const activeTierIndex = useMemo(() => {
         if (!session.pricingTiers) return 0;
@@ -129,6 +160,11 @@ const SessionCard = ({ session, now }) => {
                     <Tag color={paymentCfg.color} className="!text-xs !font-semibold !px-3 !py-1">
                         {paymentCfg.label}
                     </Tag>
+                    {confirmCfg && session.paymentStatus !== "CONFIRMED" && (
+                        <Tag color={confirmCfg.color} className="!text-xs !font-semibold !px-3 !py-1">
+                            {confirmCfg.label}
+                        </Tag>
+                    )}
                     {session.ticketCode && (
                         <code className="ml-auto rounded bg-emerald-50 px-2.5 py-1 text-xs font-mono font-bold text-emerald-700">
                             {session.ticketCode}
@@ -235,7 +271,7 @@ const SessionCard = ({ session, now }) => {
                 </div>
 
                 {/* ── Pay Button (if unpaid) ── */}
-                {session.paymentStatus === "UNPAID" && (
+                {canPaySession(session.paymentStatus) && (
                     <div className="border-t border-slate-100 pt-3">
                         <Button
                             type="primary"
@@ -261,10 +297,21 @@ const CurrentSession = () => {
     const { currentSession, loading, error } = useSelector(
         (state) => state.getCurrentSession
     );
+    const { getProfileUser } = useSelector((state) => state.getProfileUser);
+    const { payments } = useSelector((state) => state.getDriverPayments);
+
+    const driverId = getProfileUser?.id ?? getProfileUser?.userId ?? "";
 
     useEffect(() => {
         dispatch(getCurrentSessionRequest());
+        dispatch(getProfileUserRequest());
     }, [dispatch]);
+
+    useEffect(() => {
+        if (driverId) {
+            dispatch(getDriverPaymentsRequest({ driverId, limit: 20 }));
+        }
+    }, [dispatch, driverId]);
 
     // Handle API response: { totalActiveSessions, sessions: [...] }
     const sessions = useMemo(() => {
@@ -381,7 +428,15 @@ const CurrentSession = () => {
             {/* ── Session Cards ── */}
             <div className="space-y-6">
                 {sessions.map((session) => (
-                    <SessionCard key={session.sessionId} session={session} now={now} />
+                    <SessionCard
+                        key={session.sessionId}
+                        session={session}
+                        now={now}
+                        latestPayment={findLatestPaymentForSession(
+                            payments,
+                            session.sessionId,
+                        )}
+                    />
                 ))}
             </div>
         </div>
