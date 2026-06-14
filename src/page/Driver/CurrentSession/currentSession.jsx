@@ -106,14 +106,14 @@ const SessionCard = ({ session, now }) => {
                     </div>
                     <div className="flex flex-col items-center rounded-xl bg-white/10 backdrop-blur-sm px-5 py-3 border border-white/20">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">
-                            Current Fee
+                            Estimated Fee
                         </p>
                         <p className="text-2xl font-black">
-                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
+                            {(session.estimatedFee || 0).toLocaleString("vi-VN")}đ
                         </p>
-                        {session.currentFeeExplanation && (
+                        {session.parkingHours != null && (
                             <p className="text-[10px] text-emerald-200">
-                                {session.currentFeeExplanation}
+                                ~{session.parkingHours}h parked
                             </p>
                         )}
                     </div>
@@ -213,29 +213,23 @@ const SessionCard = ({ session, now }) => {
                 )}
 
                 {/* ── Fee Summary ── */}
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 border-t border-slate-100 pt-3">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 border-t border-slate-100 pt-3">
                     <div className="rounded-lg bg-emerald-50 p-2.5">
-                        <p className="text-[9px] font-bold uppercase text-emerald-500">Current Fee</p>
+                        <p className="text-[9px] font-bold uppercase text-emerald-500">Estimated Fee</p>
                         <p className="text-sm font-black text-emerald-700">
-                            {(session.currentAccumulatedFee || 0).toLocaleString("vi-VN")}đ
-                        </p>
-                    </div>
-                    <div className="rounded-lg bg-violet-50 p-2.5">
-                        <p className="text-[9px] font-bold uppercase text-violet-500">Estimated</p>
-                        <p className="text-sm font-black text-violet-700">
                             {(session.estimatedFee || 0).toLocaleString("vi-VN")}đ
                         </p>
                     </div>
                     <div className="rounded-lg bg-slate-50 p-2.5">
-                        <p className="text-[9px] font-bold uppercase text-slate-400">Base</p>
+                        <p className="text-[9px] font-bold uppercase text-slate-400">Base Price</p>
                         <p className="text-sm font-bold text-slate-700">
                             {(session.basePrice || 0).toLocaleString("vi-VN")}đ
                         </p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 p-2.5">
-                        <p className="text-[9px] font-bold uppercase text-slate-400">Max Daily</p>
-                        <p className="text-sm font-bold text-slate-700">
-                            {(session.maxDailyFee || 0).toLocaleString("vi-VN")}đ
+                    <div className="rounded-lg bg-blue-50 p-2.5">
+                        <p className="text-[9px] font-bold uppercase text-blue-500">Hourly Rate</p>
+                        <p className="text-sm font-bold text-blue-700">
+                            {(session.hourlyRate || 0).toLocaleString("vi-VN")}đ/h
                         </p>
                     </div>
                 </div>
@@ -284,7 +278,7 @@ const CurrentSession = () => {
     }, [currentSession]);
 
     const totalFee = useMemo(
-        () => sessions.reduce((sum, s) => sum + (s.currentAccumulatedFee || 0), 0),
+        () => sessions.reduce((sum, s) => sum + (s.estimatedFee || 0), 0),
         [sessions]
     );
 
@@ -395,3 +389,4 @@ const CurrentSession = () => {
 };
 
 export default CurrentSession;
+    
