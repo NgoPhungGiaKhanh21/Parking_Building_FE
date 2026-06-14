@@ -162,6 +162,30 @@ const ReservationCard = ({ r, actions }) => {
                 </div>
             </div>
 
+            {/* Pricing Info */}
+            {(r.basePrice != null || r.hourlyRate != null) && (
+                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {r.basePrice != null && (
+                        <div className="flex flex-col items-center rounded-xl border border-emerald-100 bg-gradient-to-b from-emerald-50 to-white px-3 py-2.5">
+                            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide mb-0.5">Base Price</span>
+                            <span className="text-sm font-extrabold text-slate-800">{r.basePrice.toLocaleString("vi-VN")}đ</span>
+                        </div>
+                    )}
+                    {r.hourlyRate != null && (
+                        <div className="flex flex-col items-center rounded-xl border border-blue-100 bg-gradient-to-b from-blue-50 to-white px-3 py-2.5">
+                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wide mb-0.5">Hourly Rate</span>
+                            <span className="text-sm font-extrabold text-slate-800">{r.hourlyRate.toLocaleString("vi-VN")}đ/h</span>
+                        </div>
+                    )}
+                    {r.maxHours != null && (
+                        <div className="flex flex-col items-center rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white px-3 py-2.5">
+                            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wide mb-0.5">Max Hours</span>
+                            <span className="text-sm font-extrabold text-slate-800">{r.maxHours}h</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Pricing Tiers */}
             {r.pricingTiers && r.pricingTiers.length > 0 && (
                 <div className="mt-3">
@@ -216,16 +240,7 @@ const ReservationCard = ({ r, actions }) => {
                         </code>
                     </div>
                 )}
-                {r.reservationCode && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase text-slate-400">
-                            Reservation:
-                        </span>
-                        <code className="rounded bg-violet-50 px-2 py-0.5 text-xs font-mono font-bold text-violet-700">
-                            {r.reservationCode}
-                        </code>
-                    </div>
-                )}
+
                 {actions && <div className="ml-auto flex gap-2">{actions}</div>}
             </div>
         </div>

@@ -288,11 +288,14 @@ const ReservationManagement = () => {
         return [...map.values()];
     }, [slotData, selectedFloorId]);
 
-    // Slots for selected zone
+    // Slots for selected zone (natural sort by slotName: A-1, A-2, ..., A-10, A-11)
     const slots = useMemo(() => {
         if (!selectedZoneId) return [];
         const zone = slotData.find((z) => z.zoneId === selectedZoneId);
-        return Array.isArray(zone?.slots) ? zone.slots : [];
+        const raw = Array.isArray(zone?.slots) ? [...zone.slots] : [];
+        return raw.sort((a, b) =>
+            (a.slotName || "").localeCompare(b.slotName || "", undefined, { numeric: true, sensitivity: "base" })
+        );
     }, [slotData, selectedZoneId]);
 
     // Split slots into 2 rows for visual parking layout
@@ -436,6 +439,30 @@ const ReservationManagement = () => {
                             <p className="text-xs font-semibold text-slate-700">{r.floorVehicleTypeName}</p>
                         </div>
                     </div>
+
+                    {/* Pricing Info */}
+                    {(r.basePrice != null || r.hourlyRate != null) && (
+                        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+                            {r.basePrice != null && (
+                                <div className="flex flex-col items-center rounded-xl border border-emerald-100 bg-gradient-to-b from-emerald-50 to-white px-3 py-2.5">
+                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide mb-0.5">Base Price</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{r.basePrice.toLocaleString("vi-VN")}đ</span>
+                                </div>
+                            )}
+                            {r.hourlyRate != null && (
+                                <div className="flex flex-col items-center rounded-xl border border-blue-100 bg-gradient-to-b from-blue-50 to-white px-3 py-2.5">
+                                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wide mb-0.5">Hourly Rate</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{r.hourlyRate.toLocaleString("vi-VN")}đ/h</span>
+                                </div>
+                            )}
+                            {r.maxHours != null && (
+                                <div className="flex flex-col items-center rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white px-3 py-2.5">
+                                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wide mb-0.5">Max Hours</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{r.maxHours}h</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Pricing Tiers */}
                     {r.pricingTiers && r.pricingTiers.length > 0 && (
