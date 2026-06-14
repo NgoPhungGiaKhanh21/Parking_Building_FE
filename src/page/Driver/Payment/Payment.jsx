@@ -55,10 +55,17 @@ const resolveSessions = (currentSession) => {
   return [];
 };
 
-const buildPaymentPayload = (session, profile, note) => ({
+/** Lấy số tiền cần thanh toán từ session (BE có thể trả field khác nhau) */
+const resolveSessionAmount = (session) =>
+  session?.estimatedFee ??
+  session?.currentAccumulatedFee ??
+  session?.basePrice ??
+  0;
+
+const buildPaymentPayload = (session, profile, note, amount) => ({
   sessionId: session.sessionId ?? session.id,
   paymentMethod: "PAYOS",
-  amount: session.currentAccumulatedFee ?? 0,
+  amount: amount ?? resolveSessionAmount(session),
   driverId: profile?.id ?? profile?.userId ?? "",
   note: note?.trim() || "",
   ...getFrontendRedirectUrls(),
@@ -92,7 +99,7 @@ const Payment = () => {
 
   const sessionId = activeSession?.sessionId ?? activeSession?.id ?? "";
   const driverId = getProfileUser?.id ?? getProfileUser?.userId ?? "";
-  const amount = activeSession?.currentAccumulatedFee ?? 0;
+  const amount = resolveSessionAmount(activeSession);
 
   const formDefaults = useMemo(
     () => ({
@@ -140,6 +147,7 @@ const Payment = () => {
       activeSession,
       getProfileUser,
       values.note,
+      values.amount,
     );
     dispatch(initiatePaymentRequest(payload));
   };
