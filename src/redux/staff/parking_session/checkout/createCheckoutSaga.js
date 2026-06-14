@@ -6,12 +6,14 @@ import {
     createCheckoutSuccess,
     createCheckoutFail,
 } from "./createCheckoutSlice";
+import { getAllReservationRequest } from "../../reservation/getAllReservation/getAllReservationSlice";
 
 function* handleCreateCheckout(action) {
     try {
         const response = yield call(checkOutApi, action.payload);
         const data = response.data?.data ?? response.data;
         yield put(createCheckoutSuccess(data));
+        yield put(getAllReservationRequest());
         toast.success("Check-out successful");
     } catch (error) {
         const errorData = error.response?.data;

@@ -51,19 +51,19 @@ const PriceManager = () => {
   const [editingPolicyId, setEditingPolicyId] = useState(null);
 
   const { policies, loading, error } = useSelector(
-    (state) => state.getAllPricingPolicy
+    (state) => state.getAllPricingPolicy,
   );
   const { policy: policyDetail, loading: detailLoading } = useSelector(
-    (state) => state.getPricingPolicyById
+    (state) => state.getPricingPolicyById,
   );
   const { loading: createLoading, success: createSuccess } = useSelector(
-    (state) => state.createPricingPolicy
+    (state) => state.createPricingPolicy,
   );
   const { loading: updateLoading, success: updateSuccess } = useSelector(
-    (state) => state.updatePricingPolicy
+    (state) => state.updatePricingPolicy,
   );
   const { loading: deleteLoading } = useSelector(
-    (state) => state.deletePricingPolicy
+    (state) => state.deletePricingPolicy,
   );
   const { vehicleTypes } = useSelector((state) => state.getVehicleTypeList);
 
@@ -84,6 +84,7 @@ const PriceManager = () => {
   useEffect(() => {
     if (!createSuccess) return;
     createForm.resetFields();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsCreateOpen(false);
     dispatch(resetCreatePricingPolicyStatus());
   }, [createSuccess, createForm, dispatch]);
@@ -91,6 +92,7 @@ const PriceManager = () => {
   useEffect(() => {
     if (!updateSuccess) return;
     updateForm.resetFields();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsUpdateOpen(false);
     setEditingPolicyId(null);
     dispatch(resetUpdatePricingPolicyStatus());
@@ -102,8 +104,9 @@ const PriceManager = () => {
     return policyList.filter(
       (p) =>
         p.policyName?.toLowerCase().includes(keyword) ||
-        p.pricingType?.toLowerCase().includes(keyword) ||
-        p.typeName?.toLowerCase().includes(keyword)
+        p.typeName?.toLowerCase().includes(keyword) ||
+        p.vehicleTypeName?.toLowerCase().includes(keyword) ||
+        p.status?.toLowerCase().includes(keyword),
     );
   }, [policyList, searchText]);
 
@@ -126,60 +129,56 @@ const PriceManager = () => {
 
   const columns = [
     {
-      title: "Policy Name",
+      title: "policyName",
       dataIndex: "policyName",
       key: "policyName",
       fixed: "left",
-      render: (v) => <span className="font-semibold text-slate-800">{v || "—"}</span>,
+      render: (v) => (
+        <span className="font-semibold text-slate-800">{v || "—"}</span>
+      ),
     },
     {
-      title: "Vehicle Type",
-      dataIndex: "typeName",
-      key: "typeName",
-      render: (_, record) => getVehicleTypeName(record),
+      title: "vehicleType",
+      dataIndex: "vehicleTypeId",
+      key: "vehicleTypeId",
+      render: (_, record) => (
+        <div>
+          <p className="text-sm text-slate-700">{getVehicleTypeName(record)}</p>
+        </div>
+      ),
     },
     {
-      title: "Pricing Type",
-      dataIndex: "pricingType",
-      key: "pricingType",
-      render: (v) => <Tag color="blue">{v || "—"}</Tag>,
-    },
-    {
-      title: "Base Price",
+      title: "basePrice",
       dataIndex: "basePrice",
       key: "basePrice",
       render: formatCurrency,
     },
     {
-      title: "Hourly Rate",
+      title: "hourlyRate",
       dataIndex: "hourlyRate",
       key: "hourlyRate",
       render: formatCurrency,
     },
     {
-      title: "Phụ phí/ngày",
-      dataIndex: "perDayPrice",
-      key: "perDayPrice",
-      render: (v) => (v != null ? `+${formatCurrency(v)}` : "—"),
+      title: "maxHours",
+      dataIndex: "maxHours",
+      key: "maxHours",
+      render: (v) => (v != null ? `${v}h` : "—"),
     },
     {
-      title: "Max Daily Fee",
-      dataIndex: "maxDailyFee",
-      key: "maxDailyFee",
-      render: formatCurrency,
+      title: "effectiveFrom",
+      dataIndex: "effectiveFrom",
+      key: "effectiveFrom",
+      render: formatDateTime,
     },
     {
-      title: "Effective",
-      key: "effective",
-      render: (_, r) => (
-        <div className="text-xs text-slate-600">
-          <p>{formatDateTime(r.effectiveFrom)}</p>
-          <p>{formatDateTime(r.effectiveTo)}</p>
-        </div>
-      ),
+      title: "effectiveTo",
+      dataIndex: "effectiveTo",
+      key: "effectiveTo",
+      render: formatDateTime,
     },
     {
-      title: "Status",
+      title: "status",
       dataIndex: "status",
       key: "status",
       render: (status) => (
@@ -324,7 +323,7 @@ const PriceManager = () => {
             updatePricingPolicyRequest({
               id: editingPolicyId,
               data: buildPolicyPayload(values),
-            })
+            }),
           )
         }
       />
