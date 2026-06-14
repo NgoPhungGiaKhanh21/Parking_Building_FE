@@ -9,6 +9,7 @@ import { getProfileUserRequest } from "../../../redux/profileUser/getProfileUser
 import { getDriverPaymentsRequest } from "../../../redux/driver/payment/getDriverPayments/getDriverPaymentsSlice";
 
 const PAYMENT_STATUS_COLORS = {
+  CONFIRMED: "green",
   PAID: "green",
   UNPAID: "gold",
   PENDING: "orange",

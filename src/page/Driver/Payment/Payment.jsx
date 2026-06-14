@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Alert, Button, Empty, Form, Input, InputNumber, Spin, Tag } from "antd";
-import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { Button, Empty, Form, Input, InputNumber, Spin, Tag } from "antd";
 import {
   CreditCard,
   Car,
@@ -27,24 +26,9 @@ const getFrontendBaseUrl = () =>
 const getFrontendRedirectUrls = () => {
   const base = getFrontendBaseUrl();
   return {
-    frontendReturnUrl: `${base}/driver/payment/success`,
-    frontendCancelUrl: `${base}/driver/payment/cancel`,
+    frontendReturnUrl: `${base}/payment/success`,
+    frontendCancelUrl: `${base}/payment/failed`,
   };
-};
-
-const parsePaymentResult = (searchParams) => {
-  const result = searchParams.get("result");
-  if (result === "success") return "success";
-  if (result === "cancel") return "cancel";
-
-  const status = searchParams.get("status")?.toUpperCase();
-  if (status === "PAID" || status === "SUCCESS") return "success";
-  if (status === "CANCELLED" || status === "CANCEL") return "cancel";
-
-  if (searchParams.get("cancel") === "true") return "cancel";
-  if (searchParams.get("code") === "00") return "success";
-
-  return null;
 };
 
 /** API trả { sessions: [...] } hoặc 1 session object */
@@ -55,15 +39,19 @@ const resolveSessions = (currentSession) => {
   return [];
 };
 
-/** Lấy số tiền cần thanh toán từ session (BE có thể trả field khác nhau) */
 const resolveSessionAmount = (session) =>
   session?.estimatedFee ??
   session?.currentAccumulatedFee ??
   session?.basePrice ??
   0;
 
+const resolveDriverName = (profile) =>
+  profile?.fullName ?? profile?.driverName ?? profile?.name ?? "—";
+
 const buildPaymentPayload = (session, profile, note, amount) => ({
   sessionId: session.sessionId ?? session.id,
+  ticketCode: session.ticketCode ?? "",
+  reservationCode: session.reservationCode ?? "",
   paymentMethod: "PAYOS",
   amount: amount ?? resolveSessionAmount(session),
   driverId: profile?.id ?? profile?.userId ?? "",
@@ -74,9 +62,7 @@ const buildPaymentPayload = (session, profile, note, amount) => ({
 const Payment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [form] = Form.useForm();
-  const [paymentFeedback, setPaymentFeedback] = useState(null);
 
   const { currentSession, loading: sessionLoading } = useSelector(
     (state) => state.getCurrentSession,
@@ -93,12 +79,17 @@ const Payment = () => {
 
   const activeSession = useMemo(() => {
     return (
-      sessions.find((s) => s.paymentStatus === "UNPAID") ?? sessions[0] ?? null
+      sessions.find(
+        (s) => s.paymentStatus === "UNPAID" || s.paymentStatus === "FAILED",
+      ) ??
+      sessions[0] ??
+      null
     );
   }, [sessions]);
 
   const sessionId = activeSession?.sessionId ?? activeSession?.id ?? "";
   const driverId = getProfileUser?.id ?? getProfileUser?.userId ?? "";
+  const driverName = resolveDriverName(getProfileUser);
   const amount = resolveSessionAmount(activeSession);
 
   const formDefaults = useMemo(
@@ -106,10 +97,10 @@ const Payment = () => {
       sessionId,
       paymentMethod: "PAYOS",
       amount,
-      driverId,
+      driverName,
       note: "",
     }),
-    [sessionId, amount, driverId],
+    [sessionId, amount, driverName],
   );
 
   useEffect(() => {
@@ -117,22 +108,6 @@ const Payment = () => {
     dispatch(getProfileUserRequest());
     return () => dispatch(resetInitiatePayment());
   }, [dispatch]);
-
-  useEffect(() => {
-    const paymentResult = parsePaymentResult(searchParams);
-    if (!paymentResult) return;
-
-    if (paymentResult === "success") {
-      setPaymentFeedback("success");
-      toast.success("Thanh toán thành công!");
-      dispatch(getCurrentSessionRequest());
-    } else {
-      setPaymentFeedback("cancel");
-      toast.info("Đã hủy thanh toán.");
-    }
-
-    setSearchParams({}, { replace: true });
-  }, [searchParams, setSearchParams, dispatch]);
 
   useEffect(() => {
     if (activeSession && getProfileUser) {
@@ -213,30 +188,6 @@ const Payment = () => {
           </Tag>
         </div>
       </div>
-
-      {paymentFeedback === "success" && (
-        <Alert
-          type="success"
-          showIcon
-          message="Thanh toán thành công"
-          description="Bạn đã quay lại trang payment. Trạng thái session sẽ được cập nhật."
-          className="mb-6"
-          closable
-          onClose={() => setPaymentFeedback(null)}
-        />
-      )}
-
-      {paymentFeedback === "cancel" && (
-        <Alert
-          type="warning"
-          showIcon
-          message="Đã hủy thanh toán"
-          description="Bạn có thể thử thanh toán lại bên dưới."
-          className="mb-6"
-          closable
-          onClose={() => setPaymentFeedback(null)}
-        />
-      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
@@ -338,11 +289,8 @@ const Payment = () => {
                 />
               </Form.Item>
 
-              <Form.Item name="driverId" label="driverId">
-                <Input
-                  readOnly
-                  className="!bg-slate-50 !font-mono !text-slate-600"
-                />
+              <Form.Item name="driverName" label="driverName">
+                <Input readOnly className="!bg-slate-50 !text-slate-700" />
               </Form.Item>
 
               <Form.Item name="note" label="note">

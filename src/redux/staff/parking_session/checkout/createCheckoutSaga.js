@@ -10,11 +10,29 @@ import { getAllReservationRequest } from "../../reservation/getAllReservation/ge
 
 function* handleCreateCheckout(action) {
     try {
-        const response = yield call(checkOutApi, action.payload);
-        const data = response.data?.data ?? response.data;
-        yield put(createCheckoutSuccess(data));
+        const { ticketCode, paymentMethod } = action.payload;
+        const response = yield call(checkOutApi, {
+            ticketCode: String(ticketCode || "").trim(),
+            paymentMethod: String(paymentMethod || "PAYOS").trim(),
+        });
+        const body = response.data;
+
+        if (body?.success === false) {
+            const errorMessage = body.message || "Failed to check out";
+            yield put(createCheckoutFail(errorMessage));
+            toast.error(errorMessage);
+            return;
+        }
+
+        const data = body?.data ?? body;
+        yield put(
+            createCheckoutSuccess({
+                message: body?.message || "Check-out successful",
+                ...data,
+            })
+        );
         yield put(getAllReservationRequest());
-        toast.success("Check-out successful");
+        toast.success(body?.message || "Check-out successful");
     } catch (error) {
         const errorData = error.response?.data;
         const errorMessage =
