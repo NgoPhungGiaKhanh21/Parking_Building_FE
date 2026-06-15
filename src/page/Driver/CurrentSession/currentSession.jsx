@@ -26,6 +26,7 @@ import { getCurrentSessionRequest } from "../../../redux/driver/session/currentS
 import { getProfileUserRequest } from "../../../redux/profileUser/getProfileUserSlice";
 import { getDriverPaymentsRequest } from "../../../redux/driver/payment/getDriverPayments/getDriverPaymentsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
+import PaidSessionsModal from "./PaidSessionsModal";
 
 dayjs.extend(duration);
 
@@ -324,10 +325,22 @@ const CurrentSession = () => {
         return [];
     }, [currentSession]);
 
-    const totalFee = useMemo(
-        () => sessions.reduce((sum, s) => sum + (s.estimatedFee || 0), 0),
+    const unpaidSessions = useMemo(
+        () => sessions.filter((s) => canPaySession(s.paymentStatus)),
         [sessions]
     );
+
+    const paidSessions = useMemo(
+        () => sessions.filter((s) => !canPaySession(s.paymentStatus)),
+        [sessions]
+    );
+
+    const totalFee = useMemo(
+        () => unpaidSessions.reduce((sum, s) => sum + (s.estimatedFee || 0), 0),
+        [unpaidSessions]
+    );
+
+    const [isPaidModalOpen, setIsPaidModalOpen] = useState(false);
 
     // ── No active session
     if (!loading && (error || sessions.length === 0)) {
@@ -398,13 +411,23 @@ const CurrentSession = () => {
                             <p className="mt-1 font-medium text-slate-500">
                                 You have{" "}
                                 <span className="font-bold text-emerald-600">
-                                    {sessions.length}
+                                    {unpaidSessions.length}
                                 </span>{" "}
-                                active parking {sessions.length === 1 ? "session" : "sessions"}.
+                                active unpaid {unpaidSessions.length === 1 ? "session" : "sessions"}.
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {paidSessions.length > 0 && (
+                            <Button
+                                type="default"
+                                className="!h-auto !py-3 !px-5 !rounded-xl !border-blue-200 !text-blue-600 font-semibold flex items-center gap-2 hover:!bg-blue-50"
+                                onClick={() => setIsPaidModalOpen(true)}
+                            >
+                                <Clock size={18} />
+                                Paid History ({paidSessions.length})
+                            </Button>
+                        )}
                         <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-center">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
                                 Total Fee
@@ -415,10 +438,10 @@ const CurrentSession = () => {
                         </div>
                         <div className="rounded-xl bg-blue-50 border border-blue-200 px-5 py-3 text-center">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">
-                                Sessions
+                                Unpaid Sessions
                             </p>
                             <p className="text-xl font-black text-blue-700">
-                                {sessions.length}
+                                {unpaidSessions.length}
                             </p>
                         </div>
                     </div>
@@ -427,7 +450,7 @@ const CurrentSession = () => {
 
             {/* ── Session Cards ── */}
             <div className="space-y-6">
-                {sessions.map((session) => (
+                {unpaidSessions.map((session) => (
                     <SessionCard
                         key={session.sessionId}
                         session={session}
@@ -439,6 +462,13 @@ const CurrentSession = () => {
                     />
                 ))}
             </div>
+
+            <PaidSessionsModal 
+                open={isPaidModalOpen} 
+                onCancel={() => setIsPaidModalOpen(false)} 
+                sessions={paidSessions}
+                payments={payments}
+            />
         </div>
     );
 };

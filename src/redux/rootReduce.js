@@ -56,6 +56,8 @@ import initiatePaymentReducer from "./driver/payment/initiatePayment/initiatePay
 import getAllPaymentsReducer from "./staff/payment/getAllPayments/getAllPaymentsSlice";
 import confirmPaymentByStaffReducer from "./staff/payment/confirmPaymentByStaff/confirmPaymentByStaffSlice";
 import getDriverPaymentsReducer from "./driver/payment/getDriverPayments/getDriverPaymentsSlice";
+import getAllVehicleManagerReducer from "./manager/Vehicle/getAllVehicle/getAllVehicleSlice";
+import getOccupiedSlotReducer from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -84,12 +86,14 @@ const rootReducer = combineReducers({
   createZone: createZoneReducer,
   updateZoneStatus: updateZoneStatusReducer,
   getSlotByZone: getSlotByZoneReducer,
+  getOccupiedSlot: getOccupiedSlotReducer,
   getAllStaff: getStaffListReducer,
   postStaffToBuilding: postStaffToBuildingReducer,
   getStaffBuildings: getStaffBuildingsReducer,
   getBuildingStaff: getBuildingStaffReducer,
   removeStaffFromBuilding: removeStaffFromBuildingReducer,
   getVehicleManage: getVehicleManageReducer,
+  getAllVehicleManager: getAllVehicleManagerReducer,
   getAllDriver: getAllDriverReducer,
   changeStatusVehicle: changeStatusVehicleReducer,
   createVehicleType: createVehicleTypeReducer,

@@ -66,7 +66,7 @@ const CheckoutResultModal = ({ open, result, onClose }) => {
     if (!result) return null;
 
     return (
-        <Modal open={open} onCancel={onClose} centered width={560} footer={null} destroyOnClose>
+        <Modal open={open} onCancel={onClose} centered width={560} footer={null} destroyOnHidden>
             <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
                     <CheckCircle2 size={24} />
@@ -388,7 +388,7 @@ const VehicleExit = () => {
                 centered
                 width={480}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 {confirmModal.reservation && (
                     <div>

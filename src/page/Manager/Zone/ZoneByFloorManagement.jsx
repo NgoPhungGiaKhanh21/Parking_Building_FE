@@ -1,5 +1,5 @@
 import { ArrowLeft, Layers, Pencil } from "lucide-react";
-import { Button, Form, Spin, message, Switch } from "antd";
+import { Button, Form, Spin, message, Switch, Table } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -60,89 +60,6 @@ const getZoneTitle = (zone, index) => {
   );
 };
 
-// Đã thêm onToggleStatus prop
-const ZoneCard = ({ zone, index, onSelect, onToggleStatus, onEdit }) => {
-  const displayFields = pickZoneDisplayFields(zone);
-  const title = getZoneTitle(zone, index);
-  const statusField = displayFields.find((field) => field.key === "status");
-  const detailFields = displayFields.filter(
-    (field) => field.key !== "name" && field.key !== "status",
-  );
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelect(zone, title)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(zone, title);
-        }
-      }}
-      className="cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md"
-    >
-      <img
-        src={ZONE_FLOOR_BANNER_IMAGE}
-        alt={title}
-        className="h-44 w-full object-cover"
-      />
-      <div className="flex flex-col p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-slate-800">{title}</h3>
-          {statusField ? (
-            // Dùng stopPropagation để ngăn mở modal list slot khi click vào switch
-            <div
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              <Switch
-                checked={statusField.value === "ACTIVE"}
-                onChange={(checked) => {
-                  onToggleStatus(zone.id, checked ? "ACTIVE" : "INACTIVE");
-                }}
-                checkedChildren="Active"
-                unCheckedChildren="Inactive"
-              />
-            </div>
-          ) : null}
-        </div>
-
-        <div className="space-y-2 text-sm text-slate-600">
-          {detailFields.length > 0 ? (
-            detailFields.map((field) => (
-              <p key={field.key}>
-                <span className="font-semibold text-slate-700">
-                  {field.label}:{" "}
-                </span>
-                {field.value}
-              </p>
-            ))
-          ) : (
-            <p className="text-slate-500">No additional details.</p>
-          )}
-        </div>
-
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-xs font-medium text-indigo-600">View slots →</p>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <Button
-              size="small"
-              icon={<Pencil size={14} />}
-              onClick={() => onEdit(zone)}
-            >
-              Edit
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const ZoneByFloorManagement = () => {
   const dispatch = useDispatch();
   const { floorId, floorSlug } = useParams();
@@ -154,6 +71,7 @@ const ZoneByFloorManagement = () => {
   const [selectedEditZone, setSelectedEditZone] = useState(null);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [selectedZoneName, setSelectedZoneName] = useState("");
+  const [selectedMasterZoneId, setSelectedMasterZoneId] = useState(null);
 
   const floorContext = useMemo(
     () => readFloorContext(floorId, floorSlug, location.state),
@@ -186,6 +104,19 @@ const ZoneByFloorManagement = () => {
     Number.isFinite(floorMaxCapacity) &&
     floorMaxCapacity > 0 &&
     remainingCapacity > 0;
+
+  const selectedMasterZone = useMemo(
+    () => zoneList.find((z) => z.id === selectedMasterZoneId) || null,
+    [zoneList, selectedMasterZoneId]
+  );
+
+  useEffect(() => {
+    if (zoneList.length > 0 && !selectedMasterZoneId) {
+      setSelectedMasterZoneId(zoneList[0].id);
+    } else if (zoneList.length === 0) {
+      setSelectedMasterZoneId(null);
+    }
+  }, [zoneList, selectedMasterZoneId]);
 
   useEffect(() => {
     if (floorContext?.floorId) {
@@ -372,17 +303,125 @@ const ZoneByFloorManagement = () => {
             {canCreateZone ? " Click Create Zone to add the first zone." : null}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {zoneList.map((zone, index) => (
-              <ZoneCard
-                key={zone.id || `zone-${index}`}
-                zone={zone}
-                index={index}
-                onSelect={handleSelectZone}
-                onToggleStatus={handleToggleStatus}
-                onEdit={handleOpenEditModal}
-              />
-            ))}
+          <div className="flex flex-col md:flex-row min-h-[400px] border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            {/* Master List (Left) */}
+            <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 flex flex-col">
+              <div className="p-4 border-b border-slate-200 bg-white font-semibold text-slate-700 flex items-center justify-between">
+                <span>Zone List</span>
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{zoneList.length} total</span>
+              </div>
+              <div className="flex-1 overflow-y-auto max-h-[500px]">
+                {zoneList.map((zone, index) => {
+                  const isSelected = selectedMasterZoneId === zone.id;
+                  const title = getZoneTitle(zone, index);
+                  const isActive = zone.status === "ACTIVE";
+                  return (
+                    <div
+                      key={zone.id}
+                      onClick={() => setSelectedMasterZoneId(zone.id)}
+                      className={`cursor-pointer px-5 py-4 border-b border-slate-100 transition-colors flex items-center justify-between ${
+                        isSelected
+                          ? "bg-indigo-50 border-l-4 border-l-indigo-600 pl-4"
+                          : "bg-white hover:bg-slate-50 border-l-4 border-l-transparent pl-4"
+                      }`}
+                    >
+                      <span
+                        className={`font-medium ${
+                          isSelected ? "text-indigo-700" : "text-slate-700"
+                        }`}
+                      >
+                        {title}
+                      </span>
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          isActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-slate-300"
+                        }`}
+                        title={isActive ? "Active" : "Inactive"}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Detail View (Right) */}
+            <div className="w-full md:w-2/3 bg-white p-6 md:p-8 flex flex-col">
+              {selectedMasterZone ? (
+                <div className="animate-in fade-in duration-300 h-full flex flex-col">
+                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-800">
+                        {getZoneTitle(selectedMasterZone, zoneList.indexOf(selectedMasterZone))}
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Select an action below or toggle the status.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={selectedMasterZone.status === "ACTIVE"}
+                      onChange={(checked) =>
+                        handleToggleStatus(
+                          selectedMasterZone.id,
+                          checked ? "ACTIVE" : "INACTIVE"
+                        )
+                      }
+                      checkedChildren="Active"
+                      unCheckedChildren="Inactive"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                      <p className="text-sm text-slate-500 font-medium mb-1">
+                        Max Capacity
+                      </p>
+                      <p className="text-3xl font-bold text-slate-700">
+                        {selectedMasterZone.maxCapacity}
+                      </p>
+                    </div>
+                    <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                      <p className="text-sm text-slate-500 font-medium mb-1">
+                        Slot Count
+                      </p>
+                      <p className="text-3xl font-bold text-slate-700">
+                        {selectedMasterZone.slotCount}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mt-auto">
+                    <Button
+                      type="primary"
+                      size="large"
+                      onClick={() =>
+                        handleSelectZone(
+                          selectedMasterZone,
+                          getZoneTitle(selectedMasterZone, zoneList.indexOf(selectedMasterZone))
+                        )
+                      }
+                      className="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-base font-medium"
+                    >
+                      Manage Slots →
+                    </Button>
+                    <Button
+                      size="large"
+                      icon={<Pencil size={16} />}
+                      onClick={() => handleOpenEditModal(selectedMasterZone)}
+                      className="flex-1 w-full h-12 text-base font-medium"
+                    >
+                      Edit Zone
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <Layers className="w-16 h-16 text-slate-200 mb-4" />
+                  <p className="text-lg font-medium text-slate-500">
+                    Select a zone to view details
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

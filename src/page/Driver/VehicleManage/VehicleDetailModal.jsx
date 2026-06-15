@@ -117,7 +117,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
       open={isVisible}
       onCancel={handleModalClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
       centered
       width={480}
       closeIcon={

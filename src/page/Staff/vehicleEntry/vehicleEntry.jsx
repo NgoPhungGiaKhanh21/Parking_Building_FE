@@ -524,7 +524,7 @@ const VehicleEntry = () => {
                 centered
                 width={480}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
             >
                 {confirmModal.reservation && (
                     <div>

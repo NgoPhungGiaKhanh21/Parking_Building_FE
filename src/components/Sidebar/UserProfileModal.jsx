@@ -513,7 +513,7 @@ const UserProfileModal = ({ isOpen, onClose }) => {
       open={isOpen}
       onCancel={onClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
       centered
       width={520}
       className="custom-user-modal"

@@ -52,7 +52,7 @@ const UpdateVehicleTypeModal = ({ visible, onClose, initialData }) => {
       open={visible}
       onCancel={onClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}
