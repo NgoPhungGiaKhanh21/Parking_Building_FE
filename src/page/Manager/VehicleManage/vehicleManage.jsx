@@ -39,14 +39,12 @@ import { deleteVehicleTypeRequest } from "../../../redux/manager/Vehicle/deleteV
 import UpdateVehicleTypeModal from "./updateVehicleTypeModal";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
-import { getAllDriverRequest } from "../../../redux/manager/Vehicle/getAllDriver/getAllDriverSlice";
-import { getVehicleManageRequest } from "../../../redux/manager/Vehicle/getVehicleManage/getVehicleManageSlice";
+import { getAllVehicleRequest } from "../../../redux/manager/Vehicle/getAllVehicle/getAllVehicleSlice";
 
 const VehicleManagement = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
 
-  const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [activeTab, setActiveTab] = useState("1");
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -54,11 +52,9 @@ const VehicleManagement = () => {
   const [selectedTypeData, setSelectedTypeData] = useState(null);
 
   // --- REDUX STATE ---
-  const { getAllDriver: driversList, loading: isDriversLoading } = useSelector(
-    (state) => state.getAllDriver
+  const { getAllVehicleManager: vehiclesList, loading: isVehiclesLoading } = useSelector(
+    (state) => state.getAllVehicleManager
   );
-  const { getVehicleManage: vehiclesList, loading: isVehiclesLoading } =
-    useSelector((state) => state.getVehicleManage);
   const { loading: isChangingStatus } = useSelector(
     (state) => state.changeStatusVehicle
   );
@@ -76,23 +72,18 @@ const VehicleManagement = () => {
 
   // --- EFFECTS ---
   useEffect(() => {
-    dispatch(getAllDriverRequest());
+    dispatch(getAllVehicleRequest());
     dispatch(getVehicleTypeListRequest());
   }, [dispatch]);
 
   // --- HANDLERS (TAB 1) ---
-  const handleDriverChange = (userId) => {
-    setSelectedDriverId(userId);
-    dispatch(getVehicleManageRequest(userId));
-  };
-
-  const handleToggleStatus = (vehicleId, currentStatus) => {
+  const handleToggleStatus = (vehicleId, currentStatus, userId) => {
     const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     dispatch(
       changeStatusVehicleRequest({
         vehicleId: vehicleId,
         status: newStatus,
-        userId: selectedDriverId,
+        userId: userId,
       })
     );
   };
@@ -147,6 +138,20 @@ const VehicleManagement = () => {
   // --- COLUMNS T1 ---
   const vehicleColumns = [
     {
+      title: "Owner",
+      dataIndex: "username",
+      key: "username",
+      sorter: (a, b) => {
+        const nameA = a.username || "";
+        const nameB = b.username || "";
+        return nameA.localeCompare(nameB);
+      },
+      defaultSortOrder: 'ascend',
+      render: (text) => (
+        <span className="font-semibold text-slate-800">{text}</span>
+      ),
+    },
+    {
       title: "Plate Number",
       dataIndex: "plateNumber",
       key: "plateNumber",
@@ -199,7 +204,7 @@ const VehicleManagement = () => {
             title="Confirm Status Change"
             description={`Are you sure you want to set this vehicle to ${targetStatus}?`}
             onConfirm={() =>
-              handleToggleStatus(record.vehicleId, record.status)
+              handleToggleStatus(record.vehicleId, record.status, record.userId)
             }
             okText="Yes"
             cancelText="No"
@@ -311,76 +316,33 @@ const VehicleManagement = () => {
       ),
       children: (
         <div className="grid grid-cols-1 gap-6 mt-2 animate-in fade-in duration-500">
-          <Card className="shadow-sm border-slate-200 rounded-xl">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="flex items-center gap-2 text-slate-700 font-semibold w-48">
-                <UserSearch className="w-5 h-5 text-indigo-500" />
-                Select Driver:
-              </div>
-              <div className="flex-1 max-w-md">
-                <Select
-                  showSearch
-                  placeholder="Search and select driver..."
-                  className="w-full h-11"
-                  loading={isDriversLoading}
-                  onChange={handleDriverChange}
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    (option?.label ?? "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  options={
-                    driversList?.map((driver) => ({
-                      value: driver.userId,
-                      label: `${driver.fullName || "No Name"} (${
-                        driver.username
-                      }) - ${driver.email}`,
-                    })) || []
-                  }
-                />
-              </div>
-            </div>
-          </Card>
-
           <Card className="shadow-sm border-slate-200 rounded-xl min-h-[400px]">
-            {!selectedDriverId ? (
-              <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                  <CarFront className="w-10 h-10 text-slate-300" />
-                </div>
-                <p className="text-lg">
-                  Select a driver to view their vehicles
-                </p>
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-800">
+                  All Vehicles
+                </h2>
+                <Tag
+                  color="blue"
+                  className="px-3 py-1 text-sm rounded-full font-medium"
+                >
+                  Total: {vehiclesList?.length || 0}
+                </Tag>
               </div>
-            ) : (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-800">
-                    Driver's Vehicles
-                  </h2>
-                  <Tag
-                    color="blue"
-                    className="px-3 py-1 text-sm rounded-full font-medium"
-                  >
-                    Total: {vehiclesList?.length || 0}
-                  </Tag>
-                </div>
-                <Table
-                  columns={vehicleColumns}
-                  dataSource={vehiclesList}
-                  rowKey="vehicleId"
-                  loading={isVehiclesLoading || isChangingStatus}
-                  pagination={{ pageSize: 10 }}
-                  locale={{
-                    emptyText: (
-                      <Empty description="This driver has no vehicles yet" />
-                    ),
-                  }}
-                  className="border border-slate-100 rounded-lg overflow-hidden shadow-sm"
-                />
-              </div>
-            )}
+              <Table
+                columns={vehicleColumns}
+                dataSource={vehiclesList}
+                rowKey="vehicleId"
+                loading={isVehiclesLoading || isChangingStatus}
+                pagination={{ pageSize: 10 }}
+                locale={{
+                  emptyText: (
+                    <Empty description="No vehicles found" />
+                  ),
+                }}
+                className="border border-slate-100 rounded-lg overflow-hidden shadow-sm"
+              />
+            </div>
           </Card>
         </div>
       ),
@@ -534,7 +496,7 @@ const VehicleManagement = () => {
         open={isCreateModalVisible}
         onCancel={handleCancelCreate}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         centered
       >
         <Form

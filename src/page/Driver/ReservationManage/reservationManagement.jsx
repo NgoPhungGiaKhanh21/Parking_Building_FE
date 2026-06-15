@@ -377,14 +377,27 @@ const ReservationManagement = () => {
         EXPIRED: { color: "default", icon: <XCircle size={13} />, label: "Expired" },
     };
 
-    const [reservationSubTab, setReservationSubTab] = useState("APPROVED");
+    const [reservationSubTab, setReservationSubTab] = useState("PENDING");
+
+    const pendingReservations = useMemo(
+        () => myReservationList.filter((r) => r.reservationStatus === "PENDING"),
+        [myReservationList]
+    );
 
     const approvedReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "APPROVED" || r.reservationStatus === "PENDING" || r.reservationStatus === "ACTIVE" || r.reservationStatus === "CONFIRMED"),
+        () => myReservationList.filter((r) => r.reservationStatus === "APPROVED" || r.reservationStatus === "ACTIVE" || r.reservationStatus === "CONFIRMED"),
         [myReservationList]
     );
     const cancelledReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "CANCELLED" || r.reservationStatus === "EXPIRED" || r.reservationStatus === "COMPLETED"),
+        () => myReservationList.filter((r) => r.reservationStatus === "CANCELLED"),
+        [myReservationList]
+    );
+    const expiredReservations = useMemo(
+        () => myReservationList.filter((r) => r.reservationStatus === "EXPIRED"),
+        [myReservationList]
+    );
+    const completedReservations = useMemo(
+        () => myReservationList.filter((r) => r.reservationStatus === "COMPLETED"),
         [myReservationList]
     );
 
@@ -535,6 +548,25 @@ const ReservationManagement = () => {
             size="small"
             items={[
                 {
+                    key: "PENDING",
+                    label: (
+                        <span className="flex items-center gap-1.5 font-medium text-sm">
+                            <Clock size={14} />
+                            Pending
+                            {pendingReservations.length > 0 && (
+                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+                                    {pendingReservations.length}
+                                </span>
+                            )}
+                        </span>
+                    ),
+                    children: (
+                        <div className="space-y-4">
+                            {renderReservationCards(pendingReservations)}
+                        </div>
+                    ),
+                },
+                {
                     key: "APPROVED",
                     label: (
                         <span className="flex items-center gap-1.5 font-medium text-sm">
@@ -550,6 +582,44 @@ const ReservationManagement = () => {
                     children: (
                         <div className="space-y-4">
                             {renderReservationCards(approvedReservations)}
+                        </div>
+                    ),
+                },
+                {
+                    key: "COMPLETED",
+                    label: (
+                        <span className="flex items-center gap-1.5 font-medium text-sm">
+                            <CheckCircle2 size={14} />
+                            Completed
+                            {completedReservations.length > 0 && (
+                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-500 px-1.5 text-[10px] font-bold text-white">
+                                    {completedReservations.length}
+                                </span>
+                            )}
+                        </span>
+                    ),
+                    children: (
+                        <div className="space-y-4">
+                            {renderReservationCards(completedReservations)}
+                        </div>
+                    ),
+                },
+                {
+                    key: "EXPIRED",
+                    label: (
+                        <span className="flex items-center gap-1.5 font-medium text-sm">
+                            <XCircle size={14} />
+                            Expired
+                            {expiredReservations.length > 0 && (
+                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-500 px-1.5 text-[10px] font-bold text-white">
+                                    {expiredReservations.length}
+                                </span>
+                            )}
+                        </span>
+                    ),
+                    children: (
+                        <div className="space-y-4">
+                            {renderReservationCards(expiredReservations)}
                         </div>
                     ),
                 },
@@ -858,7 +928,7 @@ const ReservationManagement = () => {
                 footer={null}
                 centered
                 width={520}
-                destroyOnClose
+                destroyOnHidden
                 title={
                     <div className="border-b pb-4 mb-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -925,9 +995,24 @@ const ReservationManagement = () => {
                     <Form.Item
                         name="dateRange"
                         label={
-                            <span className="font-semibold text-slate-700">
-                                Reservation Period <span className="text-red-500">*</span>
-                            </span>
+                            <div className="flex items-center justify-between w-full">
+                                <span className="font-semibold text-slate-700">
+                                    Reservation Period <span className="text-red-500">*</span>
+                                </span>
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    onClick={() => {
+                                        const current = form.getFieldValue("dateRange") || [];
+                                        form.setFieldsValue({
+                                            dateRange: [dayjs(), current[1] || null],
+                                        });
+                                    }}
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 p-0 h-auto"
+                                >
+                                    <Clock size={12} /> Set Start to Now
+                                </Button>
+                            </div>
                         }
                         rules={[
                             { required: true, message: "Please select reservation start and end time!" },
@@ -937,7 +1022,7 @@ const ReservationManagement = () => {
                                     if (value[1].isBefore(value[0])) {
                                         return Promise.reject("End time must be after start time.");
                                     }
-                                    if (value[0].isBefore(dayjs())) {
+                                    if (value[0].isBefore(dayjs().subtract(5, "minute"))) {
                                         return Promise.reject("Start time cannot be in the past.");
                                     }
                                     return Promise.resolve();

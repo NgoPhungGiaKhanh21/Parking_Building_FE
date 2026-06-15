@@ -25,7 +25,7 @@ const VehicleDetailModal = ({ open, onClose, vehicleId }) => {
             footer={null}
             centered
             width={480}
-            destroyOnClose
+            destroyOnHidden
             title={null}
             className="vehicle-detail-modal"
         >

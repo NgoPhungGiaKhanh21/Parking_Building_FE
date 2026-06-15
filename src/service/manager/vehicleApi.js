@@ -8,6 +8,10 @@ export const getAllDriverApi = (data) => {
   return api.get("/manager/drivers", data);
 };
 
+export const getAllVehicleApi = (data) => {
+  return api.get("/manager/vehicles", data);
+};
+
 export const changeStatusVehicleApi = (data) => {
   return api.patch(`/manager/vehicles/${data.vehicleId}/status`, {
     status: data.status,

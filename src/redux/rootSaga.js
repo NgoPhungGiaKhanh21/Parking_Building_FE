@@ -56,6 +56,9 @@ import { watchInitiatePayment } from "./driver/payment/initiatePayment/initiateP
 import { watchGetAllPayments } from "./staff/payment/getAllPayments/getAllPaymentsSaga";
 import { watchConfirmPaymentByStaff } from "./staff/payment/confirmPaymentByStaff/confirmPaymentByStaffSaga";
 import { watchGetDriverPayments } from "./driver/payment/getDriverPayments/getDriverPaymentsSaga";
+import { watchGetAllVehicleManager } from "./manager/Vehicle/getAllVehicle/getAllVehicleSaga";
+import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSaga";
+
 
 export default function* rootSaga() {
   yield all([
@@ -85,12 +88,14 @@ export default function* rootSaga() {
     watchCreateZone(),
     watchUpdateZoneStatus(),
     watchGetSlotByZone(),
+    watchGetOccupiedSlot(),
     watchGetAllStaff(),
     watchAssignStaff(),
     watchGetStaffBuildings(),
     watchGetBuildingStaff(),
     watchRemoveStaffFromBuilding(),
     watchGetVehicleManage(),
+    watchGetAllVehicleManager(),
     watchGetAllDriver(),
     watchChangeStatusVehicle(),
     watchCreateVehicleType(),

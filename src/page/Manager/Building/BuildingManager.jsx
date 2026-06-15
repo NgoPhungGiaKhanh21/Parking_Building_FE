@@ -34,7 +34,11 @@ import UpdateBuildingModal from "./modals/UpdateBuildingModal";
 import BuildingDetailModal from "./modals/BuildingDetailModal";
 
 import { updateBuildingStatusRequest } from "../../../redux/manager/Building/updateBuildingStatus/updateBuildingStatusSlice";
-import { BUILDING_IMAGE, createTimeValue, isActiveStatus } from "./utils/buildingUtils";
+import {
+  BUILDING_IMAGE,
+  createTimeValue,
+  isActiveStatus,
+} from "./utils/buildingUtils";
 
 export const BuildingManager = () => {
   const dispatch = useDispatch();
@@ -54,21 +58,23 @@ export const BuildingManager = () => {
   const [editingBuildingId, setEditingBuildingId] = useState(null);
 
   const { loading: createLoading, success } = useSelector(
-    (state) => state.createBuilding
+    (state) => state.createBuilding,
   );
 
   const { loading: updateLoading, success: updateSuccess } = useSelector(
-    (state) => state.updateBuilding
+    (state) => state.updateBuilding,
   );
 
   const { buildings, loading: listLoading } = useSelector(
-    (state) => state.getBuildingList
+    (state) => state.getBuildingList,
   );
 
   const { buildingDetail, loading: detailLoading } = useSelector(
-    (state) => state.getBuildingDetail
+    (state) => state.getBuildingDetail,
   );
-  const { updatingBuildingId } = useSelector((state) => state.updateBuildingStatus);
+  const { updatingBuildingId } = useSelector(
+    (state) => state.updateBuildingStatus,
+  );
 
   useEffect(() => {
     dispatch(getBuildingListRequest());
@@ -126,7 +132,7 @@ export const BuildingManager = () => {
         operatingEndTime: values.operatingEndTime?.format("HH:mm:ss"),
 
         contactNumber: values.contactNumber?.trim(),
-      })
+      }),
     );
   };
 
@@ -170,7 +176,7 @@ export const BuildingManager = () => {
 
           contactNumber: values.contactNumber?.trim(),
         },
-      })
+      }),
     );
   };
 
@@ -197,7 +203,7 @@ export const BuildingManager = () => {
       updateBuildingStatusRequest({
         buildingId,
         status: checked ? "ACTIVE" : "INACTIVE",
-      })
+      }),
     );
   };
 
@@ -274,7 +280,11 @@ export const BuildingManager = () => {
                           handleBuildingStatusChange(building.id, checked)
                         }
                       />
-                      <Tag color={isActiveStatus(building.status) ? "green" : "gold"}>
+                      <Tag
+                        color={
+                          isActiveStatus(building.status) ? "green" : "gold"
+                        }
+                      >
                         {building.status || "N/A"}
                       </Tag>
                     </div>
@@ -297,7 +307,7 @@ export const BuildingManager = () => {
                       {building.totalFloors ?? "N/A"}
                     </p>
 
-                    <p>
+                    {/* <p>
                       <span className="font-semibold text-slate-700">
                         Occupancy:{" "}
                       </span>
@@ -311,7 +321,7 @@ export const BuildingManager = () => {
                       </span>
 
                       {building.slotCount ?? 0}
-                    </p>
+                    </p> */}
                   </div>
 
                   <div className="mt-auto pt-4">
