@@ -129,7 +129,7 @@ const PriceManager = () => {
 
   const columns = [
     {
-      title: "policyName",
+      title: "Policy Name",
       dataIndex: "policyName",
       key: "policyName",
       fixed: "left",
@@ -138,7 +138,7 @@ const PriceManager = () => {
       ),
     },
     {
-      title: "vehicleType",
+      title: "Vehicle Type",
       dataIndex: "vehicleTypeId",
       key: "vehicleTypeId",
       render: (_, record) => (
@@ -148,41 +148,43 @@ const PriceManager = () => {
       ),
     },
     {
-      title: "basePrice",
+      title: "Base Price",
       dataIndex: "basePrice",
       key: "basePrice",
       render: formatCurrency,
     },
     {
-      title: "hourlyRate",
+      title: "Hourly Rate",
       dataIndex: "hourlyRate",
       key: "hourlyRate",
       render: formatCurrency,
     },
     {
-      title: "maxHours",
+      title: "Max Hours",
       dataIndex: "maxHours",
       key: "maxHours",
       render: (v) => (v != null ? `${v}h` : "—"),
     },
     {
-      title: "effectiveFrom",
+      title: "Effective From",
       dataIndex: "effectiveFrom",
       key: "effectiveFrom",
       render: formatDateTime,
     },
     {
-      title: "effectiveTo",
+      title: "Effective To",
       dataIndex: "effectiveTo",
       key: "effectiveTo",
       render: formatDateTime,
     },
     {
-      title: "status",
+      title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status) => (
-        <Tag color={status === "ACTIVE" ? "green" : "red"}>{status || "—"}</Tag>
+        <Tag color={status === "ACTIVE" ? "green" : "red"}>
+          {status === "ACTIVE" ? "Active" : status === "INACTIVE" ? "Inactive" : status || "—"}
+        </Tag>
       ),
     },
     {
@@ -253,7 +255,10 @@ const PriceManager = () => {
             <Button
               type="primary"
               icon={<Plus size={16} />}
-              onClick={() => setIsCreateOpen(true)}
+              onClick={() => {
+                createForm.setFieldsValue({ status: "ACTIVE" });
+                setIsCreateOpen(true);
+              }}
             >
               Create Policy
             </Button>

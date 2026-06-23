@@ -6,43 +6,41 @@ export const SystemOverview = () => {
   const features = [
     {
       icon: <Building2 size={24} />,
-      title: "Nhà xe nhiều tầng tối ưu",
-      desc: "Mô hình kiến trúc hiện đại, tận dụng tối đa không gian chiều cao để tăng X3 hiệu suất chứa xe so với mặt bằng truyền thống.",
+      title: "Multi-level parking optimization",
+      desc: "Modern architecture that maximizes vertical space to increase parking capacity compared to traditional layouts.",
     },
     {
       icon: <Leaf size={24} />,
-      title: "Trung tâm điều hành Xanh",
-      desc: "Tòa nhà vận hành tích hợp pin mặt trời và mảng xanh đô thị, tối ưu năng lượng và thân thiện với môi trường.",
+      title: "Green operations center",
+      desc: "Facilities integrated with solar panels and urban greenery for energy efficiency and sustainability.",
     },
     {
       icon: <Route size={24} />,
-      title: "Phân luồng & Điều hướng AI",
-      desc: "Hệ thống vạch kẻ, mũi tên và cảm biến thông minh chỉ dẫn xe ra vào theo làn riêng biệt, xóa sổ hoàn toàn tình trạng ùn tắc.",
+      title: "AI traffic flow & guidance",
+      desc: "Smart lanes, signage, and sensors guide vehicles in and out through dedicated routes to reduce congestion.",
     },
     {
       icon: <ParkingCircle size={24} />,
-      title: "Bãi đỗ mặt đất thông minh",
-      desc: "Khu vực quét mã, nhận diện biển số tự động và cập nhật trạng thái vị trí trống theo thời gian thực (Real-time).",
+      title: "Smart surface parking",
+      desc: "QR check-in, automatic license plate recognition, and real-time slot availability updates.",
     },
   ];
 
   return (
     <div className="bg-white py-16 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
-        {/* TIÊU ĐỀ */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
-            Khám Phá Toàn Cảnh Hệ Thống
+            Explore the Full System
           </h2>
 
           <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Sự kết hợp giữa công nghệ quản lý tự động và hạ tầng đô thị thông
-            minh, mang lại trải nghiệm đỗ xe hiện đại và tối ưu.
+            A combination of automated management technology and smart urban
+            infrastructure for a modern, efficient parking experience.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* LEFT CONTENT */}
           <div className="lg:col-span-5 grid gap-4 order-2 lg:order-1">
             {features.map((item, index) => (
               <div
@@ -68,12 +66,11 @@ export const SystemOverview = () => {
             ))}
           </div>
 
-          {/* IMAGE */}
           <div className="lg:col-span-7 order-1 lg:order-2">
             <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg">
               <img
                 src={parkingImg}
-                alt="Mô hình tổng quan bãi đỗ xe"
+                alt="Parking system overview"
                 className="w-full h-full object-cover"
               />
             </div>

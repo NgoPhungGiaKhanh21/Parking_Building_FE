@@ -9,34 +9,32 @@ const MiddleSectionSlider = () => {
   const slides = [
     {
       image: img1,
-      title: "Quản lý bãi xe thông minh",
-      desc: "Theo dõi vị trí đỗ xe, số lượng chỗ trống và trạng thái phương tiện theo thời gian thực.",
+      title: "Smart parking management",
+      desc: "Track parking slots, available spaces, and vehicle status in real time.",
     },
     {
       image:
         "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=1200",
-      title: "Đặt chỗ & thanh toán",
-      desc: "Hỗ trợ đặt chỗ trước và thanh toán nhanh chóng bằng mã QR tiện lợi.",
+      title: "Reservations & payments",
+      desc: "Support advance booking and fast QR-based payments for a seamless experience.",
     },
     {
       image: img2,
-      title: "Giám sát phương tiện",
-      desc: "Kiểm soát lượt xe ra vào, lưu lịch sử gửi xe và hỗ trợ quản lý an toàn hiệu quả.",
+      title: "Vehicle monitoring",
+      desc: "Control entry and exit, keep parking history, and manage security efficiently.",
     },
   ];
 
   return (
     <section className="w-full min-h-screen bg-white pt-28">
-      {/* pt-28 để tránh bị header che */}
-
       <div className="w-full">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-slate-900">
-          Hệ thống bãi đỗ xe thông minh
+          Smart Parking System
         </h2>
 
         <p className="text-center text-slate-500 mb-10 text-lg max-w-3xl mx-auto px-4">
-          Giải pháp quản lý bãi xe hiện đại giúp tối ưu vận hành và nâng cao
-          trải nghiệm người dùng.
+          A modern parking solution that optimizes operations and improves the
+          user experience.
         </p>
 
         <Swiper
@@ -49,17 +47,14 @@ const MiddleSectionSlider = () => {
           {slides.map((slide, index) => (
             <SwiperSlide key={index}>
               <div className="relative w-full h-[80vh] overflow-hidden">
-                {/* IMAGE */}
                 <img
                   src={slide.image}
                   alt={slide.title}
                   className="w-full h-full object-cover"
                 />
 
-                {/* OVERLAY */}
                 <div className="absolute inset-0 bg-black/40" />
 
-                {/* CONTENT */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                   <h3 className="text-4xl md:text-6xl font-bold text-white mb-6">
                     {slide.title}
