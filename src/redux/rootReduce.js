@@ -58,6 +58,7 @@ import confirmPaymentByStaffReducer from "./staff/payment/confirmPaymentByStaff/
 import getDriverPaymentsReducer from "./driver/payment/getDriverPayments/getDriverPaymentsSlice";
 import getAllVehicleManagerReducer from "./manager/Vehicle/getAllVehicle/getAllVehicleSlice";
 import getOccupiedSlotReducer from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSlice";
+import getRevenueReducer from "./manager/Revenue/getRevenueSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -105,6 +106,7 @@ const rootReducer = combineReducers({
   updatePricingPolicy: updatePricingPolicyReducer,
   deletePricingPolicy: deletePricingPolicyReducer,
   updateZone: updateZoneReducer,
+  getRevenue: getRevenueReducer,
 
   //staff
   getAllReservation: getAllReservationReducer,

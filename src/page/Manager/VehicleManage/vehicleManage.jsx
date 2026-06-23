@@ -14,6 +14,9 @@ import {
   Input,
   Tooltip,
   Badge,
+  DatePicker,
+  Row,
+  Col,
 } from "antd";
 import {
   CarFront,
@@ -24,6 +27,8 @@ import {
   Edit,
   Trash2,
   LayoutGrid,
+  Search,
+  Filter,
 } from "lucide-react";
 
 // --- Import actions cho Vehicle (Tab 1) ---
@@ -44,8 +49,30 @@ import { getAllVehicleRequest } from "../../../redux/manager/Vehicle/getAllVehic
 const VehicleManagement = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
 
   const [activeTab, setActiveTab] = useState("1");
+
+  const handleSearch = (values) => {
+    const formattedValues = {
+      ...values,
+      checkInFrom: values.checkInFrom ? values.checkInFrom.format('YYYY-MM-DDTHH:mm:ss') : undefined,
+      checkInTo: values.checkInTo ? values.checkInTo.format('YYYY-MM-DDTHH:mm:ss') : undefined,
+    };
+    
+    // Clean up undefined/null values
+    const cleanValues = Object.fromEntries(
+      Object.entries(formattedValues).filter(([_, v]) => v !== undefined && v !== "" && v !== null)
+    );
+
+    console.log("Filter payload:", cleanValues);
+    dispatch(getAllVehicleRequest(cleanValues));
+  };
+
+  const handleResetFilter = () => {
+    filterForm.resetFields();
+    dispatch(getAllVehicleRequest());
+  };
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
@@ -148,7 +175,7 @@ const VehicleManagement = () => {
       },
       defaultSortOrder: 'ascend',
       render: (text) => (
-        <span className="font-semibold text-slate-800">{text}</span>
+        <span className="font-semibold text-slate-800">@{text}</span>
       ),
     },
     {
@@ -159,26 +186,51 @@ const VehicleManagement = () => {
         <span className="font-bold text-slate-700">{text}</span>
       ),
     },
-    { title: "Brand", dataIndex: "brand", key: "brand" },
-    { title: "Model", dataIndex: "model", key: "model" },
-    {
-      title: "Color",
-      dataIndex: "vehicleColor",
-      key: "vehicleColor",
-      render: (color) => (
-        <div className="flex items-center gap-2">
-          <div
-            className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
-            style={{ backgroundColor: color?.toLowerCase() || "#ccc" }}
-          ></div>
-          <span className="capitalize">{color}</span>
+    { title: "Brand & Model", 
+      key: "brandModel",
+      render: (_, record) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-slate-800">{record.brand}</span>
+          <span className="text-xs text-slate-500">{record.model}</span>
         </div>
-      ),
+      )
     },
     {
       title: "Vehicle Type",
       dataIndex: "vehicleTypeName",
       key: "vehicleTypeName",
+      render: (type, record) => (
+        <div className="flex flex-col gap-1">
+           <span className="font-medium text-slate-700">{type}</span>
+           <div className="flex items-center gap-1 text-xs text-slate-500">
+             <div
+               className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
+               style={{ backgroundColor: record.vehicleColor?.toLowerCase() || "#ccc" }}
+             ></div>
+             <span className="capitalize">{record.vehicleColor}</span>
+           </div>
+        </div>
+      )
+    },
+    {
+      title: "Parked Status",
+      key: "parked",
+      render: (_, record) => {
+        if (record.checkInTime && !record.checkOutTime) {
+          return <Tag color="blue">Parked</Tag>;
+        }
+        return <Tag color="default">Not Parked</Tag>;
+      }
+    },
+    {
+      title: "Time Info",
+      key: "timeInfo",
+      render: (_, record) => (
+        <div className="flex flex-col gap-1 text-xs text-slate-600 min-w-[140px]">
+          <div><span className="font-medium">In:</span> {record.checkInTime ? new Date(record.checkInTime).toLocaleString() : '-'}</div>
+          <div><span className="font-medium">Out:</span> {record.checkOutTime ? new Date(record.checkOutTime).toLocaleString() : '-'}</div>
+        </div>
+      )
     },
     {
       title: "Status",
@@ -316,7 +368,93 @@ const VehicleManagement = () => {
       ),
       children: (
         <div className="grid grid-cols-1 gap-6 mt-2 animate-in fade-in duration-500">
-          <Card className="shadow-sm border-slate-200 rounded-xl min-h-[400px]">
+          <div className="mb-6 rounded-2xl border border-indigo-50 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+            <div className="bg-gradient-to-r from-indigo-50/50 to-white px-6 py-4 border-b border-indigo-50 flex items-center gap-3">
+              <div className="p-2 bg-white rounded-lg text-indigo-600 shadow-sm border border-indigo-100">
+                <Filter className="w-4 h-4" />
+              </div>
+              <h2 className="text-base font-bold text-slate-800">Advanced Filter</h2>
+            </div>
+            <div className="p-6">
+              <Form form={filterForm} layout="vertical" onFinish={handleSearch}>
+                <Row gutter={[24, 16]}>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="plateNumber" label={<span className="font-medium text-slate-600">Plate Number</span>}>
+                      <Input placeholder="e.g. 59A-99999" size="large" className="rounded-lg hover:border-indigo-300 focus:border-indigo-500" allowClear />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="username" label={<span className="font-medium text-slate-600">Username</span>}>
+                      <Input placeholder="Search username" size="large" className="rounded-lg hover:border-indigo-300 focus:border-indigo-500" allowClear />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="status" label={<span className="font-medium text-slate-600">Vehicle Status</span>}>
+                      <Select placeholder="Select status" size="large" className="rounded-lg" allowClear>
+                        <Select.Option value="ACTIVE">ACTIVE</Select.Option>
+                        <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+                        <Select.Option value="BLOCKED">BLOCKED</Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="vehicleTypeId" label={<span className="font-medium text-slate-600">Vehicle Type</span>}>
+                      <Select placeholder="Select type" size="large" className="rounded-lg" allowClear>
+                        {vehicleTypes?.map((type) => (
+                          <Select.Option key={type.vehicleTypeId} value={type.vehicleTypeId}>
+                            {type.typeName}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="parked" label={<span className="font-medium text-slate-600">Parked Status</span>}>
+                      <Select placeholder="All" size="large" className="rounded-lg" allowClear>
+                        <Select.Option value={true}>Currently Parked</Select.Option>
+                        <Select.Option value={false}>Not in parking lot</Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="checkInFrom" label={<span className="font-medium text-slate-600">Check In Time</span>}>
+                      <DatePicker showTime size="large" className="w-full rounded-lg hover:border-indigo-300" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12} md={8} lg={6}>
+                    <Form.Item name="checkInTo" label={<span className="font-medium text-slate-600">Check Out Time</span>}>
+                      <DatePicker showTime size="large" className="w-full rounded-lg hover:border-indigo-300" />
+                    </Form.Item>
+                  </Col>
+                  
+                  <Col xs={24} className="flex justify-end pt-2 border-t border-slate-100 mt-2">
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={handleResetFilter} 
+                        icon={<RefreshCw className="w-4 h-4" />} 
+                        size="large"
+                        className="rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-all font-medium px-6"
+                      >
+                        Reset Filter
+                      </Button>
+                      <Button 
+                        type="primary" 
+                        htmlType="submit" 
+                        icon={<Search className="w-4 h-4" />} 
+                        size="large"
+                        className="rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-[1px] transition-all font-medium px-8"
+                      >
+                        Search Vehicles
+                      </Button>
+                    </div>
+                  </Col>
+                </Row>
+              </Form>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[400px]">
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-800">
@@ -340,10 +478,10 @@ const VehicleManagement = () => {
                     <Empty description="No vehicles found" />
                   ),
                 }}
-                className="border border-slate-100 rounded-lg overflow-hidden shadow-sm"
+                className="border border-slate-100 rounded-xl overflow-hidden"
               />
             </div>
-          </Card>
+          </div>
         </div>
       ),
     },
@@ -358,93 +496,98 @@ const VehicleManagement = () => {
         <div className="mt-2 animate-in fade-in duration-500">
           {/* Vùng Thống kê (Nâng cấp giao diện) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
-                <LayoutGrid className="w-6 h-6" />
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-4 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-50 to-violet-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner border border-indigo-100/50">
+                <LayoutGrid className="w-7 h-7" />
               </div>
               <div>
                 <p className="text-sm text-slate-500 font-medium">
                   Total Types
                 </p>
-                <p className="text-2xl font-bold text-slate-800">
+                <p className="text-3xl font-bold text-slate-800">
                   {totalTypes}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-slate-500">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+              <div className="flex justify-between items-center mb-2 z-10">
+                <span className="text-sm font-semibold text-slate-500 tracking-wide">
                   SMALL
                 </span>
                 <Badge status="cyan" />
               </div>
-              <span className="text-xl font-bold text-slate-700">
+              <span className="text-3xl font-bold text-slate-800 z-10">
                 {smallTypesCount}
               </span>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-slate-500">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+              <div className="flex justify-between items-center mb-2 z-10">
+                <span className="text-sm font-semibold text-slate-500 tracking-wide">
                   MEDIUM
                 </span>
                 <Badge status="processing" color="blue" />
               </div>
-              <span className="text-xl font-bold text-slate-700">
+              <span className="text-3xl font-bold text-slate-800 z-10">
                 {mediumTypesCount}
               </span>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-slate-500">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-purple-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+              <div className="flex justify-between items-center mb-2 z-10">
+                <span className="text-sm font-semibold text-slate-500 tracking-wide">
                   LARGE
                 </span>
                 <Badge status="purple" />
               </div>
-              <span className="text-xl font-bold text-slate-700">
+              <span className="text-3xl font-bold text-slate-800 z-10">
                 {largeTypesCount}
               </span>
             </div>
           </div>
 
           {/* Bảng Dữ Liệu */}
-          <Card className="shadow-sm border-slate-200 rounded-xl min-h-[400px]">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">
-                  Vehicle Types Portfolio
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Manage all supported vehicle sizes and categories
-                </p>
+          <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[400px]">
+            <div className="p-6">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">
+                    Vehicle Types Portfolio
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Manage all supported vehicle sizes and categories
+                  </p>
+                </div>
+
+                <Button
+                  type="primary"
+                  icon={<Plus className="w-4 h-4" />}
+                  onClick={handleOpenCreateModal}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 h-11 px-6 rounded-xl shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-[1px] transition-all font-medium"
+                >
+                  Create New Type
+                </Button>
               </div>
 
-              <Button
-                type="primary"
-                icon={<Plus className="w-4 h-4" />}
-                onClick={handleOpenCreateModal}
-                className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 h-10 px-5 rounded-lg shadow-sm"
-              >
-                Create New Type
-              </Button>
+              <Table
+                columns={vehicleTypeColumns}
+                dataSource={vehicleTypes}
+                rowKey="vehicleTypeId"
+                loading={isVehicleTypesLoading || isDeletingVehicleType} // Bật spinner khi đang xóa
+                pagination={{ pageSize: 10 }}
+                locale={{
+                  emptyText: (
+                    <Empty description="No vehicle types found. Create one!" />
+                  ),
+                }}
+                className="border border-slate-100 rounded-xl overflow-hidden custom-table"
+              />
             </div>
-
-            <Table
-              columns={vehicleTypeColumns}
-              dataSource={vehicleTypes}
-              rowKey="vehicleTypeId"
-              loading={isVehicleTypesLoading || isDeletingVehicleType} // Bật spinner khi đang xóa
-              pagination={{ pageSize: 10 }}
-              locale={{
-                emptyText: (
-                  <Empty description="No vehicle types found. Create one!" />
-                ),
-              }}
-              className="border border-slate-100 rounded-lg overflow-hidden shadow-sm custom-table"
-            />
-          </Card>
+          </div>
         </div>
       ),
     },
@@ -454,26 +597,32 @@ const VehicleManagement = () => {
     activeTab === "1" ? "vehiclemanagement" : "vehicletypes";
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="p-6 bg-[#f8fafc] min-h-screen">
       {/* Header */}
-      <div className="mb-6 rounded-2xl border border-violet-100 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <CommonBreadcrumb role="Manager" page={breadcrumbPage} />
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-violet-600 shadow-inner">
-            <CarFront size={28} strokeWidth={2.5} />
+      <div className="mb-6 rounded-3xl border border-indigo-50 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-50 to-purple-50 opacity-50 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-50 to-cyan-50 opacity-50 blur-2xl"></div>
+        
+        <div className="relative z-10">
+          <div className="mb-6">
+            <CommonBreadcrumb role="Manager" page={breadcrumbPage} />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-              {activeTab === "1" ? "Vehicle Management" : "Vehicle Types Data"}
-            </h1>
-            <p className="mt-1 font-medium text-slate-500">
-              {activeTab === "1"
-                ? "Manage driver vehicles and oversee their current statuses"
-                : "Manage vehicle type for all supported vehicle classifications"}
-            </p>
+
+          <div className="flex items-center gap-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200/50">
+              <CarFront size={32} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {activeTab === "1" ? "Vehicle Management" : "Vehicle Types Portfolio"}
+              </h1>
+              <p className="mt-1.5 text-base font-medium text-slate-500">
+                {activeTab === "1"
+                  ? "Track and manage all registered driver vehicles within the system"
+                  : "Classify and organize vehicle types for parking spot allocation"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

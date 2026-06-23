@@ -8,6 +8,8 @@ import {
     Modal,
     Badge,
     Tooltip,
+    Upload,
+    message,
 } from "antd";
 import {
     Car,
@@ -29,18 +31,18 @@ import {
     Ticket,
     DollarSign,
     AlertCircle,
+    Upload as UploadIcon,
 } from "lucide-react";
 import dayjs from "dayjs";
 
 import { getAllReservationRequest } from "../../../redux/staff/reservation/getAllReservation/getAllReservationSlice";
-import { approveReservationRequest } from "../../../redux/staff/reservation/approvedReservation/approvedReservationSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { createCheckinRequest } from "../../../redux/staff/parking_session/checkin/createCheckinSlice";
 
 // ─── Status config ─────────────────────────────────────────────────────────────
 const reservationStatusConfig = {
     PENDING: { color: "gold", icon: <Clock size={13} />, label: "Pending" },
-    APPROVED: { color: "cyan", icon: <ShieldCheck size={13} />, label: "Approved" },
+    CHECKED_IN: { color: "blue", icon: <ShieldCheck size={13} />, label: "Checked In" },
     ACTIVE: { color: "green", icon: <CheckCircle2 size={13} />, label: "Active" },
     CONFIRMED: { color: "blue", icon: <CheckCircle2 size={13} />, label: "Confirmed" },
     COMPLETED: { color: "default", icon: <CheckCircle2 size={13} />, label: "Completed" },
@@ -86,7 +88,7 @@ const ReservationCard = ({ r, actions }) => {
             </div>
 
             {/* Detail grid */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 <div className="rounded-lg bg-slate-50 p-3">
                     <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
                         Building
@@ -102,14 +104,6 @@ const ReservationCard = ({ r, actions }) => {
                     </p>
                     <p className="text-xs font-semibold text-slate-700">
                         {dayjs(r.reservationStart).format("DD/MM/YYYY HH:mm")}
-                    </p>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
-                        End
-                    </p>
-                    <p className="text-xs font-semibold text-slate-700">
-                        {dayjs(r.reservationEnd).format("DD/MM/YYYY HH:mm")}
                     </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-3">
@@ -210,23 +204,6 @@ const ReservationCard = ({ r, actions }) => {
                 </div>
             )}
 
-            {/* Reservation Note */}
-            {r.reservationNote && (
-                <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3">
-                    <MessageSquareText
-                        size={14}
-                        className="mt-0.5 flex-shrink-0 text-amber-500"
-                    />
-                    <div>
-                        <p className="text-[10px] font-bold uppercase text-amber-500 mb-0.5">
-                            Note
-                        </p>
-                        <p className="text-xs text-amber-800 leading-relaxed">
-                            {r.reservationNote}
-                        </p>
-                    </div>
-                </div>
-            )}
 
             {/* Ticket code + Actions */}
             <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
@@ -251,21 +228,20 @@ const ReservationCard = ({ r, actions }) => {
 const VehicleEntry = () => {
     const dispatch = useDispatch();
     const [mainTab, setMainTab] = useState("checkin");
-    const [reservationSubTab, setReservationSubTab] = useState("PENDING");
+    const [reservationSubTab, setReservationSubTab] = useState("CHECKED_IN");
 
     // ── Confirm modal state
     const [confirmModal, setConfirmModal] = useState({
         open: false,
-        type: null, // 'approve' | 'checkin'
         reservation: null,
     });
+    const [checkinImageUrl, setCheckinImageUrl] = useState("");
+    const [checkinImageFile, setCheckinImageFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // ── Redux state
     const { getAllReservation, loading: reservationsLoading } = useSelector(
         (state) => state.getAllReservation
-    );
-    const { loading: approveLoading } = useSelector(
-        (state) => state.approvedReservation
     );
     const { loading: checkinLoading } = useSelector(
         (state) => state.createCheckin
@@ -282,12 +258,13 @@ const VehicleEntry = () => {
         [getAllReservation]
     );
 
-    const pendingList = useMemo(
-        () => reservationList.filter((r) => r.reservationStatus === "PENDING"),
-        [reservationList]
-    );
-    const approvedList = useMemo(
-        () => reservationList.filter((r) => r.reservationStatus === "APPROVED" && r.slotStatus !== "OCCUPIED"),
+    const pendingList = useMemo(() => {
+        const list = reservationList.filter((r) => r.reservationStatus === "PENDING");
+        return list.sort((a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf());
+    }, [reservationList]);
+
+    const checkedInList = useMemo(
+        () => reservationList.filter((r) => r.reservationStatus === "CHECKED_IN"),
         [reservationList]
     );
     const cancelledList = useMemo(
@@ -296,45 +273,42 @@ const VehicleEntry = () => {
     );
 
     // ── Handlers
-    const handleApprove = useCallback(
-        (reservation) => {
-            setConfirmModal({ open: true, type: "approve", reservation });
-        },
-        []
-    );
 
     const handleCheckin = useCallback(
         (reservation) => {
-            setConfirmModal({ open: true, type: "checkin", reservation });
+            setConfirmModal({ open: true, reservation });
+            setCheckinImageUrl("");
+            setCheckinImageFile(null);
         },
         []
     );
 
     const handleConfirm = useCallback(() => {
-        const { type, reservation } = confirmModal;
-        if (type === "approve") {
-            dispatch(
-                approveReservationRequest({
-                    reservationCode: reservation.reservationCode,
-                    status: "APPROVED",
-                    note: "Reservation approved by staff",
-                })
-            );
-        } else if (type === "checkin") {
-            dispatch(
-                createCheckinRequest({
-                    ticketCode: reservation.ticketCode,
-                    plateNumber: reservation.vehiclePlate,
-                    vehicleColor: reservation.vehicleColor,
-                    vehicleTypeId: reservation.floorVehicleTypeId,
-                })
-            );
+        const { reservation } = confirmModal;
+        if (!checkinImageFile) {
+            message.error("Please upload a vehicle image before checking in.");
+            return;
         }
-        setConfirmModal({ open: false, type: null, reservation: null });
-    }, [confirmModal, dispatch]);
+
+        dispatch(
+            createCheckinRequest({
+                ticketCode: reservation.ticketCode,
+                plateNumber: reservation.vehiclePlate,
+                vehicleColor: reservation.vehicleColor,
+                vehicleTypeId: reservation.floorVehicleTypeId,
+                checkinImage: checkinImageFile,
+            })
+        );
+        setConfirmModal({ open: false, reservation: null });
+        setCheckinImageUrl("");
+        setCheckinImageFile(null);
+    }, [confirmModal, checkinImageFile, dispatch]);
+
 
     const handleCancelModal = useCallback(() => {
-        setConfirmModal({ open: false, type: null, reservation: null });
+        setConfirmModal({ open: false, reservation: null });
+        setCheckinImageUrl("");
+        setCheckinImageFile(null);
     }, []);
 
     // ── Render helpers
@@ -369,13 +343,13 @@ const VehicleEntry = () => {
     // ── Checkin Tab Content
     const CheckinTab = () => (
         <div>
-            <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3">
-                <AlertCircle size={16} className="text-emerald-600 flex-shrink-0" />
-                <p className="text-xs text-emerald-700 font-medium">
-                    Only <strong>APPROVED</strong> reservations appear here. Approve pending reservations in the "Manage Reservations" tab first.
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200 p-3">
+                <AlertCircle size={16} className="text-blue-600 flex-shrink-0" />
+                <p className="text-xs text-blue-700 font-medium">
+                    Only the <strong>OLDEST PENDING</strong> reservation is shown here to process the queue in order.
                 </p>
             </div>
-            {renderReservationList(approvedList, (r) => (
+            {renderReservationList(pendingList.slice(0, 1), (r) => (
                 <button
                     type="button"
                     onClick={() => handleCheckin(r)}
@@ -398,47 +372,21 @@ const VehicleEntry = () => {
                 className="reservation-sub-tabs"
                 items={[
                     {
-                        key: "PENDING",
+                        key: "CHECKED_IN",
                         label: (
                             <span className="flex items-center gap-1.5 font-medium text-sm">
-                                <Clock size={14} />
-                                Pending
-                                {pendingList.length > 0 && (
+                                <ShieldCheck size={14} />
+                                Checked In
+                                {checkedInList.length > 0 && (
                                     <Badge
-                                        count={pendingList.length}
+                                        count={checkedInList.length}
                                         size="small"
-                                        style={{ backgroundColor: "#f59e0b" }}
+                                        style={{ backgroundColor: "#3b82f6" }}
                                     />
                                 )}
                             </span>
                         ),
-                        children: renderReservationList(pendingList, (r) => (
-                            <button
-                                type="button"
-                                onClick={() => handleApprove(r)}
-                                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-blue-700 hover:shadow-md cursor-pointer active:scale-95"
-                            >
-                                <ShieldCheck size={14} />
-                                Approve
-                            </button>
-                        )),
-                    },
-                    {
-                        key: "APPROVED",
-                        label: (
-                            <span className="flex items-center gap-1.5 font-medium text-sm">
-                                <ShieldCheck size={14} />
-                                Approved
-                                {approvedList.length > 0 && (
-                                    <Badge
-                                        count={approvedList.length}
-                                        size="small"
-                                        style={{ backgroundColor: "#06b6d4" }}
-                                    />
-                                )}
-                            </span>
-                        ),
-                        children: renderReservationList(approvedList),
+                        children: renderReservationList(checkedInList),
                     },
                     {
                         key: "CANCELLED",
@@ -490,9 +438,9 @@ const VehicleEntry = () => {
                             <span className="flex items-center gap-2 font-semibold">
                                 <LogIn size={16} />
                                 Check In
-                                {approvedList.length > 0 && (
+                                {pendingList.length > 0 && (
                                     <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
-                                        {approvedList.length}
+                                        1
                                     </span>
                                 )}
                             </span>
@@ -531,28 +479,16 @@ const VehicleEntry = () => {
                         <div className="mb-5">
                             <div className="flex items-center gap-3 mb-2">
                                 <div
-                                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
-                                        confirmModal.type === "approve"
-                                            ? "bg-blue-600"
-                                            : "bg-emerald-600"
-                                    }`}
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-emerald-600"
                                 >
-                                    {confirmModal.type === "approve" ? (
-                                        <ShieldCheck size={20} />
-                                    ) : (
-                                        <LogIn size={20} />
-                                    )}
+                                    <LogIn size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-slate-800">
-                                        {confirmModal.type === "approve"
-                                            ? "Approve Reservation"
-                                            : "Confirm Check In"}
+                                        Confirm Check In
                                     </h3>
                                     <p className="text-sm text-slate-500">
-                                        {confirmModal.type === "approve"
-                                            ? "Are you sure you want to approve this reservation?"
-                                            : "Are you sure you want to check in this vehicle?"}
+                                        Please upload the vehicle image before checking in.
                                     </p>
                                 </div>
                             </div>
@@ -561,14 +497,6 @@ const VehicleEntry = () => {
                         {/* Reservation summary */}
                         <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 space-y-3 mb-5">
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                                        Reservation Code
-                                    </p>
-                                    <p className="text-sm font-bold font-mono text-violet-700">
-                                        {confirmModal.reservation.reservationCode}
-                                    </p>
-                                </div>
                                 <div className="rounded-lg bg-white border border-slate-200 p-3">
                                     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
                                         Ticket Code
@@ -618,8 +546,6 @@ const VehicleEntry = () => {
                                         {confirmModal.reservation.floorVehicleTypeName}
                                     </p>
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
                                 <div className="rounded-lg bg-white border border-slate-200 p-3">
                                     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
                                         Start
@@ -630,17 +556,60 @@ const VehicleEntry = () => {
                                         ).format("DD/MM/YYYY HH:mm")}
                                     </p>
                                 </div>
-                                <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                                        End
-                                    </p>
-                                    <p className="text-xs font-semibold text-slate-700">
-                                        {dayjs(
-                                            confirmModal.reservation.reservationEnd
-                                        ).format("DD/MM/YYYY HH:mm")}
-                                    </p>
-                                </div>
                             </div>
+                        </div>
+
+                        {/* Image Upload section */}
+                        <div className="rounded-xl bg-white border border-slate-200 p-4 mb-5">
+                            <p className="text-xs font-semibold uppercase text-slate-500 mb-3 flex items-center gap-1.5">
+                                <UploadIcon size={14} /> Vehicle Check-in Image <span className="text-red-500">*</span>
+                            </p>
+                            <Upload
+                                name="file"
+                                listType="picture-card"
+                                className="checkin-uploader"
+                                showUploadList={false}
+                                customRequest={async (options) => {
+                                    const { file, onSuccess, onError } = options;
+                                    setIsUploading(true);
+                                    try {
+                                        // Using standard FormData for Cloudinary
+                                        const formData = new FormData();
+                                        formData.append("file", file);
+                                        formData.append("upload_preset", "your_preset_here"); // NOTE: this should use your project's upload logic
+
+                                        // Simulating local object URL for immediate display since actual logic might be elsewhere
+                                        // In real implementation, you'd call your image upload API here
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => {
+                                            setCheckinImageUrl(e.target.result);
+                                            setCheckinImageFile(file);
+                                            setIsUploading(false);
+                                            onSuccess("Ok");
+                                            message.success("Image added successfully");
+                                        };
+                                        reader.readAsDataURL(file);
+                                    } catch (err) {
+                                        setIsUploading(false);
+                                        onError(err);
+                                        message.error("Failed to add image");
+                                    }
+                                }}
+                                beforeUpload={(file) => {
+                                    const isImage = file.type.startsWith("image/");
+                                    if (!isImage) message.error("You can only upload image files!");
+                                    return isImage;
+                                }}
+                            >
+                                {checkinImageUrl ? (
+                                    <img src={checkinImageUrl} alt="Vehicle Check-in" className="w-full h-full object-cover rounded-lg" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
+                                        {isUploading ? <Spin size="small" /> : <UploadIcon size={20} />}
+                                        <div className="text-xs font-medium">Click to Upload</div>
+                                    </div>
+                                )}
+                            </Upload>
                         </div>
 
                         {/* Action buttons */}
@@ -655,27 +624,12 @@ const VehicleEntry = () => {
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                disabled={approveLoading || checkinLoading}
-                                className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    confirmModal.type === "approve"
-                                        ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200"
-                                        : "bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
-                                }`}
+                                disabled={checkinLoading || isUploading || !checkinImageFile}
+                                className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
                             >
-                                {(approveLoading || checkinLoading) && (
-                                    <Spin size="small" />
-                                )}
-                                {confirmModal.type === "approve" ? (
-                                    <>
-                                        <ShieldCheck size={16} />
-                                        Confirm Approve
-                                    </>
-                                ) : (
-                                    <>
-                                        <LogIn size={16} />
-                                        Confirm Check In
-                                    </>
-                                )}
+                                {checkinLoading && <Spin size="small" />}
+                                <LogIn size={16} />
+                                Confirm Check In
                             </button>
                         </div>
                     </div>

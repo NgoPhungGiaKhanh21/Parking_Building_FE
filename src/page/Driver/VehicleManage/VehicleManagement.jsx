@@ -238,7 +238,7 @@ const VehicleList = () => {
                 <div className="relative overflow-hidden h-52">
                   <img
                     alt={vehicle.model}
-                    src={getVehicleImage(vehicle.vehicleTypeName)}
+                    src={vehicle.imageUrl || getVehicleImage(vehicle.vehicleTypeName)}
                     className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 ease-in-out"
                   />
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border border-white/20 flex items-center gap-1.5">

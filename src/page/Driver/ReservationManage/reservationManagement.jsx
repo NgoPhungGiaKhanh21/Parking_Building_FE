@@ -39,7 +39,7 @@ import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbread
 import VehicleDetailModal from "./VehicleDetailModal";
 
 const { Text, Title } = Typography;
-const { RangePicker } = DatePicker;
+
 
 // ─── Slot status config ────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -344,7 +344,6 @@ const ReservationManagement = () => {
     };
 
     const handleSubmit = (values) => {
-        const [start, end] = values.dateRange;
         const payload = {
             plateNumber: selectedVehicle.plateNumber,
             vehicleColor: selectedVehicle.vehicleColor,
@@ -352,8 +351,7 @@ const ReservationManagement = () => {
             model: selectedVehicle.model,
             vehicleTypeId: selectedVehicle.vehicleTypeId,
             slotId: selectedSlot.slotId,
-            reservationStart: start.format("YYYY-MM-DDTHH:mm:ss"),
-            reservationEnd: end.format("YYYY-MM-DDTHH:mm:ss"),
+            reservationStart: values.reservationStart.format("YYYY-MM-DDTHH:mm:ss"),
         };
         dispatch(createReservationsRequest(payload));
     };
@@ -369,7 +367,7 @@ const ReservationManagement = () => {
 
     const reservationStatusConfig = {
         PENDING: { color: "gold", icon: <Clock size={13} />, label: "Pending" },
-        APPROVED: { color: "cyan", icon: <ShieldCheck size={13} />, label: "Approved" },
+        CHECKED_IN: { color: "blue", icon: <ShieldCheck size={13} />, label: "Checked In" },
         ACTIVE: { color: "green", icon: <CheckCircle2 size={13} />, label: "Active" },
         CONFIRMED: { color: "blue", icon: <CheckCircle2 size={13} />, label: "Confirmed" },
         COMPLETED: { color: "default", icon: <CheckCircle2 size={13} />, label: "Completed" },
@@ -384,8 +382,8 @@ const ReservationManagement = () => {
         [myReservationList]
     );
 
-    const approvedReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "APPROVED" || r.reservationStatus === "ACTIVE" || r.reservationStatus === "CONFIRMED"),
+    const checkedInReservations = useMemo(
+        () => myReservationList.filter((r) => r.reservationStatus === "CHECKED_IN" || r.reservationStatus === "ACTIVE" || r.reservationStatus === "CONFIRMED"),
         [myReservationList]
     );
     const cancelledReservations = useMemo(
@@ -442,10 +440,6 @@ const ReservationManagement = () => {
                         <div className="rounded-lg bg-slate-50 p-3">
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Start</p>
                             <p className="text-xs font-semibold text-slate-700">{dayjs(r.reservationStart).format("DD/MM/YYYY HH:mm")}</p>
-                        </div>
-                        <div className="rounded-lg bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">End</p>
-                            <p className="text-xs font-semibold text-slate-700">{dayjs(r.reservationEnd).format("DD/MM/YYYY HH:mm")}</p>
                         </div>
                         <div className="rounded-lg bg-slate-50 p-3">
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Vehicle Type</p>
@@ -567,21 +561,21 @@ const ReservationManagement = () => {
                     ),
                 },
                 {
-                    key: "APPROVED",
+                    key: "CHECKED_IN",
                     label: (
                         <span className="flex items-center gap-1.5 font-medium text-sm">
                             <ShieldCheck size={14} />
-                            Approved
-                            {approvedReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-cyan-500 px-1.5 text-[10px] font-bold text-white">
-                                    {approvedReservations.length}
+                            Checked In
+                            {checkedInReservations.length > 0 && (
+                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">
+                                    {checkedInReservations.length}
                                 </span>
                             )}
                         </span>
                     ),
                     children: (
                         <div className="space-y-4">
-                            {renderReservationCards(approvedReservations)}
+                            {renderReservationCards(checkedInReservations)}
                         </div>
                     ),
                 },
@@ -993,36 +987,32 @@ const ReservationManagement = () => {
                 {/* Date Form */}
                 <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
                     <Form.Item
-                        name="dateRange"
+                        name="reservationStart"
                         label={
                             <div className="flex items-center justify-between w-full">
                                 <span className="font-semibold text-slate-700">
-                                    Reservation Period <span className="text-red-500">*</span>
+                                    Start Time <span className="text-red-500">*</span>
                                 </span>
                                 <Button
                                     type="link"
                                     size="small"
                                     onClick={() => {
-                                        const current = form.getFieldValue("dateRange") || [];
                                         form.setFieldsValue({
-                                            dateRange: [dayjs(), current[1] || null],
+                                            reservationStart: dayjs(),
                                         });
                                     }}
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 p-0 h-auto"
                                 >
-                                    <Clock size={12} /> Set Start to Now
+                                    <Clock size={12} /> Set to Now
                                 </Button>
                             </div>
                         }
                         rules={[
-                            { required: true, message: "Please select reservation start and end time!" },
+                            { required: true, message: "Please select reservation start time!" },
                             {
                                 validator(_, value) {
-                                    if (!value || !value[0] || !value[1]) return Promise.resolve();
-                                    if (value[1].isBefore(value[0])) {
-                                        return Promise.reject("End time must be after start time.");
-                                    }
-                                    if (value[0].isBefore(dayjs().subtract(5, "minute"))) {
+                                    if (!value) return Promise.resolve();
+                                    if (value.isBefore(dayjs().subtract(5, "minute"))) {
                                         return Promise.reject("Start time cannot be in the past.");
                                     }
                                     return Promise.resolve();
@@ -1030,13 +1020,13 @@ const ReservationManagement = () => {
                             },
                         ]}
                     >
-                        <RangePicker
+                        <DatePicker
                             showTime={{ format: "HH:mm" }}
                             format="YYYY-MM-DD HH:mm"
                             className="w-full"
                             size="large"
                             disabledDate={(current) => current && current < dayjs().startOf("day")}
-                            placeholder={["Start date & time", "End date & time"]}
+                            placeholder="Select start date & time"
                         />
                     </Form.Item>
 
