@@ -9,7 +9,7 @@ export const getAllDriverApi = (data) => {
 };
 
 export const getAllVehicleApi = (data) => {
-  return api.get("/manager/vehicles", data);
+  return api.get("/manager/vehicles", { params: data });
 };
 
 export const changeStatusVehicleApi = (data) => {

@@ -58,7 +58,7 @@ import { watchConfirmPaymentByStaff } from "./staff/payment/confirmPaymentByStaf
 import { watchGetDriverPayments } from "./driver/payment/getDriverPayments/getDriverPaymentsSaga";
 import { watchGetAllVehicleManager } from "./manager/Vehicle/getAllVehicle/getAllVehicleSaga";
 import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSaga";
-
+import { watchGetRevenue } from "./manager/Revenue/getRevenueSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -107,6 +107,8 @@ export default function* rootSaga() {
     watchUpdatePricingPolicy(),
     watchDeletePricingPolicy(),
     watchUpdateZone(),
+    watchGetRevenue(),
+    
     //staff
     watchGetAllReservation(),
     watchApproveReservation(),
