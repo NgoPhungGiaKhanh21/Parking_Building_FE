@@ -88,7 +88,7 @@ const CheckoutResultModal = ({ open, result, onClose }) => {
       centered
       width={560}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
@@ -461,7 +461,7 @@ const VehicleExit = () => {
         centered
         width={480}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         {confirmModal.reservation && (
           <div>

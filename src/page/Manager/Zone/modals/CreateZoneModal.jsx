@@ -24,7 +24,7 @@ const CreateZoneModal = ({
       onCancel={onCancel}
       footer={null}
       width={520}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
         <p>

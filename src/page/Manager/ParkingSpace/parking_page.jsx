@@ -13,11 +13,13 @@ import {
   clearGetSlotByZone,
   getSlotByZoneRequest,
 } from "../../../redux/manager/Building/zone/getSlotByZone/getSlotByZoneSlice";
+import { getOccupiedSlotRequest, clearGetOccupiedSlot } from "../../../redux/manager/Building/zone/getOccupiedSlot/getOccupiedSlotSlice";
 import {
   normalizeSlotStatus,
   splitSlotsIntoTwoRows,
 } from "../Building/utils/buildingUtils";
 import { getSlotCardClass, SLOT_STATUS_LEGEND } from "./parkingUtils";
+import SlotDetailModal from "./SlotDetailModal";
 
 const mapSelectOptions = (items, labelKey = "name") =>
   (Array.isArray(items) ? items : [])
@@ -56,6 +58,8 @@ const ParkingSpacePage = () => {
   const [selectedFloorId, setSelectedFloorId] = useState(null);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedSlotName, setSelectedSlotName] = useState("");
 
   const { buildings, loading: buildingsLoading } = useSelector(
     (state) => state.getBuildingList
@@ -125,6 +129,7 @@ const ParkingSpacePage = () => {
     setSelectedFloorId(null);
     setSelectedZoneId(null);
     setSelectedSlotId(null);
+    setIsModalVisible(false);
     dispatch(clearGetSlotByZone());
   };
 
@@ -138,6 +143,23 @@ const ParkingSpacePage = () => {
   const handleZoneChange = (value) => {
     setSelectedZoneId(value);
     setSelectedSlotId(null);
+    setIsModalVisible(false);
+  };
+
+  const handleSlotSelect = (item) => {
+    setSelectedSlotId(item.id);
+    setSelectedSlotName(item.name);
+    const status = normalizeSlotStatus(item.status);
+    if (status === "OCCUPIED" || status === "RESERVED" || status === "PENDING_EXIT") {
+      dispatch(clearGetOccupiedSlot());
+      dispatch(getOccupiedSlotRequest({ slotId: item.id }));
+      setIsModalVisible(true);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    dispatch(clearGetOccupiedSlot());
   };
 
   return (
@@ -256,7 +278,7 @@ const ParkingSpacePage = () => {
                   key={slot.id || slot.name}
                   slot={slot}
                   isSelected={selectedSlotId === slot.id}
-                  onSelect={(item) => setSelectedSlotId(item.id)}
+                  onSelect={handleSlotSelect}
                 />
               ))}
             </div>
@@ -274,13 +296,19 @@ const ParkingSpacePage = () => {
                   key={slot.id || slot.name}
                   slot={slot}
                   isSelected={selectedSlotId === slot.id}
-                  onSelect={(item) => setSelectedSlotId(item.id)}
+                  onSelect={handleSlotSelect}
                 />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      <SlotDetailModal 
+        visible={isModalVisible} 
+        onClose={handleModalClose} 
+        slotName={selectedSlotName}
+      />
     </div>
   );
 };

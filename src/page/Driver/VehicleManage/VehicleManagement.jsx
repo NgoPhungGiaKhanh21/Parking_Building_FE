@@ -123,9 +123,9 @@ const VehicleList = () => {
   const getVehicleImage = (type) => {
     const typeName = type?.toLowerCase() || "";
     if (typeName.includes("car")) {
-      return "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=500&q=80";
+      return "data:image/png;base64,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";
     }
-    return "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=500&q=80";
+    return "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQY8pVXpFHWp-qPKYZsLe2v8p4ydykAl_OVXQ&s";
   };
 
   const vehicleData = getAllVehicles?.data || [];
@@ -314,7 +314,7 @@ const VehicleList = () => {
         open={isCreateModalVisible}
         onCancel={handleCreateCancel}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         centered
         width={500}
         closeIcon={<X className="w-5 h-5 text-gray-400 mt-1 mr-1" />}

@@ -27,6 +27,7 @@ import PaymentSuccess from "../page/Driver/Payment/PaymentSuccess";
 import PaymentCancel from "../page/Driver/Payment/PaymentCancel";
 import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
 import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
+import Availability from "../page/Driver/Availability/availability"
 const router = createBrowserRouter([
   {
     path: "/",
@@ -117,6 +118,7 @@ const router = createBrowserRouter([
         element: <DriverLayout />,
         children: [
           { path: "", element: <VehicleManagement /> },
+          { path: "availability", element: <Availability /> },
           { path: "reservation", element: <ReservationManage /> },
           { path: "current-session", element: <CurrentSession /> },
           { path: "payment", element: <Payment /> },

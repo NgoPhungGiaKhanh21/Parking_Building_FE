@@ -16,7 +16,7 @@ const DetailItem = ({ label, value }) => (
 
 const PricingPolicyDetailModal = ({ open, onCancel, loading, policy }) => (
   <Modal
-    title="Chi tiết chính sách giá"
+    title="Pricing Policy Details"
     open={open}
     onCancel={onCancel}
     footer={null}
@@ -29,35 +29,37 @@ const PricingPolicyDetailModal = ({ open, onCancel, loading, policy }) => (
       </div>
     ) : (
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <DetailItem label="vehicleTypeId" value={policy?.vehicleTypeId} />
-        <DetailItem label="policyName" value={policy?.policyName} />
-        <DetailItem label="Loại xe" value={getVehicleTypeName(policy)} />
+        <DetailItem label="Policy Name" value={policy?.policyName} />
+        <DetailItem label="Vehicle Type" value={getVehicleTypeName(policy)} />
         <DetailItem
-          label="status"
+          label="Status"
           value={
             policy?.status ? (
               <Tag color={policy.status === "ACTIVE" ? "green" : "red"}>
-                {policy.status}
+                {policy.status === "ACTIVE" ? "Active" : "Inactive"}
               </Tag>
             ) : (
               "—"
             )
           }
         />
-        <DetailItem label="basePrice" value={formatCurrency(policy?.basePrice)} />
-        <DetailItem label="hourlyRate" value={formatCurrency(policy?.hourlyRate)} />
-        <DetailItem label="maxHours" value={policy?.maxHours ?? "—"} />
+        <DetailItem label="Base Price" value={formatCurrency(policy?.basePrice)} />
+        <DetailItem label="Hourly Rate" value={formatCurrency(policy?.hourlyRate)} />
         <DetailItem
-          label="effectiveFrom"
+          label="Max Hours"
+          value={policy?.maxHours != null ? `${policy.maxHours} hrs` : "—"}
+        />
+        <DetailItem
+          label="Effective From"
           value={formatDateTime(policy?.effectiveFrom)}
         />
         <DetailItem
-          label="effectiveTo"
+          label="Effective To"
           value={formatDateTime(policy?.effectiveTo)}
         />
         {policy?.createdAt && (
           <DetailItem
-            label="createdAt"
+            label="Created At"
             value={formatDateTime(policy.createdAt)}
           />
         )}
