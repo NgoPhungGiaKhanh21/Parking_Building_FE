@@ -1,9 +1,13 @@
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from "antd";
-
-const STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "Đang áp dụng" },
-  { value: "INACTIVE", label: "Ngừng áp dụng" },
-];
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Switch,
+} from "antd";
 
 const PricingPolicyFormModal = ({
   open,
@@ -32,12 +36,12 @@ const PricingPolicyFormModal = ({
         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
           <Form.Item
             name="vehicleTypeId"
-            label="vehicleTypeId"
-            rules={[{ required: true, message: "Vui lòng chọn loại xe." }]}
+            label="Vehicle Type"
+            rules={[{ required: true, message: "Please select a vehicle type." }]}
           >
             <Select
               size="large"
-              placeholder="Chọn loại xe"
+              placeholder="Select vehicle type"
               options={vehicleTypeOptions}
               showSearch
               optionFilterProp="label"
@@ -46,65 +50,77 @@ const PricingPolicyFormModal = ({
 
           <Form.Item
             name="policyName"
-            label="policyName"
-            rules={[{ required: true, message: "Vui lòng nhập tên chính sách." }]}
+            label="Policy Name"
+            rules={[{ required: true, message: "Please enter a policy name." }]}
           >
-            <Input size="large" placeholder="VD: Motorbike Standard Pricing" />
+            <Input size="large" placeholder="e.g. Motorbike Standard Pricing" />
           </Form.Item>
 
           <Form.Item
             name="basePrice"
-            label="basePrice"
-            rules={[{ required: true, message: "Vui lòng nhập basePrice." }]}
+            label="Base Price"
+            tooltip="Initial parking fee when a session starts"
+            rules={[{ required: true, message: "Please enter the base price." }]}
           >
-            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
+            <InputNumber size="large" min={0} className="w-full" addonAfter="VND" />
           </Form.Item>
 
           <Form.Item
             name="hourlyRate"
-            label="hourlyRate"
-            rules={[{ required: true, message: "Vui lòng nhập hourlyRate." }]}
+            label="Hourly Rate"
+            tooltip="Fee charged per additional hour"
+            rules={[{ required: true, message: "Please enter the hourly rate." }]}
           >
-            <InputNumber size="large" min={0} className="w-full" addonAfter="đ" />
+            <InputNumber size="large" min={0} className="w-full" addonAfter="VND" />
           </Form.Item>
 
           <Form.Item
             name="maxHours"
-            label="maxHours"
-            rules={[{ required: true, message: "Vui lòng nhập maxHours." }]}
+            label="Max Hours"
+            tooltip="Maximum billable hours for this policy"
+            rules={[{ required: true, message: "Please enter max hours." }]}
           >
-            <InputNumber size="large" min={1} precision={0} className="w-full" addonAfter="giờ" />
+            <InputNumber
+              size="large"
+              min={1}
+              precision={0}
+              className="w-full"
+              addonAfter="hrs"
+            />
           </Form.Item>
 
           <Form.Item
             name="status"
-            label="status"
-            rules={[{ required: true, message: "Vui lòng chọn trạng thái." }]}
+            label="Status"
+            valuePropName="checked"
+            getValueFromEvent={(checked) => (checked ? "ACTIVE" : "INACTIVE")}
+            getValueProps={(value) => ({ checked: value === "ACTIVE" })}
+            rules={[{ required: true, message: "Please set the policy status." }]}
           >
-            <Select size="large" options={STATUS_OPTIONS} />
+            <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
           </Form.Item>
 
           <Form.Item
             name="effectiveFrom"
-            label="effectiveFrom"
-            rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu." }]}
+            label="Effective From"
+            rules={[{ required: true, message: "Please select a start date." }]}
           >
             <DatePicker showTime size="large" className="w-full" />
           </Form.Item>
 
           <Form.Item
             name="effectiveTo"
-            label="effectiveTo"
-            rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc." }]}
+            label="Effective To"
+            rules={[{ required: true, message: "Please select an end date." }]}
           >
             <DatePicker showTime size="large" className="w-full" />
           </Form.Item>
         </div>
 
         <div className="mt-4 flex justify-end gap-3">
-          <Button onClick={onCancel}>Hủy</Button>
+          <Button onClick={onCancel}>Cancel</Button>
           <Button type="primary" htmlType="submit" loading={loading}>
-            Lưu
+            Save
           </Button>
         </div>
       </Form>
