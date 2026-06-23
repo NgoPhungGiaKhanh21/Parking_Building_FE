@@ -20,5 +20,24 @@ export const checkInApi = (data) => {
 };
 
 export const checkOutApi = (data) => {
-    return api.post("/sessions/checkout", data);
+    if (data.checkoutImage) {
+        const formData = new FormData();
+        formData.append("checkoutImage", data.checkoutImage);
+
+        const params = new URLSearchParams();
+        if (data.ticketCode) params.append("ticketCode", data.ticketCode);
+        if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
+
+        return api.post(`sessions/checkout?${params.toString()}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
+
+    return api.post("/sessions/checkout", {
+        ticketCode: data.ticketCode,
+        paymentMethod: data.paymentMethod,
+        checkoutImageUrl: data.checkoutImageUrl || "",
+    });
 };

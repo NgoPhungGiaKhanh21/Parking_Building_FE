@@ -1,6 +1,7 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
 import { checkOutApi } from "../../../../service/staff/parking_sessionApi";
+import { normalizeReservation } from "../../../../utils/reservationSessionUtils";
 import {
     createCheckoutRequest,
     createCheckoutSuccess,
@@ -24,7 +25,7 @@ function* handleCreateCheckout(action) {
             return;
         }
 
-        const data = body?.data ?? body;
+        const data = normalizeReservation(body?.data ?? body);
         yield put(
             createCheckoutSuccess({
                 message: body?.message || "Check-out successful",

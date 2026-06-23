@@ -16,6 +16,7 @@ import {
   Hash,
   ParkingCircle,
   ArrowLeftSquare,
+  ImageIcon,
 } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -25,6 +26,12 @@ import {
   createCheckoutRequest,
   resetCheckout,
 } from "../../../redux/staff/parking_session/checkout/createCheckoutSlice";
+import {
+  normalizeReservation,
+  mergeCheckoutSession,
+  recordsMatch,
+  formatParkingDurationLabel,
+} from "../../../utils/reservationSessionUtils";
 
 const isCheckoutEligible = (r) => {
   if (!r?.ticketCode) return false;
@@ -37,6 +44,7 @@ const isCheckoutEligible = (r) => {
     return false;
   }
   return (
+    status === "CHECKED_IN" ||
     status === "ACTIVE" ||
     status === "CONFIRMED" ||
     r.sessionStatus === "ACTIVE" ||
@@ -46,6 +54,11 @@ const isCheckoutEligible = (r) => {
 
 const reservationStatusConfig = {
   PENDING: { color: "gold", icon: <Clock size={13} />, label: "Pending" },
+  CHECKED_IN: {
+    color: "blue",
+    icon: <ShieldCheck size={13} />,
+    label: "Checked In",
+  },
   APPROVED: {
     color: "cyan",
     icon: <ShieldCheck size={13} />,
@@ -69,6 +82,29 @@ const reservationStatusConfig = {
 const formatCurrency = (value) =>
   value != null ? `${Number(value).toLocaleString("vi-VN")}đ` : "—";
 
+const formatDateTime = (value) =>
+  value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—";
+
+const SessionImagePanel = ({ label, src, emptyText = "No image" }) => (
+  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+    <p className="text-xs font-semibold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
+      <ImageIcon size={14} />
+      {label}
+    </p>
+    {src ? (
+      <img
+        src={src}
+        alt={label}
+        className="mx-auto w-full max-w-xs h-56 object-contain rounded-lg border border-slate-200 bg-white"
+      />
+    ) : (
+      <div className="mx-auto flex h-56 w-full max-w-xs items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white text-xs text-slate-400">
+        {emptyText}
+      </div>
+    )}
+  </div>
+);
+
 const CheckoutResultDetail = ({ label, value }) => (
   <div className="rounded-lg border border-slate-200 bg-white p-3">
     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
@@ -78,8 +114,9 @@ const CheckoutResultDetail = ({ label, value }) => (
   </div>
 );
 
-const CheckoutResultModal = ({ open, result, onClose }) => {
+const CheckoutResultModal = ({ open, result, source, onClose }) => {
   if (!result) return null;
+  const merged = mergeCheckoutSession(source, result);
 
   return (
     <Modal
@@ -108,52 +145,55 @@ const CheckoutResultModal = ({ open, result, onClose }) => {
         <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-1">
           Total Fee
         </p>
-        <p className="text-3xl font-black">{formatCurrency(result.totalFee)}</p>
-        {result.checkoutTime && (
+        <p className="text-3xl font-black">{formatCurrency(merged.totalFee)}</p>
+        {merged.checkoutTime && (
           <p className="text-xs text-emerald-200 mt-2">
-            {dayjs(result.checkoutTime).format("DD/MM/YYYY HH:mm")}
+            {formatDateTime(merged.checkoutTime)}
           </p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <CheckoutResultDetail label="Slot" value={result.slotName} />
+        <CheckoutResultDetail label="Check-in Time" value={formatDateTime(merged.checkinTime)} />
+        <CheckoutResultDetail label="Check-out Time" value={formatDateTime(merged.checkoutTime)} />
+        <CheckoutResultDetail label="Slot" value={merged.slotName} />
         <CheckoutResultDetail
           label="Location"
-          value={[result.zoneName, result.floorName]
+          value={[merged.zoneName, merged.floorName]
             .filter(Boolean)
             .join(" · ")}
         />
-        <CheckoutResultDetail label="Building" value={result.buildingName} />
+        <CheckoutResultDetail label="Building" value={merged.buildingName} />
         <CheckoutResultDetail
           label="Vehicle Type"
-          value={result.vehicleTypeName}
+          value={merged.vehicleTypeName}
         />
         <CheckoutResultDetail
           label="Base Price"
-          value={formatCurrency(result.basePrice)}
+          value={formatCurrency(merged.basePrice)}
         />
         <CheckoutResultDetail
           label="Hourly Rate"
-          value={formatCurrency(result.hourlyRate)}
+          value={formatCurrency(merged.hourlyRate)}
         />
         <CheckoutResultDetail
           label="Parking Time"
-          value={
-            result.parkingHours != null || result.parkingMinutes != null
-              ? `${result.parkingHours ?? 0}h ${result.parkingMinutes ?? 0}m`
-              : "—"
-          }
+          value={formatParkingDurationLabel(merged)}
         />
-        <CheckoutResultDetail label="Payment ID" value={result.paymentId} />
+        <CheckoutResultDetail label="Payment ID" value={merged.paymentId} />
+      </div>
+
+      <div className="flex flex-col gap-3 mb-4">
+        <SessionImagePanel label="Check-in Image" src={merged.checkinImageUrl} />
+        <SessionImagePanel label="Check-out Image" src={merged.checkoutImageUrl} />
       </div>
 
       <div className="flex flex-wrap gap-2 mb-5">
-        {result.sessionStatus && (
-          <Tag color="green">Session: {result.sessionStatus}</Tag>
+        {merged.sessionStatus && (
+          <Tag color="green">Session: {merged.sessionStatus}</Tag>
         )}
-        {result.paymentStatus && (
-          <Tag color="blue">Payment: {result.paymentStatus}</Tag>
+        {merged.paymentStatus && (
+          <Tag color="blue">Payment: {merged.paymentStatus}</Tag>
         )}
       </div>
 
@@ -170,7 +210,7 @@ const CheckoutResultModal = ({ open, result, onClose }) => {
   );
 };
 
-const SessionCard = ({ r, actions }) => {
+const SessionCard = ({ r, actions, completed = false }) => {
   const cfg = reservationStatusConfig[r.reservationStatus] || {
     color: "default",
     icon: null,
@@ -217,18 +257,20 @@ const SessionCard = ({ r, actions }) => {
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
-            Start
+            Reservation Start
           </p>
           <p className="text-xs font-semibold text-slate-700">
-            {dayjs(r.reservationStart).format("DD/MM/YYYY HH:mm")}
+            {formatDateTime(r.reservationStart)}
           </p>
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">
-            End
+            {!completed && r.paymentTime ? "Payment Time" : "Reservation End"}
           </p>
           <p className="text-xs font-semibold text-slate-700">
-            {dayjs(r.reservationEnd).format("DD/MM/YYYY HH:mm")}
+            {!completed && r.paymentTime
+              ? formatDateTime(r.paymentTime)
+              : formatDateTime(r.reservationEnd)}
           </p>
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
@@ -236,10 +278,47 @@ const SessionCard = ({ r, actions }) => {
             Type
           </p>
           <p className="text-xs font-semibold text-slate-700">
-            {r.floorVehicleTypeName}
+            {r.floorVehicleTypeName ?? r.vehicleTypeName}
           </p>
         </div>
       </div>
+
+      {completed && (
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3">
+            <p className="text-[10px] font-bold uppercase text-emerald-500 mb-0.5">
+              Check-in Time
+            </p>
+            <p className="text-xs font-semibold text-emerald-800">
+              {formatDateTime(r.checkinTime)}
+            </p>
+          </div>
+          <div className="rounded-lg bg-orange-50 border border-orange-100 p-3">
+            <p className="text-[10px] font-bold uppercase text-orange-500 mb-0.5">
+              Check-out Time
+            </p>
+            <p className="text-xs font-semibold text-orange-800">
+              {formatDateTime(r.checkoutTime)}
+            </p>
+          </div>
+          <div className="rounded-lg bg-violet-50 border border-violet-100 p-3">
+            <p className="text-[10px] font-bold uppercase text-violet-500 mb-0.5">
+              Total Fee
+            </p>
+            <p className="text-xs font-bold text-violet-800">
+              {formatCurrency(r.totalFee)}
+            </p>
+          </div>
+          <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
+            <p className="text-[10px] font-bold uppercase text-blue-500 mb-0.5">
+              Parking Duration
+            </p>
+            <p className="text-xs font-semibold text-blue-800">
+              {formatParkingDurationLabel(r)}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-lg bg-indigo-50 p-3">
@@ -274,13 +353,33 @@ const SessionCard = ({ r, actions }) => {
         </div>
       </div>
 
-      {r.reservationNote && (
+      {completed && (
+        <div className="mt-3 flex flex-col gap-3">
+          <SessionImagePanel label="Check-in Image" src={r.checkinImageUrl} />
+          <SessionImagePanel label="Check-out Image" src={r.checkoutImageUrl} />
+        </div>
+      )}
+
+      {!completed && r.checkinImageUrl && (
+        <div className="mt-3">
+          <SessionImagePanel label="Check-in Image" src={r.checkinImageUrl} />
+        </div>
+      )}
+
+      {completed && (r.paymentStatus || r.sessionStatus) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {r.sessionStatus && <Tag color="green">Session: {r.sessionStatus}</Tag>}
+          {r.paymentStatus && <Tag color="blue">Payment: {r.paymentStatus}</Tag>}
+        </div>
+      )}
+
+      {(r.reservationNote || r.note) && (
         <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3">
           <MessageSquareText
             size={14}
             className="mt-0.5 shrink-0 text-amber-500"
           />
-          <p className="text-xs text-amber-800">{r.reservationNote}</p>
+          <p className="text-xs text-amber-800">{r.reservationNote ?? r.note}</p>
         </div>
       )}
 
@@ -308,6 +407,8 @@ const VehicleExit = () => {
     open: false,
     reservation: null,
   });
+  const [checkoutSource, setCheckoutSource] = useState(null);
+  const [sessionOverlays, setSessionOverlays] = useState({});
 
   const {
     getAllReservation,
@@ -330,23 +431,82 @@ const VehicleExit = () => {
     [getAllReservation],
   );
 
+  const mergedCheckoutResult = useMemo(
+    () => (checkoutResult ? mergeCheckoutSession(checkoutSource, checkoutResult) : null),
+    [checkoutResult, checkoutSource],
+  );
+
+  const resolveRecord = useCallback(
+    (record) => {
+      const base = normalizeReservation(record);
+      if (mergedCheckoutResult && recordsMatch(base, mergedCheckoutResult)) {
+        return mergeCheckoutSession(base, mergedCheckoutResult);
+      }
+      const overlay = Object.values(sessionOverlays).find((item) =>
+        recordsMatch(base, item),
+      );
+      return overlay ? mergeCheckoutSession(base, overlay) : base;
+    },
+    [mergedCheckoutResult, sessionOverlays],
+  );
+
   const activeList = useMemo(
-    () => reservationList.filter(isCheckoutEligible),
-    [reservationList],
+    () =>
+      reservationList
+        .filter(isCheckoutEligible)
+        .map(resolveRecord)
+        .sort((a, b) => {
+          const aTime = a.paymentTime
+            ? dayjs(a.paymentTime).valueOf()
+            : Number.POSITIVE_INFINITY;
+          const bTime = b.paymentTime
+            ? dayjs(b.paymentTime).valueOf()
+            : Number.POSITIVE_INFINITY;
+          return aTime - bTime;
+        }),
+    [reservationList, resolveRecord],
   );
 
   const completedList = useMemo(
-    () => reservationList.filter((r) => r.reservationStatus === "COMPLETED"),
-    [reservationList],
+    () =>
+      reservationList
+        .filter((r) => r.reservationStatus === "COMPLETED")
+        .map(resolveRecord)
+        .sort((a, b) => {
+          const aTime = a.checkoutTime ? dayjs(a.checkoutTime).valueOf() : 0;
+          const bTime = b.checkoutTime ? dayjs(b.checkoutTime).valueOf() : 0;
+          return bTime - aTime;
+        }),
+    [reservationList, resolveRecord],
   );
 
   const handleCheckout = useCallback(
     (reservation) => {
       dispatch(resetCheckout());
-      setConfirmModal({ open: true, reservation });
+      const normalized = normalizeReservation(reservation);
+      setCheckoutSource(normalized);
+      setConfirmModal({ open: true, reservation: normalized });
     },
     [dispatch],
   );
+
+  const persistCheckoutOverlay = useCallback((merged) => {
+    if (!merged) return;
+    setSessionOverlays((prev) => {
+      const next = { ...prev };
+      const keys = [merged.ticketCode, merged.sessionId, merged.reservationId].filter(
+        Boolean,
+      );
+      keys.forEach((key) => {
+        next[key] = merged;
+      });
+      return next;
+    });
+  }, []);
+
+  const handleCloseConfirm = useCallback(() => {
+    setConfirmModal({ open: false, reservation: null });
+  }, []);
 
   const handleConfirm = useCallback(() => {
     if (checkoutLoading || !confirmModal.reservation) return;
@@ -358,7 +518,7 @@ const VehicleExit = () => {
     );
   }, [checkoutLoading, confirmModal.reservation, dispatch]);
 
-  const renderSessionList = (list, actionRenderer) => {
+  const renderSessionList = (list, actionRenderer, completed = false) => {
     if (reservationsLoading) {
       return (
         <div className="flex justify-center py-16">
@@ -369,7 +529,13 @@ const VehicleExit = () => {
     if (list.length === 0) {
       return (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-16">
-          <Empty description="No checked-in vehicles found" />
+          <Empty
+            description={
+              completed
+                ? "No completed sessions found"
+                : "No checked-in vehicles found"
+            }
+          />
         </div>
       );
     }
@@ -379,6 +545,7 @@ const VehicleExit = () => {
           <SessionCard
             key={r.reservationId}
             r={r}
+            completed={completed}
             actions={actionRenderer ? actionRenderer(r) : null}
           />
         ))}
@@ -450,14 +617,14 @@ const VehicleExit = () => {
                 Completed
               </span>
             ),
-            children: renderSessionList(completedList),
+            children: renderSessionList(completedList, null, true),
           },
         ]}
       />
 
       <Modal
         open={confirmModal.open && !checkoutResult}
-        onCancel={() => setConfirmModal({ open: false, reservation: null })}
+        onCancel={handleCloseConfirm}
         centered
         width={480}
         footer={null}
@@ -517,9 +684,7 @@ const VehicleExit = () => {
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setConfirmModal({ open: false, reservation: null })
-                }
+                onClick={handleCloseConfirm}
                 className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 cursor-pointer"
               >
                 Cancel
@@ -539,11 +704,14 @@ const VehicleExit = () => {
       </Modal>
 
       <CheckoutResultModal
-        open={Boolean(checkoutResult)}
-        result={checkoutResult}
+        open={Boolean(mergedCheckoutResult)}
+        result={mergedCheckoutResult}
+        source={checkoutSource}
         onClose={() => {
+          persistCheckoutOverlay(mergedCheckoutResult);
           dispatch(resetCheckout());
           setConfirmModal({ open: false, reservation: null });
+          setCheckoutSource(null);
         }}
       />
     </div>

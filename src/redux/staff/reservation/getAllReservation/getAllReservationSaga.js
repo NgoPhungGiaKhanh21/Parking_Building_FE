@@ -1,5 +1,6 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { getAllReservationApi } from "../../../../service/staff/reservationApi";
+import { normalizeReservation } from "../../../../utils/reservationSessionUtils";
 import {
   getAllReservationRequest,
   getAllReservationSuccess,
@@ -14,7 +15,7 @@ function* handleGetAllReservation(action) {
         const data = Array.isArray(raw)
             ? raw
             : raw?.reservations ?? raw?.content ?? [];
-        yield put(getAllReservationSuccess(data));
+        yield put(getAllReservationSuccess(data.map(normalizeReservation)));
   } catch (error) {
     const errorData = error.response?.data;
     const errorMessage =
