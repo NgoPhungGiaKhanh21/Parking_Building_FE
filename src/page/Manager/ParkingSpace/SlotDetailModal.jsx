@@ -1,9 +1,9 @@
 import React from 'react';
-import { Modal, Spin } from 'antd';
+import { Modal, Spin, Image } from 'antd';
 import { useSelector } from 'react-redux';
 import { 
   Car, User, Clock, Calendar, 
-  MapPin, Tag, Hash, CreditCard 
+  MapPin, Tag, Hash, CreditCard, ImageIcon
 } from 'lucide-react';
 
 const formatDateTime = (dateStr) => {
@@ -175,6 +175,20 @@ const SlotDetailModal = ({ visible, onClose, slotName }) => {
               </div>
             </div>
 
+            {/* Check-in Image */}
+            {data.checkinImageUrl && (
+              <div className="col-span-1 md:col-span-2">
+                <SectionHeading icon={ImageIcon} title="Check-in Image" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow flex justify-center">
+                  <Image
+                    src={data.checkinImageUrl}
+                    alt="Check-in Image"
+                    className="rounded-xl max-h-72 object-contain"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Reservation Details (If applicable) */}
             {data.reservationId && (
               <div className="col-span-1 md:col-span-2">
@@ -184,10 +198,9 @@ const SlotDetailModal = ({ visible, onClose, slotName }) => {
                     <span className="text-sm font-semibold text-slate-700">Reservation Status</span>
                     <StatusBadge status={data.reservationStatus} />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <StackedDetail label="Ticket Code" value={data.ticketCode} isBold valueClass="text-purple-600 font-mono text-base" />
                     <StackedDetail label="Start Time" value={formatDateTime(data.reservationStart)} />
-                    <StackedDetail label="End Time" value={formatDateTime(data.reservationEnd)} />
                   </div>
                 </div>
               </div>

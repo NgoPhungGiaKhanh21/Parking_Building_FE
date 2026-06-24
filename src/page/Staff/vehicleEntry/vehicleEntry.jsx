@@ -10,6 +10,7 @@ import {
     Tooltip,
     Upload,
     message,
+    Image,
 } from "antd";
 import {
     Car,
@@ -32,6 +33,7 @@ import {
     DollarSign,
     AlertCircle,
     Upload as UploadIcon,
+    ImageIcon,
 } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -204,6 +206,56 @@ const ReservationCard = ({ r, actions }) => {
                 </div>
             )}
 
+
+            {/* Check-in Image */}
+            {r.checkinImageUrl && (
+                <div
+                    className="mt-4 rounded-2xl p-[2px]"
+                    style={{
+                        background: "linear-gradient(135deg, #6366f1, #3b82f6, #06b6d4)",
+                    }}
+                >
+                    <div className="rounded-[14px] bg-white p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 text-white shadow-sm">
+                                <ImageIcon size={14} />
+                            </div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-transparent bg-clip-text"
+                                style={{ backgroundImage: "linear-gradient(135deg, #6366f1, #06b6d4)" }}
+                            >
+                                Check-in Image
+                            </span>
+                        </div>
+                        <div className="flex flex-col items-center w-full">
+                            <div className="overflow-hidden rounded-xl shadow-lg ring-1 ring-slate-200/60" style={{ width: "fit-content" }}>
+                                <Image
+                                    src={r.checkinImageUrl}
+                                    alt="Check-in vehicle"
+                                    width={280}
+                                    height={180}
+                                    className="!rounded-xl !object-cover"
+                                    style={{
+                                        borderRadius: 12,
+                                        objectFit: "cover",
+                                        display: "block",
+                                        transition: "transform 0.3s ease",
+                                    }}
+                                    placeholder={
+                                        <div className="flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl"
+                                            style={{ width: 280, height: 180 }}
+                                        >
+                                            <Spin size="small" />
+                                        </div>
+                                    }
+                                />
+                            </div>
+                            <p className="mt-2 text-[10px] text-slate-400 font-medium">
+                                Click to preview full image
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Ticket code + Actions */}
             <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">

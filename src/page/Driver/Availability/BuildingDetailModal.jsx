@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal } from 'antd';
+import React, { useMemo } from 'react';
+import { Modal, Tabs } from 'antd';
 import { 
   Building2, 
   Clock, 
@@ -31,6 +31,16 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 const BuildingDetailModal = ({ visible, onClose, building }) => {
+  const zonesByFloor = useMemo(() => {
+    if (!building?.zones) return {};
+    return building.zones.reduce((acc, zone) => {
+      const floorName = zone.floorName || 'Unknown Floor';
+      if (!acc[floorName]) acc[floorName] = [];
+      acc[floorName].push(zone);
+      return acc;
+    }, {});
+  }, [building]);
+
   if (!building) return null;
 
   return (
@@ -74,8 +84,14 @@ const BuildingDetailModal = ({ visible, onClose, building }) => {
               <Clock size={20} className="text-emerald-500" />
               <h4 className="font-bold text-slate-700">Operating Hours</h4>
             </div>
-            <p className="text-slate-600 font-medium text-lg ml-8">24/7</p>
-            <p className="text-slate-400 text-sm ml-8 mt-1">Open all days including holidays</p>
+            <p className="text-slate-600 font-medium text-lg ml-8">
+              {building.operatingHoursDisplay || `${building.operatingStartTime || '??'} - ${building.operatingEndTime || '??'}`}
+            </p>
+            <p className="text-slate-400 text-sm ml-8 mt-1">
+              {building.operatingStartTime && building.operatingEndTime
+                ? `Open daily from ${building.operatingStartTime?.slice(0, 5)} to ${building.operatingEndTime?.slice(0, 5)}`
+                : 'Operating hours not available'}
+            </p>
           </div>
           
           <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm">
@@ -129,20 +145,33 @@ const BuildingDetailModal = ({ visible, onClose, building }) => {
 
         {/* Zone Availability */}
         <Section icon={MapPin} title="Zone Availability">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {building.zones?.map((zone) => (
-              <div key={zone.zoneId} className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-700">Zone {zone.zoneName}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Floor: {zone.floorName}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-blue-600">{zone.availableSlots} <span className="text-slate-400 font-medium text-xs">/ {zone.totalSlots}</span></p>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Available</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {Object.keys(zonesByFloor).length > 0 ? (
+            <Tabs
+              defaultActiveKey="0"
+              items={Object.entries(zonesByFloor).map(([floorName, zones], index) => ({
+                key: String(index),
+                label: <span className="font-semibold">{floorName}</span>,
+                children: (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                    {zones.map((zone) => (
+                      <div key={zone.zoneId} className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-between">
+                        <div>
+                          <h4 className="font-bold text-slate-700">Zone: {zone.zoneName}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">Floor: {zone.floorName}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-blue-600">{zone.availableSlots} <span className="text-slate-400 font-medium text-xs">/ {zone.totalSlots}</span></p>
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Available</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              }))}
+            />
+          ) : (
+            <p className="text-slate-500 text-sm italic">No zone data available.</p>
+          )}
         </Section>
         
       </div>

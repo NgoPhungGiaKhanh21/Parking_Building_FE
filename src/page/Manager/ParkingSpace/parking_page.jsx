@@ -268,7 +268,7 @@ const ParkingSpacePage = () => {
         ) : (
           <div className="space-y-6">
             <p className="text-center text-sm font-semibold text-slate-500">
-              {selectedBuilding?.name} · {selectedFloor?.name || selectedFloor?.floorName} · Zone{" "}
+              {selectedBuilding?.name} · {selectedFloor?.name || selectedFloor?.floorName} · {" "}
               {selectedZone?.name}
             </p>
 

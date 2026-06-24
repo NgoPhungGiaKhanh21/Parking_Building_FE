@@ -27,6 +27,7 @@ import { getCurrentSessionRequest } from "../../../redux/driver/session/currentS
 import { getProfileUserRequest } from "../../../redux/profileUser/getProfileUserSlice";
 import { getDriverPaymentsRequest } from "../../../redux/driver/payment/getDriverPayments/getDriverPaymentsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
+import PaidSessionsModal from "./PaidSessionsModal";
 
 dayjs.extend(duration);
 
@@ -337,6 +338,7 @@ const SessionCard = ({ session, now, latestPayment }) => {
 const CurrentSession = () => {
   const dispatch = useDispatch();
   const now = useLiveTick();
+  const [isPaidModalOpen, setIsPaidModalOpen] = useState(false);
 
   const { currentSession, loading, error } = useSelector(
     (state) => state.getCurrentSession,
@@ -448,7 +450,7 @@ const CurrentSession = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
                 Total Fee
@@ -465,6 +467,13 @@ const CurrentSession = () => {
                 {sessions.length}
               </p>
             </div>
+            <Button
+              onClick={() => setIsPaidModalOpen(true)}
+              className="!font-semibold"
+              type="dashed"
+            >
+              View Paid Sessions
+            </Button>
           </div>
         </div>
       </div>
@@ -483,6 +492,19 @@ const CurrentSession = () => {
           />
         ))}
       </div>
+
+      {/* ── Paid Sessions Modal ── */}
+      <PaidSessionsModal
+        open={isPaidModalOpen}
+        onCancel={() => setIsPaidModalOpen(false)}
+        sessions={sessions.filter(
+          (s) =>
+            s.paymentStatus === "PAID" ||
+            s.paymentStatus === "CONFIRMED" ||
+            s.paymentStatus === "PARTIAL",
+        )}
+        payments={payments}
+      />
     </div>
   );
 };
