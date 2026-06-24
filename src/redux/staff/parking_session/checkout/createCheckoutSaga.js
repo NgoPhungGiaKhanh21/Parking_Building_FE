@@ -11,10 +11,12 @@ import { getAllReservationRequest } from "../../reservation/getAllReservation/ge
 
 function* handleCreateCheckout(action) {
     try {
-        const { ticketCode, paymentMethod } = action.payload;
+        const { ticketCode, paymentMethod, checkoutImage, checkoutImageUrl } = action.payload;
         const response = yield call(checkOutApi, {
             ticketCode: String(ticketCode || "").trim(),
             paymentMethod: String(paymentMethod || "PAYOS").trim(),
+            checkoutImage,
+            checkoutImageUrl,
         });
         const body = response.data;
 
