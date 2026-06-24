@@ -87,6 +87,7 @@ const router = createBrowserRouter([
           { path: "parking-space", element: <ParkingSpacePage /> },
           { path: "staff", element: <StaffManagement /> },
           { path: "vehicle", element: <VehicleManager /> },
+          { path: "revenue", element: <Dashboard /> },
           { path: "price-policy", element: <PriceManager /> },
         ],
       },
