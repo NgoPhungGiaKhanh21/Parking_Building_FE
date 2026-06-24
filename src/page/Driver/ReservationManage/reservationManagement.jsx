@@ -3,33 +3,19 @@ import { useDispatch, useSelector } from "react-redux";
 import {
     Select,
     Spin,
-    Modal,
     Form,
-    DatePicker,
-    Button,
-    Typography,
     Tag,
     Tabs,
-    Empty,
-    Tooltip,
 } from "antd";
 import {
     Car,
     Lock,
-    CalendarDays,
     MapPin,
     Layers,
     ChevronRight,
     ParkingCircle,
     ClipboardList,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    Building2,
-    ShieldCheck,
-    MessageSquareText,
 } from "lucide-react";
-import dayjs from "dayjs";
 
 import { getAllVehicleRequest } from "../../../redux/driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
 import { getAllSlotDriverRequest } from "../../../redux/driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSlice";
@@ -37,9 +23,8 @@ import { createReservationsRequest } from "../../../redux/driver/reservationMana
 import { getMyReservationsRequest } from "../../../redux/driver/reservationManagement/getMyReservations/getMyReservationsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import VehicleDetailModal from "./VehicleDetailModal";
-
-const { Text, Title } = Typography;
-
+import MyReservationsTab from "./MyReservationsTab";
+import BookingModal from "./BookingModal";
 
 // ─── Slot status config ────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -109,9 +94,6 @@ const SlotCell = ({ slot, isSelected, onSelect }) => {
 
 // ─── Vehicle selector card ─────────────────────────────────────────────────────
 const VehicleCard = ({ vehicle, isSelected, onClick }) => {
-    const isMotorbike = vehicle.vehicleTypeName?.toLowerCase().includes("motor") ||
-        vehicle.vehicleTypeName?.toLowerCase().includes("bike");
-
     return (
         <button
             type="button"
@@ -150,7 +132,7 @@ const VehicleCard = ({ vehicle, isSelected, onClick }) => {
                 />
                 <span className="text-xs text-gray-500 capitalize">{vehicle.vehicleColor}</span>
             </div>
-            <Tag color={isMotorbike ? "orange" : "blue"} className="!mt-0.5 !text-[10px]">
+            <Tag color={vehicle.vehicleTypeName?.toLowerCase().includes("motor") || vehicle.vehicleTypeName?.toLowerCase().includes("bike") ? "orange" : "blue"} className="!mt-0.5 !text-[10px]">
                 {vehicle.vehicleTypeName}
             </Tag>
         </button>
@@ -216,7 +198,7 @@ const ReservationManagement = () => {
             setSelectedVehicle(null);
             form.resetFields();
             dispatch(getAllSlotDriverRequest());
-            dispatch(getMyReservationsRequest()); // refresh reserved list
+            dispatch(getMyReservationsRequest());
         }
     }, [createReservation, createLoading, createError, dispatch, form]);
 
@@ -227,13 +209,11 @@ const ReservationManagement = () => {
     );
     const slotData = useMemo(() => (Array.isArray(listSlot) ? listSlot : []), [listSlot]);
 
-    // Parsed reservation list (API returns data as array directly)
     const myReservationList = useMemo(() =>
         Array.isArray(myReservations) ? myReservations : [],
         [myReservations]
     );
 
-    // Active statuses (used for tab badge counter only)
     const ACTIVE_STATUSES = ["ACTIVE", "PENDING", "CONFIRMED"];
 
     // Buildings (distinct)
@@ -241,7 +221,13 @@ const ReservationManagement = () => {
         const map = new Map();
         slotData.forEach((z) => {
             if (z.buildingId && !map.has(z.buildingId)) {
-                map.set(z.buildingId, { id: z.buildingId, name: z.buildingName });
+                map.set(z.buildingId, {
+                    id: z.buildingId,
+                    name: z.buildingName,
+                    operatingStartTime: z.operatingStartTime || null,
+                    operatingEndTime: z.operatingEndTime || null,
+                    operatingHoursDisplay: z.operatingHoursDisplay || null,
+                });
             }
         });
         return [...map.values()];
@@ -288,7 +274,7 @@ const ReservationManagement = () => {
         return [...map.values()];
     }, [slotData, selectedFloorId]);
 
-    // Slots for selected zone (natural sort by slotName: A-1, A-2, ..., A-10, A-11)
+    // Slots for selected zone
     const slots = useMemo(() => {
         if (!selectedZoneId) return [];
         const zone = slotData.find((z) => z.zoneId === selectedZoneId);
@@ -364,281 +350,7 @@ const ReservationManagement = () => {
 
     // ── Render
     const [activeTab, setActiveTab] = useState("book");
-
-    const reservationStatusConfig = {
-        PENDING: { color: "gold", icon: <Clock size={13} />, label: "Pending" },
-        CHECKED_IN: { color: "blue", icon: <ShieldCheck size={13} />, label: "Checked In" },
-        ACTIVE: { color: "green", icon: <CheckCircle2 size={13} />, label: "Active" },
-        CONFIRMED: { color: "blue", icon: <CheckCircle2 size={13} />, label: "Confirmed" },
-        COMPLETED: { color: "default", icon: <CheckCircle2 size={13} />, label: "Completed" },
-        CANCELLED: { color: "red", icon: <XCircle size={13} />, label: "Cancelled" },
-        EXPIRED: { color: "default", icon: <XCircle size={13} />, label: "Expired" },
-    };
-
     const [reservationSubTab, setReservationSubTab] = useState("PENDING");
-
-    const pendingReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "PENDING"),
-        [myReservationList]
-    );
-
-    const checkedInReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "CHECKED_IN" || r.reservationStatus === "ACTIVE" || r.reservationStatus === "CONFIRMED"),
-        [myReservationList]
-    );
-    const cancelledReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "CANCELLED"),
-        [myReservationList]
-    );
-    const expiredReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "EXPIRED"),
-        [myReservationList]
-    );
-    const completedReservations = useMemo(
-        () => myReservationList.filter((r) => r.reservationStatus === "COMPLETED"),
-        [myReservationList]
-    );
-
-    const renderReservationCards = (list) => {
-        if (reservationsLoading) {
-            return <div className="flex justify-center py-16"><Spin size="large" /></div>;
-        }
-        if (list.length === 0) {
-            return (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-16">
-                    <Empty description="No reservations found" />
-                </div>
-            );
-        }
-        return list.map((r) => {
-            const cfg = reservationStatusConfig[r.reservationStatus] || { color: "default", icon: null, label: r.reservationStatus };
-            return (
-                <div key={r.reservationId} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-                    {/* Top row */}
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <ParkingCircle size={22} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Slot</p>
-                                <p className="text-xl font-extrabold text-blue-600 leading-tight">{r.slotName}</p>
-                                <p className="text-xs text-slate-500">Zone {r.zoneName} · {r.floorName}</p>
-                            </div>
-                        </div>
-                        <Tag icon={cfg.icon} color={cfg.color} className="flex items-center gap-1 !text-xs !font-semibold !px-3 !py-1">
-                            {cfg.label}
-                        </Tag>
-                    </div>
-
-                    {/* Detail grid */}
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                        <div className="rounded-lg bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Building</p>
-                            <p className="text-xs font-semibold text-slate-700 flex items-center gap-1"><Building2 size={11} />{r.buildingName}</p>
-                        </div>
-                        <div className="rounded-lg bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Start</p>
-                            <p className="text-xs font-semibold text-slate-700">{dayjs(r.reservationStart).format("DD/MM/YYYY HH:mm")}</p>
-                        </div>
-                        <div className="rounded-lg bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Vehicle Type</p>
-                            <p className="text-xs font-semibold text-slate-700">{r.floorVehicleTypeName}</p>
-                        </div>
-                    </div>
-
-                    {/* Pricing Info */}
-                    {(r.basePrice != null || r.hourlyRate != null) && (
-                        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
-                            {r.basePrice != null && (
-                                <div className="flex flex-col items-center rounded-xl border border-emerald-100 bg-gradient-to-b from-emerald-50 to-white px-3 py-2.5">
-                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide mb-0.5">Base Price</span>
-                                    <span className="text-sm font-extrabold text-slate-800">{r.basePrice.toLocaleString("vi-VN")}đ</span>
-                                </div>
-                            )}
-                            {r.hourlyRate != null && (
-                                <div className="flex flex-col items-center rounded-xl border border-blue-100 bg-gradient-to-b from-blue-50 to-white px-3 py-2.5">
-                                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wide mb-0.5">Hourly Rate</span>
-                                    <span className="text-sm font-extrabold text-slate-800">{r.hourlyRate.toLocaleString("vi-VN")}đ/h</span>
-                                </div>
-                            )}
-                            {r.maxHours != null && (
-                                <div className="flex flex-col items-center rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white px-3 py-2.5">
-                                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wide mb-0.5">Max Hours</span>
-                                    <span className="text-sm font-extrabold text-slate-800">{r.maxHours}h</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Pricing Tiers */}
-                    {r.pricingTiers && r.pricingTiers.length > 0 && (
-                        <div className="mt-3">
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-2 flex items-center gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                Pricing Tiers
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {r.pricingTiers.map((tier, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex flex-col items-center rounded-xl border border-blue-100 bg-gradient-to-b from-blue-50 to-white px-3 py-2 min-w-[80px]"
-                                    >
-                                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wide mb-0.5">
-                                            {tier.tierLabel}
-                                        </span>
-                                        <span className="text-sm font-extrabold text-slate-800">
-                                            {tier.price.toLocaleString("vi-VN")}đ
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Reservation Note */}
-                    {r.reservationNote && (
-                        <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3">
-                            <MessageSquareText size={14} className="mt-0.5 flex-shrink-0 text-amber-500" />
-                            <div>
-                                <p className="text-[10px] font-bold uppercase text-amber-500 mb-0.5">Note</p>
-                                <p className="text-xs text-amber-800 leading-relaxed">{r.reservationNote}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Codes + Vehicle button */}
-                    <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
-                        {r.ticketCode && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase text-slate-400">Ticket:</span>
-                                <code className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-mono font-bold text-emerald-700">{r.ticketCode}</code>
-                            </div>
-                        )}
-                        {r.qrCode && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase text-slate-400">QR Code:</span>
-                                <code className="rounded bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 break-all">{r.qrCode}</code>
-                            </div>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => handleOpenVehicleModal(r.vehicleId)}
-                            className="ml-auto flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-100 hover:border-blue-300 hover:shadow-sm cursor-pointer"
-                        >
-                            <Car size={14} />
-                            View Vehicle
-                        </button>
-                    </div>
-                </div>
-            );
-        });
-    };
-
-    const MyReservationsTab = () => (
-        <Tabs
-            activeKey={reservationSubTab}
-            onChange={setReservationSubTab}
-            size="small"
-            items={[
-                {
-                    key: "PENDING",
-                    label: (
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <Clock size={14} />
-                            Pending
-                            {pendingReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
-                                    {pendingReservations.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    children: (
-                        <div className="space-y-4">
-                            {renderReservationCards(pendingReservations)}
-                        </div>
-                    ),
-                },
-                {
-                    key: "CHECKED_IN",
-                    label: (
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <ShieldCheck size={14} />
-                            Checked In
-                            {checkedInReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">
-                                    {checkedInReservations.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    children: (
-                        <div className="space-y-4">
-                            {renderReservationCards(checkedInReservations)}
-                        </div>
-                    ),
-                },
-                {
-                    key: "COMPLETED",
-                    label: (
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <CheckCircle2 size={14} />
-                            Completed
-                            {completedReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-500 px-1.5 text-[10px] font-bold text-white">
-                                    {completedReservations.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    children: (
-                        <div className="space-y-4">
-                            {renderReservationCards(completedReservations)}
-                        </div>
-                    ),
-                },
-                {
-                    key: "EXPIRED",
-                    label: (
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <XCircle size={14} />
-                            Expired
-                            {expiredReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-500 px-1.5 text-[10px] font-bold text-white">
-                                    {expiredReservations.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    children: (
-                        <div className="space-y-4">
-                            {renderReservationCards(expiredReservations)}
-                        </div>
-                    ),
-                },
-                {
-                    key: "CANCELLED",
-                    label: (
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <XCircle size={14} />
-                            Cancelled
-                            {cancelledReservations.length > 0 && (
-                                <span className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                                    {cancelledReservations.length}
-                                </span>
-                            )}
-                        </span>
-                    ),
-                    children: (
-                        <div className="space-y-4">
-                            {renderReservationCards(cancelledReservations)}
-                        </div>
-                    ),
-                },
-            ]}
-        />
-    );
 
     return (
         <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
@@ -910,146 +622,32 @@ const ReservationManagement = () => {
                                 )}
                             </span>
                         ),
-                        children: <MyReservationsTab />,
+                        children: (
+                            <MyReservationsTab
+                                myReservationList={myReservationList}
+                                reservationsLoading={reservationsLoading}
+                                reservationSubTab={reservationSubTab}
+                                setReservationSubTab={setReservationSubTab}
+                                onOpenVehicleModal={handleOpenVehicleModal}
+                            />
+                        ),
                     },
                 ]}
             />
 
             {/* ── Booking Modal ── */}
-            <Modal
+            <BookingModal
                 open={isModalOpen}
-                onCancel={handleModalClose}
-                footer={null}
-                centered
-                width={520}
-                destroyOnHidden
-                title={
-                    <div className="border-b pb-4 mb-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-                                <CalendarDays size={16} />
-                            </div>
-                            <Title level={4} className="!mb-0 !text-slate-800">
-                                Book Parking Slot
-                            </Title>
-                        </div>
-                        <Text className="text-slate-500 text-sm font-normal">
-                            Confirm your vehicle details and select your reservation period.
-                        </Text>
-                    </div>
-                }
-            >
-                {/* Vehicle Info */}
-                {selectedVehicle && selectedSlot && (
-                    <div className="mb-5 rounded-xl bg-slate-50 border border-slate-100 p-4 space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                            Reservation Details
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Slot */}
-                            <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Slot</p>
-                                <p className="text-lg font-extrabold text-blue-600">
-                                    {selectedSlot.slotName}
-                                </p>
-                                <p className="text-xs text-slate-500">{selectedSlot.zoneName} · {selectedSlot.floorName}</p>
-                            </div>
-
-                            {/* Vehicle plate */}
-                            <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Plate Number</p>
-                                <p className="text-sm font-extrabold font-mono text-slate-800">
-                                    {selectedVehicle.plateNumber}
-                                </p>
-                                <p className="text-xs text-slate-500 capitalize">{selectedVehicle.vehicleColor} · {selectedVehicle.vehicleTypeName}</p>
-                            </div>
-
-                            {/* Brand & Model */}
-                            <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Vehicle</p>
-                                <p className="text-sm font-bold text-slate-800">
-                                    {selectedVehicle.brand} {selectedVehicle.model}
-                                </p>
-                            </div>
-
-                            {/* Building */}
-                            <div className="rounded-lg bg-white border border-slate-200 p-3">
-                                <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Building</p>
-                                <p className="text-xs font-semibold text-slate-700 leading-snug">
-                                    {selectedSlot.buildingName}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Date Form */}
-                <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
-                    <Form.Item
-                        name="reservationStart"
-                        label={
-                            <div className="flex items-center justify-between w-full">
-                                <span className="font-semibold text-slate-700">
-                                    Start Time <span className="text-red-500">*</span>
-                                </span>
-                                <Button
-                                    type="link"
-                                    size="small"
-                                    onClick={() => {
-                                        form.setFieldsValue({
-                                            reservationStart: dayjs(),
-                                        });
-                                    }}
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 p-0 h-auto"
-                                >
-                                    <Clock size={12} /> Set to Now
-                                </Button>
-                            </div>
-                        }
-                        rules={[
-                            { required: true, message: "Please select reservation start time!" },
-                            {
-                                validator(_, value) {
-                                    if (!value) return Promise.resolve();
-                                    if (value.isBefore(dayjs().subtract(5, "minute"))) {
-                                        return Promise.reject("Start time cannot be in the past.");
-                                    }
-                                    return Promise.resolve();
-                                },
-                            },
-                        ]}
-                    >
-                        <DatePicker
-                            showTime={{ format: "HH:mm" }}
-                            format="YYYY-MM-DD HH:mm"
-                            className="w-full"
-                            size="large"
-                            disabledDate={(current) => current && current < dayjs().startOf("day")}
-                            placeholder="Select start date & time"
-                        />
-                    </Form.Item>
-
-                    <div className="flex justify-end gap-3 pt-2 border-t mt-4">
-                        <Button
-                            size="large"
-                            onClick={handleModalClose}
-                            className="rounded-xl font-medium px-6"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            size="large"
-                            loading={createLoading}
-                            className="bg-blue-600 hover:bg-blue-700 rounded-xl font-medium px-6 shadow-md"
-                        >
-                            Confirm Reservation
-                        </Button>
-                    </div>
-                </Form>
-            </Modal>
+                onClose={handleModalClose}
+                selectedVehicle={selectedVehicle}
+                selectedSlot={selectedSlot}
+                form={form}
+                createLoading={createLoading}
+                onSubmit={handleSubmit}
+                operatingStartTime={selectedBuilding?.operatingStartTime}
+                operatingEndTime={selectedBuilding?.operatingEndTime}
+                operatingHoursDisplay={selectedBuilding?.operatingHoursDisplay}
+            />
 
             {/* ── Vehicle Detail Modal ── */}
             <VehicleDetailModal

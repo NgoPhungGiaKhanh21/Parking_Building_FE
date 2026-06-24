@@ -17,6 +17,8 @@ import {
   DatePicker,
   Row,
   Col,
+  Image,
+  Switch,
 } from "antd";
 import {
   CarFront,
@@ -233,6 +235,26 @@ const VehicleManagement = () => {
       )
     },
     {
+      title: "Check-in Image",
+      dataIndex: "checkinImageUrl",
+      key: "checkinImageUrl",
+      render: (url) => url ? (
+        <Image src={url} width={60} height={40} className="object-cover rounded-md border border-slate-200" />
+      ) : (
+        <span className="text-slate-400 text-xs italic">No image</span>
+      )
+    },
+    {
+      title: "Check-out Image",
+      dataIndex: "checkoutImageUrl",
+      key: "checkoutImageUrl",
+      render: (url) => url ? (
+        <Image src={url} width={60} height={40} className="object-cover rounded-md border border-slate-200" />
+      ) : (
+        <span className="text-slate-400 text-xs italic">No image</span>
+      )
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
@@ -261,15 +283,12 @@ const VehicleManagement = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button
-              type={isCurrentlyActive ? "default" : "primary"}
-              danger={isCurrentlyActive}
-              size="small"
-              icon={<RefreshCw className="w-3 h-3" />}
-              className="flex items-center gap-1"
-            >
-              Set {targetStatus}
-            </Button>
+            <Switch
+              checked={isCurrentlyActive}
+              checkedChildren="ACTIVE"
+              unCheckedChildren="INACTIVE"
+              className={isCurrentlyActive ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"}
+            />
           </Popconfirm>
         );
       },

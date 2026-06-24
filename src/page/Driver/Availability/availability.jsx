@@ -41,7 +41,10 @@ const AvailabilityPage = () => {
           availableSlots: 0,
           vehicleTypes: new Set(),
           sampleSlot: null,
-          zones: []
+          zones: [],
+          operatingStartTime: zone.operatingStartTime || null,
+          operatingEndTime: zone.operatingEndTime || null,
+          operatingHoursDisplay: zone.operatingHoursDisplay || null,
         });
       }
       
