@@ -120,14 +120,14 @@ export const recordsMatch = (a, b) => {
 };
 
 export const formatParkingDurationLabel = (r) => {
-  if (r.parkingHours != null || r.parkingMinutes != null) {
-    return `${r.parkingHours ?? 0}h ${r.parkingMinutes ?? 0}m`;
-  }
   if (r.checkinTime && r.checkoutTime) {
     const diffMinutes = dayjs(r.checkoutTime).diff(dayjs(r.checkinTime), "minute");
     if (diffMinutes >= 0) {
       return `${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`;
     }
+  }
+  if (r.parkingHours != null || r.parkingMinutes != null) {
+    return `${r.parkingHours ?? 0}h ${r.parkingMinutes ?? 0}m`;
   }
   return "—";
 };
