@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Spin, Tabs, Empty, Tag, Modal } from "antd";
+import { Spin, Tabs, Empty, Tag, Modal, Upload, message } from "antd";
 import {
   Car,
   ClipboardList,
@@ -17,6 +17,7 @@ import {
   ParkingCircle,
   ArrowLeftSquare,
   ImageIcon,
+  Upload as UploadIcon,
 } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -26,6 +27,7 @@ import {
   createCheckoutRequest,
   resetCheckout,
 } from "../../../redux/staff/parking_session/checkout/createCheckoutSlice";
+import { getAllPaymentsRequest } from "../../../redux/staff/payment/getAllPayments/getAllPaymentsSlice";
 import {
   normalizeReservation,
   mergeCheckoutSession,
@@ -85,6 +87,11 @@ const formatCurrency = (value) =>
 const formatDateTime = (value) =>
   value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—";
 
+const normalizeStatus = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
 const SessionImagePanel = ({ label, src, emptyText = "No image" }) => (
   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
     <p className="text-xs font-semibold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
@@ -95,10 +102,10 @@ const SessionImagePanel = ({ label, src, emptyText = "No image" }) => (
       <img
         src={src}
         alt={label}
-        className="mx-auto w-full max-w-xs h-56 object-contain rounded-lg border border-slate-200 bg-white"
+        className="w-full h-52 object-contain rounded-lg border border-slate-200 bg-white"
       />
     ) : (
-      <div className="mx-auto flex h-56 w-full max-w-xs items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white text-xs text-slate-400">
+      <div className="flex h-52 w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white text-xs text-slate-400">
         {emptyText}
       </div>
     )}
@@ -169,18 +176,9 @@ const CheckoutResultModal = ({ open, result, source, onClose }) => {
           value={merged.vehicleTypeName}
         />
         <CheckoutResultDetail
-          label="Base Price"
-          value={formatCurrency(merged.basePrice)}
-        />
-        <CheckoutResultDetail
-          label="Hourly Rate"
-          value={formatCurrency(merged.hourlyRate)}
-        />
-        <CheckoutResultDetail
           label="Parking Time"
           value={formatParkingDurationLabel(merged)}
         />
-        <CheckoutResultDetail label="Payment ID" value={merged.paymentId} />
       </div>
 
       <div className="flex flex-col gap-3 mb-4">
@@ -260,7 +258,7 @@ const SessionCard = ({ r, actions, completed = false }) => {
             Reservation Start
           </p>
           <p className="text-xs font-semibold text-slate-700">
-            {formatDateTime(r.reservationStart)}
+            {formatDateTime(r.checkinTime ?? r.reservationStart)}
           </p>
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
@@ -270,7 +268,7 @@ const SessionCard = ({ r, actions, completed = false }) => {
           <p className="text-xs font-semibold text-slate-700">
             {!completed && r.paymentTime
               ? formatDateTime(r.paymentTime)
-              : formatDateTime(r.reservationEnd)}
+              : formatDateTime(r.checkoutTime ?? r.reservationEnd)}
           </p>
         </div>
         <div className="rounded-lg bg-slate-50 p-3">
@@ -407,6 +405,9 @@ const VehicleExit = () => {
     open: false,
     reservation: null,
   });
+  const [checkoutImageUrl, setCheckoutImageUrl] = useState("");
+  const [checkoutImageFile, setCheckoutImageFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [checkoutSource, setCheckoutSource] = useState(null);
   const [sessionOverlays, setSessionOverlays] = useState({});
 
@@ -420,9 +421,11 @@ const VehicleExit = () => {
     error: checkoutError,
     checkoutResult,
   } = useSelector((state) => state.createCheckout);
+  const { payments: allPayments } = useSelector((state) => state.getAllPayments);
 
   useEffect(() => {
     dispatch(getAllReservationRequest());
+    dispatch(getAllPaymentsRequest());
     return () => dispatch(resetCheckout());
   }, [dispatch]);
 
@@ -432,8 +435,11 @@ const VehicleExit = () => {
   );
 
   const mergedCheckoutResult = useMemo(
-    () => (checkoutResult ? mergeCheckoutSession(checkoutSource, checkoutResult) : null),
-    [checkoutResult, checkoutSource],
+    () =>
+      checkoutResult
+        ? mergeCheckoutSession(checkoutSource, checkoutResult, checkoutImageUrl)
+        : null,
+    [checkoutResult, checkoutSource, checkoutImageUrl],
   );
 
   const resolveRecord = useCallback(
@@ -480,10 +486,26 @@ const VehicleExit = () => {
     [reservationList, resolveRecord],
   );
 
+  const earliestCheckoutRecord = useMemo(
+    () => (activeList.length > 0 ? activeList[0] : null),
+    [activeList],
+  );
+
+  const canCheckoutRecord = useCallback(
+    (record) => {
+      if (!earliestCheckoutRecord) return true;
+      return recordsMatch(record, earliestCheckoutRecord);
+    },
+    [earliestCheckoutRecord],
+  );
+
   const handleCheckout = useCallback(
     (reservation) => {
       dispatch(resetCheckout());
       const normalized = normalizeReservation(reservation);
+      setCheckoutImageUrl("");
+      setCheckoutImageFile(null);
+      setIsUploading(false);
       setCheckoutSource(normalized);
       setConfirmModal({ open: true, reservation: normalized });
     },
@@ -506,17 +528,60 @@ const VehicleExit = () => {
 
   const handleCloseConfirm = useCallback(() => {
     setConfirmModal({ open: false, reservation: null });
+    setCheckoutImageUrl("");
+    setCheckoutImageFile(null);
+    setIsUploading(false);
   }, []);
 
   const handleConfirm = useCallback(() => {
     if (checkoutLoading || !confirmModal.reservation) return;
+    if (!checkoutImageFile) {
+      message.error("Please upload check-out image before confirming.");
+      return;
+    }
     dispatch(
       createCheckoutRequest({
         ticketCode: confirmModal.reservation.ticketCode,
         paymentMethod: "PAYOS",
+        checkoutImage: checkoutImageFile,
       }),
     );
-  }, [checkoutLoading, confirmModal.reservation, dispatch]);
+  }, [checkoutLoading, checkoutImageFile, confirmModal.reservation, dispatch]);
+
+  const resolvedConfirmAmount = useMemo(() => {
+    const reservation = confirmModal.reservation;
+    if (!reservation) return null;
+
+    const list = Array.isArray(allPayments) ? allPayments : [];
+    const paidMatch = [...list]
+      .filter((p) => {
+        const bySession =
+          reservation.sessionId &&
+          p.sessionId &&
+          String(p.sessionId) === String(reservation.sessionId);
+        const byTicket =
+          reservation.ticketCode &&
+          p.ticketCode &&
+          String(p.ticketCode) === String(reservation.ticketCode);
+        if (!bySession && !byTicket) return false;
+
+        const paidStatus = normalizeStatus(p.paidStatus);
+        const paymentStatus = normalizeStatus(p.paymentStatus);
+        return (
+          paidStatus === "PAID" ||
+          paymentStatus === "PAID" ||
+          paymentStatus === "CONFIRMED"
+        );
+      })
+      .sort((a, b) => {
+        const aTime = dayjs(a.paymentTime || a.createdAt || 0).valueOf();
+        const bTime = dayjs(b.paymentTime || b.createdAt || 0).valueOf();
+        return bTime - aTime;
+      })[0];
+
+    if (paidMatch?.amount != null) return paidMatch.amount;
+    return reservation.totalFee ?? null;
+  }, [confirmModal.reservation, allPayments]);
 
   const renderSessionList = (list, actionRenderer, completed = false) => {
     if (reservationsLoading) {
@@ -541,12 +606,12 @@ const VehicleExit = () => {
     }
     return (
       <div className="space-y-4">
-        {list.map((r) => (
+        {list.map((r, index) => (
           <SessionCard
             key={r.reservationId}
             r={r}
             completed={completed}
-            actions={actionRenderer ? actionRenderer(r) : null}
+            actions={actionRenderer ? actionRenderer(r, index, list) : null}
           />
         ))}
       </div>
@@ -601,8 +666,17 @@ const VehicleExit = () => {
             children: renderSessionList(activeList, (r) => (
               <button
                 type="button"
-                onClick={() => handleCheckout(r)}
-                className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2 text-xs font-bold text-white hover:bg-orange-700 cursor-pointer"
+                onClick={() => {
+                  if (!canCheckoutRecord(r)) {
+                    message.warning(
+                      "Please check out the earliest paid vehicle first.",
+                    );
+                    return;
+                  }
+                  handleCheckout(r);
+                }}
+                disabled={!canCheckoutRecord(r)}
+                className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2 text-xs font-bold text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <LogOut size={14} />
                 Check Out
@@ -652,32 +726,109 @@ const VehicleExit = () => {
               </div>
             )}
 
-            <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 mb-5 grid grid-cols-2 gap-3">
-              <CheckoutResultDetail
-                label="Ticket Code"
-                value={confirmModal.reservation.ticketCode}
-              />
-              <CheckoutResultDetail
-                label="Reservation"
-                value={confirmModal.reservation.reservationCode}
-              />
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 mb-4 grid grid-cols-2 gap-3">
               <CheckoutResultDetail
                 label="Driver"
                 value={confirmModal.reservation.username}
+              />
+              <CheckoutResultDetail
+                label="Building"
+                value={confirmModal.reservation.buildingName}
               />
               <CheckoutResultDetail
                 label="Slot"
                 value={confirmModal.reservation.slotName}
               />
               <CheckoutResultDetail
+                label="Vehicle Type"
+                value={
+                  confirmModal.reservation.vehicleTypeName ??
+                  confirmModal.reservation.floorVehicleTypeName
+                }
+              />
+              <CheckoutResultDetail
                 label="Plate"
                 value={confirmModal.reservation.vehiclePlate}
+              />
+              <CheckoutResultDetail
+                label="Check-in Time"
+                value={formatDateTime(confirmModal.reservation.checkinTime)}
+              />
+              <CheckoutResultDetail
+                label="Total Fee"
+                value={formatCurrency(resolvedConfirmAmount)}
               />
               <div className="rounded-lg border border-slate-200 bg-white p-3 flex items-center justify-between">
                 <p className="text-[10px] font-semibold uppercase text-slate-400">
                   Payment
                 </p>
                 <Tag color="blue">PayOS</Tag>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-white border border-slate-200 p-4 mb-5">
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-3">
+                Session Images
+              </p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SessionImagePanel
+                  label="Check-in Image"
+                  src={confirmModal.reservation.checkinImageUrl}
+                />
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
+                    <UploadIcon size={14} />
+                    Check-out Image <span className="text-red-500">*</span>
+                  </p>
+                  <Upload
+                    name="file"
+                    className="checkout-uploader w-full"
+                    showUploadList={false}
+                    customRequest={({ file, onSuccess, onError }) => {
+                      setIsUploading(true);
+                      try {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          setCheckoutImageUrl(e.target.result);
+                          setCheckoutImageFile(file);
+                          setIsUploading(false);
+                          onSuccess("Ok");
+                          message.success("Check-out image added");
+                        };
+                        reader.onerror = () => {
+                          setIsUploading(false);
+                          onError(new Error("Failed to read image"));
+                          message.error("Failed to add image");
+                        };
+                        reader.readAsDataURL(file);
+                      } catch (err) {
+                        setIsUploading(false);
+                        onError(err);
+                        message.error("Failed to add image");
+                      }
+                    }}
+                    beforeUpload={(file) => {
+                      const isImage = file.type.startsWith("image/");
+                      if (!isImage) message.error("You can only upload image files!");
+                      return isImage;
+                    }}
+                  >
+                    {checkoutImageUrl ? (
+                      <img
+                        src={checkoutImageUrl}
+                        alt="Vehicle Check-out"
+                        className="w-full h-56 object-contain rounded-xl border border-slate-200 bg-white p-1"
+                      />
+                    ) : (
+                      <div className="flex h-56 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white text-slate-400 gap-2 transition-colors hover:border-orange-300 hover:bg-orange-50/30">
+                        {isUploading ? <Spin size="small" /> : <UploadIcon size={22} />}
+                        <div className="text-xs font-semibold">Click to Upload</div>
+                        <div className="text-[11px] text-slate-400">JPG, PNG, WEBP</div>
+                      </div>
+                    )}
+                  </Upload>
+                </div>
               </div>
             </div>
 
@@ -692,7 +843,7 @@ const VehicleExit = () => {
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={checkoutLoading}
+                disabled={checkoutLoading || isUploading || !checkoutImageFile}
                 className="flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 cursor-pointer"
               >
                 {checkoutLoading && <Spin size="small" />}
@@ -712,6 +863,9 @@ const VehicleExit = () => {
           dispatch(resetCheckout());
           setConfirmModal({ open: false, reservation: null });
           setCheckoutSource(null);
+          setCheckoutImageUrl("");
+          setCheckoutImageFile(null);
+          setIsUploading(false);
         }}
       />
     </div>

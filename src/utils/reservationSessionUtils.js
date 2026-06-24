@@ -71,6 +71,12 @@ export const normalizeReservation = (record) => {
         record.checkout_image_url,
       ),
     ),
+    paymentTime: pick(
+      record.paymentTime,
+      session.paymentTime,
+      record.payment_time,
+      session.payment_time,
+    ),
     totalFee: pick(record.totalFee, session.totalFee, record.total_fee),
     parkingHours: pick(record.parkingHours, session.parkingHours),
     parkingMinutes: pick(record.parkingMinutes, session.parkingMinutes),
@@ -79,7 +85,11 @@ export const normalizeReservation = (record) => {
   };
 };
 
-export const mergeCheckoutSession = (reservation, checkoutResult) => {
+export const mergeCheckoutSession = (
+  reservation,
+  checkoutResult,
+  checkoutImagePreview,
+) => {
   const base = normalizeReservation(reservation);
   const checkout = normalizeReservation(checkoutResult);
   return {
@@ -88,7 +98,11 @@ export const mergeCheckoutSession = (reservation, checkoutResult) => {
     checkinTime: pick(checkout.checkinTime, base.checkinTime),
     checkinImageUrl: pick(checkout.checkinImageUrl, base.checkinImageUrl),
     checkoutTime: pick(checkout.checkoutTime, base.checkoutTime),
-    checkoutImageUrl: pick(checkout.checkoutImageUrl, base.checkoutImageUrl),
+    checkoutImageUrl: pick(
+      checkout.checkoutImageUrl,
+      checkoutImagePreview,
+      base.checkoutImageUrl,
+    ),
     totalFee: pick(checkout.totalFee, base.totalFee),
     reservationStatus: "COMPLETED",
   };
@@ -106,14 +120,14 @@ export const recordsMatch = (a, b) => {
 };
 
 export const formatParkingDurationLabel = (r) => {
-  if (r.parkingHours != null || r.parkingMinutes != null) {
-    return `${r.parkingHours ?? 0}h ${r.parkingMinutes ?? 0}m`;
-  }
   if (r.checkinTime && r.checkoutTime) {
     const diffMinutes = dayjs(r.checkoutTime).diff(dayjs(r.checkinTime), "minute");
     if (diffMinutes >= 0) {
       return `${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`;
     }
+  }
+  if (r.parkingHours != null || r.parkingMinutes != null) {
+    return `${r.parkingHours ?? 0}h ${r.parkingMinutes ?? 0}m`;
   }
   return "—";
 };
