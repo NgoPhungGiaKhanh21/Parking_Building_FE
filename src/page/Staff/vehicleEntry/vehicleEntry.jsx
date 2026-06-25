@@ -405,9 +405,9 @@ const VehicleEntry = () => {
                 <button
                     type="button"
                     onClick={() => handleCheckin(r)}
-                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-emerald-700 hover:shadow-md cursor-pointer active:scale-95"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 min-w-[250px] py-4 text-lg font-bold text-white transition-all hover:bg-emerald-700 hover:shadow-lg cursor-pointer active:scale-95"
                 >
-                    <LogIn size={14} />
+                    <LogIn size={20} />
                     Check In
                 </button>
             ))}

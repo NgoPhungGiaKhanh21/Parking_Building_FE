@@ -20,6 +20,7 @@ import {
   Image,
   Switch,
 } from "antd";
+import dayjs from "dayjs";
 import {
   CarFront,
   UserSearch,
@@ -58,13 +59,19 @@ const VehicleManagement = () => {
   const handleSearch = (values) => {
     const formattedValues = {
       ...values,
-      checkInFrom: values.checkInFrom ? values.checkInFrom.format('YYYY-MM-DDTHH:mm:ss') : undefined,
-      checkInTo: values.checkInTo ? values.checkInTo.format('YYYY-MM-DDTHH:mm:ss') : undefined,
+      checkInFrom: values.checkInFrom
+        ? values.checkInFrom.format("YYYY-MM-DDTHH:mm:ss")
+        : undefined,
+      checkInTo: values.checkInTo
+        ? values.checkInTo.format("YYYY-MM-DDTHH:mm:ss")
+        : undefined,
     };
-    
+
     // Clean up undefined/null values
     const cleanValues = Object.fromEntries(
-      Object.entries(formattedValues).filter(([_, v]) => v !== undefined && v !== "" && v !== null)
+      Object.entries(formattedValues).filter(
+        ([_, v]) => v !== undefined && v !== "" && v !== null,
+      ),
     );
 
     console.log("Filter payload:", cleanValues);
@@ -76,27 +83,65 @@ const VehicleManagement = () => {
     dispatch(getAllVehicleRequest());
   };
 
+  const applyPreset = (preset) => {
+    const now = dayjs();
+    let nextFrom;
+    const nextTo = now;
+
+    if (preset === "TODAY") {
+      nextFrom = now.startOf("day");
+    } else if (preset === "7D") {
+      nextFrom = now.subtract(6, "day").startOf("day");
+    } else if (preset === "30D") {
+      nextFrom = now.subtract(29, "day").startOf("day");
+    } else if (preset === "MONTH") {
+      nextFrom = now.startOf("month");
+    } else {
+      return;
+    }
+
+    const currentValues = filterForm.getFieldsValue();
+    const formattedValues = {
+      ...currentValues,
+      checkInFrom: nextFrom.format("YYYY-MM-DDTHH:mm:ss"),
+      checkInTo: nextTo.format("YYYY-MM-DDTHH:mm:ss"),
+    };
+
+    filterForm.setFieldsValue({
+      ...currentValues,
+      checkInFrom: nextFrom,
+      checkInTo: nextTo,
+    });
+
+    const cleanValues = Object.fromEntries(
+      Object.entries(formattedValues).filter(
+        ([_, v]) => v !== undefined && v !== "" && v !== null,
+      ),
+    );
+
+    dispatch(getAllVehicleRequest(cleanValues));
+  };
+
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [selectedTypeData, setSelectedTypeData] = useState(null);
 
   // --- REDUX STATE ---
-  const { getAllVehicleManager: vehiclesList, loading: isVehiclesLoading } = useSelector(
-    (state) => state.getAllVehicleManager
-  );
+  const { getAllVehicleManager: vehiclesList, loading: isVehiclesLoading } =
+    useSelector((state) => state.getAllVehicleManager);
   const { loading: isChangingStatus } = useSelector(
-    (state) => state.changeStatusVehicle
+    (state) => state.changeStatusVehicle,
   );
   const { vehicleTypes, loading: isVehicleTypesLoading } = useSelector(
-    (state) => state.getVehicleTypeList
+    (state) => state.getVehicleTypeList,
   );
   const { loading: isCreatingVehicleType } = useSelector(
-    (state) => state.createVehicleType || {}
+    (state) => state.createVehicleType || {},
   );
 
   // Lấy state loading của Delete để làm hiệu ứng loading trên bảng
   const { loading: isDeletingVehicleType } = useSelector(
-    (state) => state.deleteVehicleType || {}
+    (state) => state.deleteVehicleType || {},
   );
 
   // --- EFFECTS ---
@@ -113,7 +158,7 @@ const VehicleManagement = () => {
         vehicleId: vehicleId,
         status: newStatus,
         userId: userId,
-      })
+      }),
     );
   };
 
@@ -175,7 +220,7 @@ const VehicleManagement = () => {
         const nameB = b.username || "";
         return nameA.localeCompare(nameB);
       },
-      defaultSortOrder: 'ascend',
+      defaultSortOrder: "ascend",
       render: (text) => (
         <span className="font-semibold text-slate-800">@{text}</span>
       ),
@@ -184,92 +229,114 @@ const VehicleManagement = () => {
       title: "Plate Number",
       dataIndex: "plateNumber",
       key: "plateNumber",
+      sorter: (a, b) => (a.plateNumber || "").localeCompare(b.plateNumber || ""),
       render: (text) => (
         <span className="font-bold text-slate-700">{text}</span>
       ),
     },
-    { title: "Brand & Model", 
+    {
+      title: "Brand & Model",
       key: "brandModel",
+      sorter: (a, b) => (a.brand || "").localeCompare(b.brand || ""),
       render: (_, record) => (
         <div className="flex flex-col">
           <span className="font-medium text-slate-800">{record.brand}</span>
           <span className="text-xs text-slate-500">{record.model}</span>
         </div>
-      )
+      ),
     },
     {
       title: "Vehicle Type",
       dataIndex: "vehicleTypeName",
       key: "vehicleTypeName",
+      sorter: (a, b) => (a.vehicleTypeName || "").localeCompare(b.vehicleTypeName || ""),
       render: (type, record) => (
         <div className="flex flex-col gap-1">
-           <span className="font-medium text-slate-700">{type}</span>
-           <div className="flex items-center gap-1 text-xs text-slate-500">
-             <div
-               className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
-               style={{ backgroundColor: record.vehicleColor?.toLowerCase() || "#ccc" }}
-             ></div>
-             <span className="capitalize">{record.vehicleColor}</span>
-           </div>
+          <span className="font-medium text-slate-700">{type}</span>
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <div
+              className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
+              style={{
+                backgroundColor: record.vehicleColor?.toLowerCase() || "#ccc",
+              }}
+            ></div>
+            <span className="capitalize">{record.vehicleColor}</span>
+          </div>
         </div>
-      )
+      ),
     },
     {
       title: "Parked Status",
       key: "parked",
+      sorter: (a, b) => {
+        const isParkedA = a.checkInTime && !a.checkOutTime ? 1 : 0;
+        const isParkedB = b.checkInTime && !b.checkOutTime ? 1 : 0;
+        return isParkedA - isParkedB;
+      },
       render: (_, record) => {
         if (record.checkInTime && !record.checkOutTime) {
           return <Tag color="blue">Parked</Tag>;
         }
         return <Tag color="default">Not Parked</Tag>;
-      }
+      },
     },
     {
       title: "Time Info",
       key: "timeInfo",
+      sorter: (a, b) => new Date(a.checkInTime || 0) - new Date(b.checkInTime || 0),
       render: (_, record) => (
         <div className="flex flex-col gap-1 text-xs text-slate-600 min-w-[140px]">
-          <div><span className="font-medium">In:</span> {record.checkInTime ? new Date(record.checkInTime).toLocaleString() : '-'}</div>
-          <div><span className="font-medium">Out:</span> {record.checkOutTime ? new Date(record.checkOutTime).toLocaleString() : '-'}</div>
+          <div>
+            <span className="font-medium">In:</span>{" "}
+            {record.checkInTime
+              ? new Date(record.checkInTime).toLocaleString()
+              : "-"}
+          </div>
+          <div>
+            <span className="font-medium">Out:</span>{" "}
+            {record.checkOutTime
+              ? new Date(record.checkOutTime).toLocaleString()
+              : "-"}
+          </div>
         </div>
-      )
+      ),
     },
     {
       title: "Check-in Image",
       dataIndex: "checkinImageUrl",
       key: "checkinImageUrl",
-      render: (url) => url ? (
-        <Image src={url} width={60} height={40} className="object-cover rounded-md border border-slate-200" />
-      ) : (
-        <span className="text-slate-400 text-xs italic">No image</span>
-      )
+      render: (url) =>
+        url ? (
+          <Image
+            src={url}
+            width={60}
+            height={40}
+            className="object-cover rounded-md border border-slate-200"
+          />
+        ) : (
+          <span className="text-slate-400 text-xs italic">No image</span>
+        ),
     },
     {
       title: "Check-out Image",
       dataIndex: "checkoutImageUrl",
       key: "checkoutImageUrl",
-      render: (url) => url ? (
-        <Image src={url} width={60} height={40} className="object-cover rounded-md border border-slate-200" />
-      ) : (
-        <span className="text-slate-400 text-xs italic">No image</span>
-      )
+      render: (url) =>
+        url ? (
+          <Image
+            src={url}
+            width={60}
+            height={40}
+            className="object-cover rounded-md border border-slate-200"
+          />
+        ) : (
+          <span className="text-slate-400 text-xs italic">No image</span>
+        ),
     },
     {
       title: "Status",
-      dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag
-          color={status === "ACTIVE" ? "green" : "volcano"}
-          className="font-semibold"
-        >
-          {status}
-        </Tag>
-      ),
-    },
-    {
-      title: "Action",
-      key: "action",
+      sorter: (a, b) => (a.status || "").localeCompare(b.status || ""),
       render: (_, record) => {
         const isCurrentlyActive = record.status === "ACTIVE";
         const targetStatus = isCurrentlyActive ? "INACTIVE" : "ACTIVE";
@@ -287,7 +354,11 @@ const VehicleManagement = () => {
               checked={isCurrentlyActive}
               checkedChildren="ACTIVE"
               unCheckedChildren="INACTIVE"
-              className={isCurrentlyActive ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"}
+              className={
+                isCurrentlyActive
+                  ? "bg-emerald-500 hover:bg-emerald-600"
+                  : "bg-rose-500 hover:bg-rose-600"
+              }
             />
           </Popconfirm>
         );
@@ -392,24 +463,62 @@ const VehicleManagement = () => {
               <div className="p-2 bg-white rounded-lg text-indigo-600 shadow-sm border border-indigo-100">
                 <Filter className="w-4 h-4" />
               </div>
-              <h2 className="text-base font-bold text-slate-800">Advanced Filter</h2>
+              <h2 className="text-base font-bold text-slate-800">
+                Advanced Filter
+              </h2>
             </div>
             <div className="p-6">
               <Form form={filterForm} layout="vertical" onFinish={handleSearch}>
-                <Row gutter={[24, 16]}>
+                <Row gutter={[12, 4]}>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="plateNumber" label={<span className="font-medium text-slate-600">Plate Number</span>}>
-                      <Input placeholder="e.g. 59A-99999" size="large" className="rounded-lg hover:border-indigo-300 focus:border-indigo-500" allowClear />
+                    <Form.Item
+                      name="plateNumber"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Plate Number
+                        </span>
+                      }
+                    >
+                      <Input
+                        placeholder="e.g. 59A-99999"
+                        size="large"
+                        className="rounded-lg hover:border-indigo-300 focus:border-indigo-500"
+                        allowClear
+                      />
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="username" label={<span className="font-medium text-slate-600">Username</span>}>
-                      <Input placeholder="Search username" size="large" className="rounded-lg hover:border-indigo-300 focus:border-indigo-500" allowClear />
+                    <Form.Item
+                      name="username"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Username
+                        </span>
+                      }
+                    >
+                      <Input
+                        placeholder="Search username"
+                        size="large"
+                        className="rounded-lg hover:border-indigo-300 focus:border-indigo-500"
+                        allowClear
+                      />
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="status" label={<span className="font-medium text-slate-600">Vehicle Status</span>}>
-                      <Select placeholder="Select status" size="large" className="rounded-lg" allowClear>
+                    <Form.Item
+                      name="status"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Vehicle Status
+                        </span>
+                      }
+                    >
+                      <Select
+                        placeholder="Select status"
+                        size="large"
+                        className="rounded-lg"
+                        allowClear
+                      >
                         <Select.Option value="ACTIVE">ACTIVE</Select.Option>
                         <Select.Option value="INACTIVE">INACTIVE</Select.Option>
                         <Select.Option value="BLOCKED">BLOCKED</Select.Option>
@@ -417,50 +526,106 @@ const VehicleManagement = () => {
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="vehicleTypeId" label={<span className="font-medium text-slate-600">Vehicle Type</span>}>
-                      <Select placeholder="Select type" size="large" className="rounded-lg" allowClear>
+                    <Form.Item
+                      name="vehicleTypeId"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Vehicle Type
+                        </span>
+                      }
+                    >
+                      <Select
+                        placeholder="Select type"
+                        size="large"
+                        className="rounded-lg"
+                        allowClear
+                      >
                         {vehicleTypes?.map((type) => (
-                          <Select.Option key={type.vehicleTypeId} value={type.vehicleTypeId}>
+                          <Select.Option
+                            key={type.vehicleTypeId}
+                            value={type.vehicleTypeId}
+                          >
                             {type.typeName}
                           </Select.Option>
                         ))}
                       </Select>
                     </Form.Item>
                   </Col>
-                  
+
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="parked" label={<span className="font-medium text-slate-600">Parked Status</span>}>
-                      <Select placeholder="All" size="large" className="rounded-lg" allowClear>
-                        <Select.Option value={true}>Currently Parked</Select.Option>
-                        <Select.Option value={false}>Not in parking lot</Select.Option>
+                    <Form.Item
+                      name="parked"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Parked Status
+                        </span>
+                      }
+                    >
+                      <Select
+                        placeholder="All"
+                        size="large"
+                        className="rounded-lg"
+                        allowClear
+                      >
+                        <Select.Option value={true}>
+                          Currently Parked
+                        </Select.Option>
+                        <Select.Option value={false}>
+                          Not in parking lot
+                        </Select.Option>
                       </Select>
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="checkInFrom" label={<span className="font-medium text-slate-600">Check In Time</span>}>
-                      <DatePicker showTime size="large" className="w-full rounded-lg hover:border-indigo-300" />
+                    <Form.Item
+                      name="checkInFrom"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Check In Time
+                        </span>
+                      }
+                    >
+                      <DatePicker
+                        showTime
+                        size="large"
+                        className="w-full rounded-lg hover:border-indigo-300"
+                      />
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12} md={8} lg={6}>
-                    <Form.Item name="checkInTo" label={<span className="font-medium text-slate-600">Check Out Time</span>}>
-                      <DatePicker showTime size="large" className="w-full rounded-lg hover:border-indigo-300" />
+                    <Form.Item
+                      name="checkInTo"
+                      label={
+                        <span className="font-medium text-slate-600">
+                          Check Out Time
+                        </span>
+                      }
+                    >
+                      <DatePicker
+                        showTime
+                        size="large"
+                        className="w-full rounded-lg hover:border-indigo-300"
+                      />
                     </Form.Item>
                   </Col>
-                  
-                  <Col xs={24} className="flex justify-end pt-2 border-t border-slate-100 mt-2">
+
+                  <Col
+                    xs={24}
+                    className="flex justify-end pt-2 border-t border-slate-100 mt-2"
+                  >
                     <div className="flex gap-3">
-                      <Button 
-                        onClick={handleResetFilter} 
-                        icon={<RefreshCw className="w-4 h-4" />} 
+                      <Button
+                        onClick={handleResetFilter}
+                        icon={<RefreshCw className="w-4 h-4" />}
                         size="large"
                         className="rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-all font-medium px-6"
                       >
                         Reset Filter
                       </Button>
-                      <Button 
-                        type="primary" 
-                        htmlType="submit" 
-                        icon={<Search className="w-4 h-4" />} 
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        icon={<Search className="w-4 h-4" />}
                         size="large"
                         className="rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-[1px] transition-all font-medium px-8"
                       >
@@ -475,16 +640,48 @@ const VehicleManagement = () => {
 
           <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[400px]">
             <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-800">
-                  All Vehicles
-                </h2>
-                <Tag
-                  color="blue"
-                  className="px-3 py-1 text-sm rounded-full font-medium"
-                >
-                  Total: {vehiclesList?.length || 0}
-                </Tag>
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">
+                    All Vehicles
+                  </h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="default"
+                    className="!rounded-lg !font-semibold"
+                    onClick={() => applyPreset("TODAY")}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    type="default"
+                    className="!rounded-lg !font-semibold"
+                    onClick={() => applyPreset("7D")}
+                  >
+                    7D
+                  </Button>
+                  <Button
+                    type="default"
+                    className="!rounded-lg !font-semibold"
+                    onClick={() => applyPreset("30D")}
+                  >
+                    30D
+                  </Button>
+                  <Button
+                    type="default"
+                    className="!rounded-lg !font-semibold"
+                    onClick={() => applyPreset("MONTH")}
+                  >
+                    This Month
+                  </Button>
+                  <Tag
+                    color="blue"
+                    className="px-3 py-1 text-sm rounded-full font-medium"
+                  >
+                    Total: {vehiclesList?.length || 0}
+                  </Tag>
+                </div>
               </div>
               <Table
                 columns={vehicleColumns}
@@ -493,9 +690,7 @@ const VehicleManagement = () => {
                 loading={isVehiclesLoading || isChangingStatus}
                 pagination={{ pageSize: 10 }}
                 locale={{
-                  emptyText: (
-                    <Empty description="No vehicles found" />
-                  ),
+                  emptyText: <Empty description="No vehicles found" />,
                 }}
                 className="border border-slate-100 rounded-xl overflow-hidden"
               />
@@ -622,7 +817,7 @@ const VehicleManagement = () => {
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-50 to-purple-50 opacity-50 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-50 to-cyan-50 opacity-50 blur-2xl"></div>
-        
+
         <div className="relative z-10">
           <div className="mb-6">
             <CommonBreadcrumb role="Manager" page={breadcrumbPage} />
@@ -634,7 +829,9 @@ const VehicleManagement = () => {
             </div>
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {activeTab === "1" ? "Vehicle Management" : "Vehicle Types Portfolio"}
+                {activeTab === "1"
+                  ? "Vehicle Management"
+                  : "Vehicle Types Portfolio"}
               </h1>
               <p className="mt-1.5 text-base font-medium text-slate-500">
                 {activeTab === "1"
