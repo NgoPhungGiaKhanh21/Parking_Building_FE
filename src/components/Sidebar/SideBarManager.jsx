@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   User,
+  BadgeDollarSign,
 } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
 import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
@@ -66,7 +67,7 @@ const SidebarManager = () => {
     {
       id: "price-policy",
       label: "Manage Price Policy",
-      icon: User,
+      icon: BadgeDollarSign,
       to: "/manager/price-policy",
     },
   ];

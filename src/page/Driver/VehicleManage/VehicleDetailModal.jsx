@@ -62,6 +62,11 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
   const vehicle = getVehicleById?.data;
   const vehicleTypes = getAllVehicleType?.data || [];
 
+  const selectedVehicleTypeId = Form.useWatch("vehicleTypeId", form);
+  const selectedTypeObj = vehicleTypes.find((t) => t.vehicleTypeId === selectedVehicleTypeId);
+  const typeName = selectedTypeObj?.typeName?.toLowerCase() || "";
+  const isMotorbike = typeName.includes("motor") || typeName.includes("bike");
+
   // Tự động điền dữ liệu vào form khi bật chế độ Edit
   useEffect(() => {
     if (vehicle && isEditing) {
@@ -145,7 +150,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
           {/* BANNER HÌNH ẢNH XE */}
           <div className="relative h-56 w-full">
             <img
-              src={getVehicleImage(vehicle.vehicleTypeName)}
+              src={vehicle.imageUrl || vehicle.checkinImageUrl || vehicle.checkoutImageUrl || getVehicleImage(vehicle.vehicleTypeName)}
               alt={vehicle.model}
               className="w-full h-full object-cover"
             />
@@ -285,17 +290,51 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
                     name="plateNumber"
                     label={
                       <span className="font-semibold text-gray-700">
-                        Plate Number
+                        Plate Number <span className="text-red-500">*</span>
                       </span>
                     }
+                    normalize={(value) => (value ? value.toUpperCase() : value)}
                     rules={[
                       { required: true, message: "Please enter plate number!" },
+                      {
+                        validator: (_, value) => {
+                          if (!value) return Promise.resolve();
+                          if (!value.includes("-")) {
+                            return Promise.reject(
+                              new Error("Plate number must contain a hyphen (-)"),
+                            );
+                          }
+                          if (isMotorbike) {
+                            const regex = /^[1-9][0-9][A-Z][A-Z0-9]\s*-\s*[0-9]{4,5}$/;
+                            if (!regex.test(value)) {
+                              return Promise.reject(
+                                new Error("Invalid format! Expected e.g. 59A1 - 12345"),
+                              );
+                            }
+                          } else if (typeName) {
+                            const regex = /^[1-9][0-9][A-Z]{1,2}\s*-\s*[0-9]{4,5}$/;
+                            if (!regex.test(value)) {
+                              return Promise.reject(
+                                new Error("Invalid format! Expected e.g. 51A - 12345"),
+                              );
+                            }
+                          }
+                          return Promise.resolve();
+                        },
+                      },
                     ]}
+                    extra={
+                      <span className="text-xs text-gray-500">
+                        {isMotorbike
+                          ? "Format: 59A1-12345 or 59A1 - 12345"
+                          : "Format: 51A-12345 or 51A - 12345"}
+                      </span>
+                    }
                   >
                     <Input
-                      placeholder="e.g., 30A-678.90"
+                      placeholder={isMotorbike ? "e.g., 59A1 - 12345" : "e.g., 51A - 12345"}
                       size="large"
-                      className="rounded-lg"
+                      className="rounded-lg font-mono uppercase"
                     />
                   </Form.Item>
 
@@ -317,6 +356,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
                       placeholder="Select vehicle type"
                       size="large"
                       className="rounded-lg"
+                      disabled
                     >
                       {vehicleTypes.map((type) => (
                         <Option

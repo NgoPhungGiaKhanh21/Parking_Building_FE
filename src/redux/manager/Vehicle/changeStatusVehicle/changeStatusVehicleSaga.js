@@ -8,6 +8,8 @@ import {
   changeStatusVehicleSuccess,
 } from "./changeStatusVehicleSlice";
 
+import { getAllVehicleRequest } from "../../Vehicle/getAllVehicle/getAllVehicleSlice";
+
 function* handleChangeStatusVehicle(action) {
   try {
     const response = yield call(changeStatusVehicleApi, action.payload);
@@ -15,6 +17,7 @@ function* handleChangeStatusVehicle(action) {
     const data = response.data;
     yield put(changeStatusVehicleSuccess(data));
     yield put(getVehicleManageRequest(action.payload.userId));
+    yield put(getAllVehicleRequest());
     toast.success("Status updated successfully!");
   } catch (error) {
     const errorData = error.response?.data;
