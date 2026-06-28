@@ -27,6 +27,7 @@ import PaymentSuccess from "../page/Driver/Payment/PaymentSuccess";
 import PaymentCancel from "../page/Driver/Payment/PaymentCancel";
 import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
 import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
+import VehicleEntryGuest from "../page/Staff/vehicleEntryGuest/vehicleEntryGuest";
 import Availability from "../page/Driver/Availability/availability"
 const router = createBrowserRouter([
   {
@@ -103,6 +104,7 @@ const router = createBrowserRouter([
         element: <StaffLayout />,
         children: [
           { path: "", element: <VehicleEntry /> },
+          { path: "guest-checkin", element: <VehicleEntryGuest /> },
           { path: "vehicle-exit", element: <VehicleExit /> },
           { path: "payments", element: <PaymentManagement /> },
         ],

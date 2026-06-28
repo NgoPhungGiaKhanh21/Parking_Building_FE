@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   User,
   CarFront,
+  UserRound,
 } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
 import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
@@ -33,6 +34,12 @@ const SidebarStaff = () => {
       label: "Vehicle Entry",
       icon: ArrowRightSquare,
       to: "/staff",
+    },
+    {
+      id: "guest-checkin",
+      label: "Guest Check-in",
+      icon: UserRound,
+      to: "/staff/guest-checkin",
     },
     {
       id: "vehicle-exit",

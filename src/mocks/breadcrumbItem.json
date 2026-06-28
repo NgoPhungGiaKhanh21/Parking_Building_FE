@@ -25,6 +25,7 @@
         "title": "Staff",
         "pages": {
             "entry": "Vehicle Entry",
+            "guest-entry": "Guest Check-in",
             "exit": "Vehicle Exit",
             "ticket": "Parking Ticket Management",
             "payment": "Payment Management"
