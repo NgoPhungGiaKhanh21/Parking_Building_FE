@@ -27,6 +27,11 @@ import PaymentSuccess from "../page/Driver/Payment/PaymentSuccess";
 import PaymentCancel from "../page/Driver/Payment/PaymentCancel";
 import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
 import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
+import VehicleEntryGuest from "../page/Staff/vehicleEntryGuest/vehicleEntryGuest";
+import VehicleExitGuest from "../page/Staff/vehicleExitGuest/vehicleExitGuest";
+import GuestPayment from "../page/Staff/vehicleExitGuest/GuestPayment";
+import GuestPaymentSuccess from "../page/Staff/vehicleExitGuest/GuestPaymentSuccess";
+import GuestPaymentCancel from "../page/Staff/vehicleExitGuest/GuestPaymentCancel";
 import Availability from "../page/Driver/Availability/availability"
 const router = createBrowserRouter([
   {
@@ -45,10 +50,10 @@ const router = createBrowserRouter([
     ],
   },
 
-  // PayOS redirect — BE trả về /payment/success|cancel (không có prefix /driver)
+  // PayOS redirect — BE trả về /payment/success|failed; FE phân nhánh driver vs staff guest
   {
     path: "/payment",
-    element: <PrivateRoute allowedRoles={["ROLE_DRIVER"]} />,
+    element: <PrivateRoute allowedRoles={["ROLE_DRIVER", "ROLE_STAFF"]} />,
     children: [
       { path: "success", element: <PaymentSuccess /> },
       { path: "failed", element: <PaymentCancel /> },
@@ -103,7 +108,12 @@ const router = createBrowserRouter([
         element: <StaffLayout />,
         children: [
           { path: "", element: <VehicleEntry /> },
+          { path: "guest-checkin", element: <VehicleEntryGuest /> },
           { path: "vehicle-exit", element: <VehicleExit /> },
+          { path: "guest-checkout", element: <VehicleExitGuest /> },
+          { path: "guest-checkout/payment", element: <GuestPayment /> },
+          { path: "guest-checkout/payment/success", element: <GuestPaymentSuccess /> },
+          { path: "guest-checkout/payment/failed", element: <GuestPaymentCancel /> },
           { path: "payments", element: <PaymentManagement /> },
         ],
       },

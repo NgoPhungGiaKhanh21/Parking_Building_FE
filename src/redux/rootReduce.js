@@ -59,6 +59,8 @@ import getDriverPaymentsReducer from "./driver/payment/getDriverPayments/getDriv
 import getAllVehicleManagerReducer from "./manager/Vehicle/getAllVehicle/getAllVehicleSlice";
 import getOccupiedSlotReducer from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSlice";
 import getRevenueReducer from "./manager/Revenue/getRevenueSlice";
+import getSessionByPlateNumberReducer from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSlice";
+import checkInGuestReducer from "./staff/guest_parking/checkin_guest/checkInGuestSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -115,6 +117,8 @@ const rootReducer = combineReducers({
   createCheckout: createCheckoutReducer,
   getAllPayments: getAllPaymentsReducer,
   confirmPaymentByStaff: confirmPaymentByStaffReducer,
+  getSessionByPlateNumber: getSessionByPlateNumberReducer,
+  checkInGuest: checkInGuestReducer,
 
   //driver
   getAllVehicle: getAllVehicleReducer,

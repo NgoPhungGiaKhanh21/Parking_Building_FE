@@ -47,7 +47,7 @@ import { watchCreatePricingPolicy } from "./manager/PricingPolicy/CreatePricingP
 import { watchUpdatePricingPolicy } from "./manager/PricingPolicy/UpdatePricingPolicy/updatePricingPolicySaga";
 import { watchDeletePricingPolicy } from "./manager/PricingPolicy/DeletePricingPolicy/deletePricingPolicySaga";
 import { watchGetAllReservation } from "./staff/reservation/getAllReservation/getAllReservationSaga";
-import { watchApproveReservation } from "./staff/reservation/approvedReservation/approvedReservationSaga"
+import { watchApproveReservation } from "./staff/reservation/approvedReservation/approvedReservationSaga";
 import { watchCreateCheckin } from "./staff/parking_session/checkin/createCheckinSaga";
 import { watchCreateCheckout } from "./staff/parking_session/checkout/createCheckoutSaga";
 import { watchUpdateZone } from "./manager/Building/zone/updateZone/updateZoneSaga";
@@ -59,6 +59,8 @@ import { watchGetDriverPayments } from "./driver/payment/getDriverPayments/getDr
 import { watchGetAllVehicleManager } from "./manager/Vehicle/getAllVehicle/getAllVehicleSaga";
 import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSaga";
 import { watchGetRevenue } from "./manager/Revenue/getRevenueSaga";
+import { watchGetSessionByPlateNumber } from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSaga";
+import { watchCheckInGuest } from "./staff/guest_parking/checkin_guest/checkOutGuestSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -108,7 +110,7 @@ export default function* rootSaga() {
     watchDeletePricingPolicy(),
     watchUpdateZone(),
     watchGetRevenue(),
-    
+
     //staff
     watchGetAllReservation(),
     watchApproveReservation(),
@@ -116,6 +118,8 @@ export default function* rootSaga() {
     watchCreateCheckout(),
     watchGetAllPayments(),
     watchConfirmPaymentByStaff(),
+    watchGetSessionByPlateNumber(),
+    watchCheckInGuest(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

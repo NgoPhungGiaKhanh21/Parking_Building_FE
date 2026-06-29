@@ -620,17 +620,19 @@ const VehicleExit = () => {
 
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
-      <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <CommonBreadcrumb role="Staff" page="exit" />
-        <div className="mt-4 flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 text-orange-600">
+      <div className="mb-6 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <CommonBreadcrumb role="Staff" page="exit" />
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 text-orange-600">
             <ArrowLeftSquare size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
               Vehicle Exit Management
             </h1>
-            <p className="text-slate-500">
+            <p className="mt-1 font-medium text-slate-500">
               Check out vehicles and complete parking sessions.
             </p>
           </div>

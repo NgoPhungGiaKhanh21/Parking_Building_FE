@@ -2,27 +2,41 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button } from "antd";
-import { CheckCircle2, ParkingCircle } from "lucide-react";
+import { CheckCircle2, LogOut } from "lucide-react";
 import { toast } from "react-toastify";
 
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
-import { getCurrentSessionRequest } from "../../../redux/driver/session/currentSession/currentSessionSlice";
-import GuestPaymentSuccess from "../../Staff/vehicleExitGuest/GuestPaymentSuccess";
-import { isGuestStaffPaymentReturn } from "../../../utils/guestExitUtils";
+import { getAllPaymentsRequest } from "../../../redux/staff/payment/getAllPayments/getAllPaymentsSlice";
+import {
+  getSessionByPlateNumberRequest,
+} from "../../../redux/staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSlice";
+import {
+  GUEST_EXIT_PAID_KEY,
+  GUEST_EXIT_PLATE_KEY,
+  GUEST_PAYMENT_PENDING_KEY,
+} from "../../../utils/guestExitUtils";
 
-const DriverPaymentSuccess = () => {
+const GuestPaymentSuccess = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    dispatch(getCurrentSessionRequest());
+    sessionStorage.setItem(GUEST_EXIT_PAID_KEY, "true");
+    sessionStorage.removeItem(GUEST_PAYMENT_PENDING_KEY);
+    dispatch(getAllPaymentsRequest());
+
+    const plate = sessionStorage.getItem(GUEST_EXIT_PLATE_KEY);
+    if (plate) {
+      dispatch(getSessionByPlateNumberRequest({ plateNumber: plate }));
+    }
+
     toast.success("Thanh toán PayOS thành công!");
   }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
       <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <CommonBreadcrumb role="Driver" page="payment" />
+        <CommonBreadcrumb role="Staff" page="guest-checkout" subPage="guest-payment" />
       </div>
 
       <div className="mx-auto max-w-lg rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm text-center">
@@ -34,28 +48,20 @@ const DriverPaymentSuccess = () => {
           Payment Successful
         </h1>
         <p className="text-slate-500 mb-8">
-          PayOS đã xử lý thanh toán. Session sẽ được cập nhật.
+          PayOS đã xử lý thanh toán. Tiếp tục checkout xe khách vãng lai.
         </p>
 
         <Button
           type="primary"
           size="large"
-          icon={<ParkingCircle size={16} />}
-          onClick={() => navigate("/driver/current-session")}
+          icon={<LogOut size={16} />}
+          onClick={() => navigate("/staff/guest-checkout?checkout=1")}
         >
-          Current Session
+          Continue to Check Out
         </Button>
       </div>
     </div>
   );
 };
 
-/** BE redirect PayOS về /payment/success — phân nhánh staff guest vs driver reservation. */
-const PaymentSuccess = () => {
-  if (isGuestStaffPaymentReturn()) {
-    return <GuestPaymentSuccess />;
-  }
-  return <DriverPaymentSuccess />;
-};
-
-export default PaymentSuccess;
+export default GuestPaymentSuccess;
