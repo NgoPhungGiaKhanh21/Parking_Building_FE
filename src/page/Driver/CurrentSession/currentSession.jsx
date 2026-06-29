@@ -96,25 +96,26 @@ const formatDuration = (checkinTime, now) => {
 };
 
 // ─── Single Session Card ───────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars -- giữ latestPayment để bật lại badge confirm
 const SessionCard = ({ session, now, latestPayment }) => {
   const navigate = useNavigate();
   const timer = formatDuration(session.checkinTime, now);
-  const sessionCfg = sessionStatusConfig[session.sessionStatus] || {
-    color: "default",
-    label: session.sessionStatus,
-    icon: null,
-  };
   const paymentCfg = paymentStatusConfig[session.paymentStatus] || {
     color: "default",
     label: session.paymentStatus,
   };
-  const confirmStatus = latestPayment?.paymentStatus;
-  const confirmCfg = confirmStatus
-    ? confirmationStatusConfig[confirmStatus] || {
-        color: "default",
-        label: confirmStatus,
-      }
-    : null;
+  // const sessionCfg = sessionStatusConfig[session.sessionStatus] || {
+  //   color: "default",
+  //   label: session.sessionStatus,
+  //   icon: null,
+  // };
+  // const confirmStatus = latestPayment?.paymentStatus;
+  // const confirmCfg = confirmStatus
+  //   ? confirmationStatusConfig[confirmStatus] || {
+  //       color: "default",
+  //       label: confirmStatus,
+  //     }
+  //   : null;
 
   const activeTierIndex = useMemo(() => {
     if (!session.pricingTiers) return 0;
@@ -168,27 +169,27 @@ const SessionCard = ({ session, now, latestPayment }) => {
       <div className="p-5 space-y-4">
         {/* ── Status Tags ── */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Tag
+          {/* <Tag
             icon={sessionCfg.icon}
             color={sessionCfg.color}
             className="flex items-center gap-1 !text-xs !font-semibold !px-3 !py-1"
           >
             {sessionCfg.label}
-          </Tag>
+          </Tag> */}
           <Tag
             color={paymentCfg.color}
             className="!text-xs !font-semibold !px-3 !py-1"
           >
             {paymentCfg.label}
           </Tag>
-          {confirmCfg && session.paymentStatus !== "CONFIRMED" && (
+          {/* {confirmCfg && session.paymentStatus !== "CONFIRMED" && (
             <Tag
               color={confirmCfg.color}
               className="!text-xs !font-semibold !px-3 !py-1"
             >
               {confirmCfg.label}
             </Tag>
-          )}
+          )} */}
           {session.ticketCode && (
             <code className="ml-auto rounded bg-emerald-50 px-2.5 py-1 text-xs font-mono font-bold text-emerald-700">
               {session.ticketCode}

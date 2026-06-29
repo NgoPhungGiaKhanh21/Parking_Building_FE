@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal, Tag } from 'antd';
 import { Clock, Car, MapPin, Ticket, Building2 } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -9,21 +8,22 @@ const statusConfig = {
     PARTIAL: { color: "orange", label: "Partial" },
 };
 
-const confirmationStatusConfig = {
-    CONFIRMED: { color: "green", label: "Confirmed" },
-    PENDING: { color: "orange", label: "Pending" },
-    FAILED: { color: "red", label: "Failed" },
-};
+// const confirmationStatusConfig = {
+//     CONFIRMED: { color: "green", label: "Confirmed" },
+//     PENDING: { color: "orange", label: "Pending" },
+//     FAILED: { color: "red", label: "Failed" },
+// };
 
-const findLatestPaymentForSession = (payments, sessionId) => {
-    if (!sessionId || !payments?.length) return null;
-    return (
-        [...payments]
-            .filter((p) => p.sessionId === sessionId)
-            .sort((a, b) => dayjs(b.paymentTime).valueOf() - dayjs(a.paymentTime).valueOf())[0] ?? null
-    );
-};
+// const findLatestPaymentForSession = (payments, sessionId) => {
+//     if (!sessionId || !payments?.length) return null;
+//     return (
+//         [...payments]
+//             .filter((p) => p.sessionId === sessionId)
+//             .sort((a, b) => dayjs(b.paymentTime).valueOf() - dayjs(a.paymentTime).valueOf())[0] ?? null
+//     );
+// };
 
+// eslint-disable-next-line no-unused-vars -- giữ payments để bật lại badge confirm
 const PaidSessionsModal = ({ open, onCancel, sessions, payments }) => {
     return (
         <Modal
@@ -46,11 +46,11 @@ const PaidSessionsModal = ({ open, onCancel, sessions, payments }) => {
                 ) : (
                     sessions.map((session) => {
                         const cfg = statusConfig[session.paymentStatus] || { color: "default", label: session.paymentStatus };
-                        const latestPayment = findLatestPaymentForSession(payments, session.sessionId);
-                        const confirmStatus = latestPayment?.paymentStatus;
-                        const confirmCfg = confirmStatus
-                            ? confirmationStatusConfig[confirmStatus] || { color: "default", label: confirmStatus }
-                            : null;
+                        // const latestPayment = findLatestPaymentForSession(payments, session.sessionId);
+                        // const confirmStatus = latestPayment?.paymentStatus;
+                        // const confirmCfg = confirmStatus
+                        //     ? confirmationStatusConfig[confirmStatus] || { color: "default", label: confirmStatus }
+                        //     : null;
 
                         return (
                             <div key={session.sessionId} className="rounded-xl border border-slate-100 bg-slate-50 p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -63,9 +63,9 @@ const PaidSessionsModal = ({ open, onCancel, sessions, payments }) => {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Tag color={cfg.color} className="!m-0 font-bold px-3 py-1 text-sm rounded-full">{cfg.label}</Tag>
-                                        {confirmCfg && session.paymentStatus !== "CONFIRMED" && (
+                                        {/* {confirmCfg && session.paymentStatus !== "CONFIRMED" && (
                                             <Tag color={confirmCfg.color} className="!m-0 font-bold px-3 py-1 text-sm rounded-full">{confirmCfg.label}</Tag>
-                                        )}
+                                        )} */}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 mb-4">

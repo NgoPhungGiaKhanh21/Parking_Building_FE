@@ -27,6 +27,8 @@
             "entry": "Vehicle Entry",
             "guest-entry": "Guest Check-in",
             "exit": "Vehicle Exit",
+            "guest-checkout": "Guest Check-out",
+            "guest-payment": "Guest Payment",
             "ticket": "Parking Ticket Management",
             "payment": "Payment Management"
         }

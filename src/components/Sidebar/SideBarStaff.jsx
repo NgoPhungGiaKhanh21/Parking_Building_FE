@@ -36,16 +36,22 @@ const SidebarStaff = () => {
       to: "/staff",
     },
     {
+      id: "vehicle-exit",
+      label: "Vehicle Exit",
+      icon: ArrowLeftSquare,
+      to: "/staff/vehicle-exit",
+    },
+    {
       id: "guest-checkin",
       label: "Guest Check-in",
       icon: UserRound,
       to: "/staff/guest-checkin",
     },
     {
-      id: "vehicle-exit",
-      label: "Vehicle Exit",
-      icon: ArrowLeftSquare,
-      to: "/staff/vehicle-exit",
+      id: "guest-checkout",
+      label: "Guest Check-out",
+      icon: UserRound,
+      to: "/staff/guest-checkout",
     },
     {
       id: "parking-ticket",
@@ -93,9 +99,8 @@ const SidebarStaff = () => {
 
       {/* 1. Header & Logo */}
       <div
-        className={`relative flex min-h-[76px] items-center gap-3 border-b border-white/[0.07] px-4 pt-5 pb-4 ${
-          isCollapsed ? "justify-center" : "justify-start"
-        }`}
+        className={`relative flex min-h-[76px] items-center gap-3 border-b border-white/[0.07] px-4 pt-5 pb-4 ${isCollapsed ? "justify-center" : "justify-start"
+          }`}
       >
         <div
           className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[14px]"
@@ -137,9 +142,8 @@ const SidebarStaff = () => {
           }}
         >
           <ChevronLeft
-            className={`h-[15px] w-[15px] text-white transition-transform duration-300 ${
-              isCollapsed ? "rotate-180" : ""
-            }`}
+            className={`h-[15px] w-[15px] text-white transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
+              }`}
           />
         </button>
       </div>
@@ -147,9 +151,8 @@ const SidebarStaff = () => {
       {/* 2. User Avatar & Role Info */}
       <div
         onClick={() => setIsProfileModalOpen(true)}
-        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-colors duration-200 ${
-          isCollapsed ? "px-2 py-4" : "px-4 py-5"
-        }`}
+        className={`flex flex-col items-center gap-3 border-b border-white/[0.07] bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-colors duration-200 ${isCollapsed ? "px-2 py-4" : "px-4 py-5"
+          }`}
       >
         <div className="relative">
           <div
@@ -187,19 +190,20 @@ const SidebarStaff = () => {
         <nav className="flex flex-col gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.to;
+            const isActive =
+              location.pathname === item.to ||
+              (item.to !== "/staff" &&
+                location.pathname.startsWith(`${item.to}/`));
 
             return (
               <Link
                 key={item.id}
                 to={item.to}
-                className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${
-                  isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
-                } ${
-                  isActive
+                className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border transition-all duration-200 no-underline ${isCollapsed ? "justify-center p-3" : "px-3 py-[11px]"
+                  } ${isActive
                     ? "border-indigo-500/35 bg-indigo-500/10"
                     : "border-transparent hover:border-white/[0.08] hover:bg-white/[0.05]"
-                }`}
+                  }`}
               >
                 {isActive && (
                   <div
@@ -210,17 +214,15 @@ const SidebarStaff = () => {
                   />
                 )}
                 <Icon
-                  className={`h-[19px] w-[19px] flex-shrink-0 transition-colors duration-200 ${
-                    isActive
-                      ? "text-indigo-400"
-                      : "text-slate-400/70 group-hover:text-slate-300"
-                  }`}
+                  className={`h-[19px] w-[19px] flex-shrink-0 transition-colors duration-200 ${isActive
+                    ? "text-indigo-400"
+                    : "text-slate-400/70 group-hover:text-slate-300"
+                    }`}
                 />
                 {!isCollapsed && (
                   <span
-                    className={`whitespace-nowrap text-[13.5px] font-semibold ${
-                      isActive ? "text-indigo-200" : "text-slate-300/80"
-                    }`}
+                    className={`whitespace-nowrap text-[13.5px] font-semibold ${isActive ? "text-indigo-200" : "text-slate-300/80"
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -235,9 +237,8 @@ const SidebarStaff = () => {
       <div className="border-t border-white/[0.07] px-[10px] py-3">
         <button
           onClick={handleLogout}
-          className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-transparent transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/10 ${
-            isCollapsed ? "justify-center p-[11px]" : "px-3 py-[11px]"
-          }`}
+          className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-transparent transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/10 ${isCollapsed ? "justify-center p-[11px]" : "px-3 py-[11px]"
+            }`}
         >
           <LogOut className="h-[19px] w-[19px] flex-shrink-0 text-red-400" />
           {!isCollapsed && (
