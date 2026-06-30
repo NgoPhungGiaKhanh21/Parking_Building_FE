@@ -2,8 +2,8 @@ import api from "../api";
 
 export const getAdminDashboardStatsApi = (filters = {}) => {
   const params = {};
-  if (filters.from) params.from = filters.from;
-  if (filters.to) params.to = filters.to;
+  if (filters.fromDay) params.fromDay = filters.fromDay;
+  if (filters.toDay) params.toDay = filters.toDay;
   return api.get("/admin/dashboard/stats", { params });
 };
 

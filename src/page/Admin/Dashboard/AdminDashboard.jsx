@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button, DatePicker, Empty, Spin, Table, Tag } from "antd";
 import {
   Activity,
-  AlertTriangle,
   CircleDollarSign,
   ParkingCircle,
   Users,
@@ -97,8 +96,8 @@ const AdminDashboard = () => {
     const [from, to] = Array.isArray(dateRange) ? dateRange : [];
     dispatch(
       getAdminDashboardStatsRequest({
-        from: from ? from.toISOString() : undefined,
-        to: to ? to.toISOString() : undefined,
+        fromDay: from ? from.format("YYYY-MM-DD") : undefined,
+        toDay: to ? to.format("YYYY-MM-DD") : undefined,
       }),
     );
   };
@@ -114,7 +113,6 @@ const AdminDashboard = () => {
     () => stats?.reservations || {},
     [stats?.reservations],
   );
-  const incidents = useMemo(() => stats?.incidents || {}, [stats?.incidents]);
   const users = useMemo(() => stats?.users || {}, [stats?.users]);
   const generatedAt = stats?.generatedAt;
 
@@ -150,7 +148,6 @@ const AdminDashboard = () => {
   const reservationStatusData = useMemo(
     () => [
       { status: "Pending", count: toNumberSafe(reservations.totalPending) },
-      { status: "Approved", count: toNumberSafe(reservations.totalApproved) },
       { status: "Completed", count: toNumberSafe(reservations.totalCompleted) },
       { status: "Cancelled", count: toNumberSafe(reservations.totalCancelled) },
       { status: "Expired", count: toNumberSafe(reservations.totalExpired) },
@@ -171,17 +168,16 @@ const AdminDashboard = () => {
     [stats?.revenueByPaymentMethod],
   );
 
-  const revenueLast7Days = useMemo(
+  const revenueTrendData = useMemo(
     () =>
-      (Array.isArray(stats?.revenueLast7Days)
-        ? stats.revenueLast7Days
-        : []
-      ).map((item, index) => ({
-        date: item.date || `D${index + 1}`,
-        revenue: toNumberSafe(item.revenue),
-        transactions: toNumberSafe(item.count),
-      })),
-    [stats?.revenueLast7Days],
+      (Array.isArray(stats?.revenueTrend) ? stats.revenueTrend : []).map(
+        (item, index) => ({
+          date: item.date || `D${index + 1}`,
+          revenue: toNumberSafe(item.revenue),
+          transactions: toNumberSafe(item.count),
+        }),
+      ),
+    [stats?.revenueTrend],
   );
 
   const derivedMetrics = useMemo(() => {
@@ -192,33 +188,25 @@ const AdminDashboard = () => {
         ? (completedToday / totalReservationToday) * 100
         : 0;
 
-    const openIncidents = toNumberSafe(incidents.totalOpen);
-    const activeSessions = toNumberSafe(sessions.totalActiveSessions);
-    const incidentPressure =
-      activeSessions > 0 ? (openIncidents / activeSessions) * 100 : 0;
-
-    const totalRevenue7D = revenueLast7Days.reduce(
+    const totalRevenue = revenueTrendData.reduce(
       (sum, item) => sum + toNumberSafe(item.revenue),
       0,
     );
-    const totalTransactions7D = revenueLast7Days.reduce(
+    const totalTransactions = revenueTrendData.reduce(
       (sum, item) => sum + toNumberSafe(item.transactions),
       0,
     );
 
     return {
       successRate: successRate.toFixed(1),
-      incidentPressure: incidentPressure.toFixed(1),
-      totalRevenue7D,
+      totalRevenue,
       avgRevenuePerTransaction:
-        totalTransactions7D > 0 ? totalRevenue7D / totalTransactions7D : 0,
+        totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
     };
   }, [
-    incidents.totalOpen,
     reservations.totalCompleted,
     reservations.totalToday,
-    revenueLast7Days,
-    sessions.totalActiveSessions,
+    revenueTrendData,
   ]);
 
   const buildingColumns = [
@@ -344,8 +332,7 @@ const AdminDashboard = () => {
                 Admin Analytics Dashboard
               </h1>
               <p className="text-slate-500">
-                Monitor occupancy, revenue, reservations, users and incidents in
-                one view.
+                Monitor occupancy, revenue, reservations, and users in one view.
               </p>
             </div>
           </div>
@@ -361,10 +348,9 @@ const AdminDashboard = () => {
             </p>
             <DatePicker.RangePicker
               className="w-full"
-              showTime
               value={dateRange}
               onChange={(values) => setDateRange(values || [])}
-              format="DD/MM/YYYY HH:mm"
+              format="DD/MM/YYYY"
               placeholder={["From", "To"]}
             />
           </div>
@@ -389,7 +375,14 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Revenue (Selected Trend)"
+          value={formatCurrency(derivedMetrics.totalRevenue)}
+          note={`Avg/txn: ${formatCurrency(derivedMetrics.avgRevenuePerTransaction)}`}
+          icon={<CircleDollarSign size={18} className="text-emerald-600" />}
+          accentClass="bg-emerald-50"
+        />
         <StatCard
           label="Occupancy Rate"
           value={formatPercentValue(occupancy.occupancyRate)}
@@ -401,27 +394,13 @@ const AdminDashboard = () => {
           label="Active Sessions"
           value={formatCount(sessions.totalActiveSessions)}
           note={`Today: ${formatCount(sessions.sessionsToday)}`}
-          icon={<CalendarDays size={18} className="text-emerald-600" />}
-          accentClass="bg-emerald-50"
-        />
-        <StatCard
-          label="Open Incidents"
-          value={formatCount(incidents.totalOpen)}
-          note={`Pressure: ${derivedMetrics.incidentPressure}% / active sessions`}
-          icon={<AlertTriangle size={18} className="text-amber-600" />}
+          icon={<CalendarDays size={18} className="text-amber-600" />}
           accentClass="bg-amber-50"
-        />
-        <StatCard
-          label="Revenue Last 7 Days"
-          value={formatCurrency(derivedMetrics.totalRevenue7D)}
-          note={`Avg/txn: ${formatCurrency(derivedMetrics.avgRevenuePerTransaction)}`}
-          icon={<CircleDollarSign size={18} className="text-violet-600" />}
-          accentClass="bg-violet-50"
         />
         <StatCard
           label="Drivers Currently Parked"
           value={formatCount(users.driversCurrentlyParked)}
-          note={`Success rate today: ${derivedMetrics.successRate}%`}
+          note={`Reservation success today: ${derivedMetrics.successRate}%`}
           icon={<Users size={18} className="text-indigo-600" />}
           accentClass="bg-indigo-50"
         />
@@ -540,17 +519,17 @@ const AdminDashboard = () => {
             </ChartCard>
           </div>
 
-          <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="mb-4">
             <ChartCard
-              title="Revenue Trend - Last 7 Days VND Currency"
-              subtitle="Track revenue trajectory and detect unusual peaks/drops."
+              title="Revenue Trend"
+              subtitle="Track revenue trajectory for the selected period."
             >
-              {revenueLast7Days.length === 0 ? (
+              {revenueTrendData.length === 0 ? (
                 <Empty description="No revenue trend data" />
               ) : (
-                <div className="h-[300px]">
+                <div className="h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueLast7Days}>
+                    <LineChart data={revenueTrendData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
@@ -569,17 +548,19 @@ const AdminDashboard = () => {
                 </div>
               )}
             </ChartCard>
+          </div>
 
+          <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <ChartCard
-              title="Daily Transactions - Last 7 Days"
-              subtitle="Understand daily payment traffic volume."
+              title="Transactions Trend"
+              subtitle="Understand transaction volume for the selected period."
             >
-              {revenueLast7Days.length === 0 ? (
+              {revenueTrendData.length === 0 ? (
                 <Empty description="No transaction trend data" />
               ) : (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={revenueLast7Days}>
+                    <BarChart data={revenueTrendData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
@@ -592,45 +573,6 @@ const AdminDashboard = () => {
                         radius={[8, 8, 0, 0]}
                       />
                     </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </ChartCard>
-          </div>
-
-          <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <ChartCard
-              title="Revenue by Payment Method"
-              subtitle="Measure revenue contribution by payment channel."
-            >
-              {paymentMethodData.length === 0 ? (
-                <Empty description="No payment method data" />
-              ) : (
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={paymentMethodData}
-                        dataKey="totalRevenue"
-                        nameKey="method"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        innerRadius={55}
-                        label={({ method, percent }) =>
-                          `${method}: ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {paymentMethodData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${entry.method}`}
-                            fill={CHART_COLORS[index % CHART_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value)} />
-                      <Legend />
-                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               )}
