@@ -4,6 +4,7 @@ import authReducer from "./auth/authSlice";
 import getAllUserReducer from "./admin/GetAllUser/getAllUserSlice";
 import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSlice";
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
+import getAdminDashboardStatsReducer from "./admin/dashboardStats/getAdminDashboardStatsSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";
 import changePasswordReducer from "./changePassword/changePasswordSlice";
 import createBuildingReducer from "./manager/Building/createBuilding/createBuildingSlice";
@@ -70,6 +71,7 @@ const rootReducer = combineReducers({
   getAllUser: getAllUserReducer,
   changeStatusUser: changeStatusUserReducer,
   changeRoleUser: changeRoleUserReducer,
+  getAdminDashboardStats: getAdminDashboardStatsReducer,
   getProfileUser: getProfileUserReducer,
   changePassword: changePasswordReducer,
 

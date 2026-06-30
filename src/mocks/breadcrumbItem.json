@@ -3,7 +3,8 @@
     "Admin": {
         "title": "Admin",
         "pages": {
-            "user": "User Management"
+            "user": "User Management",
+            "dashboard": "Dashboard"
         }
     },
     "Manager": {

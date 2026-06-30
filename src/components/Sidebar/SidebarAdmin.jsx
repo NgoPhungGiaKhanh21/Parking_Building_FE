@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Avatar } from "antd";
-import { LogOut, ChevronLeft, User, CarFront } from "lucide-react";
+import { LogOut, ChevronLeft, User, CarFront, LayoutDashboard } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
 import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +19,12 @@ const SidebarAdmin = () => {
   }, [dispatch]);
 
   const menuItems = [
+    {
+      id: "admin-dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      to: "/admin/dashboard",
+    },
     {
       id: "user-management",
       label: "User Management",
