@@ -10,6 +10,7 @@ import StaffLayout from "../page/Staff/StaffLayout";
 import DriverLayout from "../page/Driver/DriverLayout";
 import AdminLayout from "../page/Admin/AdminLayout";
 import UserManagement from "../page/Admin/UserManage/UserManagement";
+import AdminDashboard from "../page/Admin/Dashboard/AdminDashboard";
 import FloorManagement from "../page/Manager/Building/FloorManagement";
 import ZoneByFloorManagement from "../page/Manager/Zone/ZoneByFloorManagement";
 import ParkingSpacePage from "../page/Manager/ParkingSpace/parking_page";
@@ -69,7 +70,10 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <AdminLayout />,
-        children: [{ path: "", element: <UserManagement /> }],
+        children: [
+          { path: "", element: <UserManagement /> },
+          { path: "dashboard", element: <AdminDashboard /> },
+        ],
       },
     ],
   },

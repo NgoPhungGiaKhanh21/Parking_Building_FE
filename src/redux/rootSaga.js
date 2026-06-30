@@ -3,6 +3,7 @@ import authSaga from "./auth/authSaga";
 import { watchGetAllUser } from "./admin/GetAllUser/GetAllUserSaga";
 import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUserSaga";
 import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
+import { watchGetAdminDashboardStats } from "./admin/dashboardStats/getAdminDashboardStatsSaga";
 import { watchGetProfileUser } from "./profileUser/getProfileUserSaga";
 import { watchChangePassword } from "./changePassword/changePasswordSaga";
 import { watchCreateBuilding } from "./manager/Building/createBuilding/createBuildingSaga";
@@ -71,6 +72,7 @@ export default function* rootSaga() {
     watchGetAllUser(),
     watchChangeStatusUser(),
     watchChangeRoleUser(),
+    watchGetAdminDashboardStats(),
     watchGetProfileUser(),
     watchChangePassword(),
 
