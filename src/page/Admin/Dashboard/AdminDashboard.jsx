@@ -1,13 +1,11 @@
 /* eslint-disable react-hooks/preserve-manual-memoization */
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, DatePicker, Empty, Spin, Table, Tag } from "antd";
+import { Button, DatePicker, Empty, Spin, Table } from "antd";
 import {
   Activity,
   CircleDollarSign,
   ParkingCircle,
-  Users,
-  CalendarDays,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -49,6 +47,18 @@ const formatCurrency = (value) => {
   return `${num.toLocaleString("vi-VN")}đ`;
 };
 
+const formatDateDMY = (value) => {
+  if (!value) return "—";
+  const text = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const [year, month, day] = text.slice(0, 10).split("-");
+    return `${day}/${month}/${year}`;
+  }
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+  return parsed.toLocaleDateString("vi-VN");
+};
+
 const normalizePercentValue = (value) => {
   const num = toNumberSafe(value);
   if (num <= 1) return num * 100;
@@ -66,18 +76,20 @@ const ChartCard = ({ title, subtitle, children }) => (
   </div>
 );
 
-const StatCard = ({ icon, label, value, note, accentClass }) => (
-  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-    <div className="mb-2 flex items-center justify-between">
-      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+const StatCard = ({ icon, label, value, note, accentClass, containerClass }) => (
+  <div
+    className={`rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ${containerClass || ""}`}
+  >
+    <div className="mb-3 flex items-center justify-between">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${accentClass}`}
+        className={`flex h-10 w-10 items-center justify-center rounded-xl ${accentClass}`}
       >
         {icon}
       </div>
     </div>
-    <p className="text-2xl font-black text-slate-800">{value}</p>
-    {note && <p className="mt-1 text-xs text-slate-500">{note}</p>}
+    <p className="text-3xl font-black text-slate-800">{value}</p>
+    {note && <p className="mt-1.5 text-xs font-medium text-slate-500">{note}</p>}
   </div>
 );
 
@@ -108,13 +120,11 @@ const AdminDashboard = () => {
   };
 
   const occupancy = useMemo(() => stats?.occupancy || {}, [stats?.occupancy]);
-  const sessions = useMemo(() => stats?.sessions || {}, [stats?.sessions]);
   const reservations = useMemo(
     () => stats?.reservations || {},
     [stats?.reservations],
   );
   const users = useMemo(() => stats?.users || {}, [stats?.users]);
-  const generatedAt = stats?.generatedAt;
 
   const occupancyPieData = useMemo(
     () =>
@@ -128,21 +138,6 @@ const AdminDashboard = () => {
         { name: "Available", value: toNumberSafe(occupancy.availableSlots) },
       ].filter((item) => item.value > 0),
     [occupancy],
-  );
-
-  const buildingOccupancyData = useMemo(
-    () =>
-      (Array.isArray(occupancy?.buildings) ? occupancy.buildings : []).map(
-        (item) => ({
-          name: item.buildingName || "N/A",
-          occupancyRate: Number(
-            normalizePercentValue(item.occupancyRate).toFixed(1),
-          ),
-          occupied: toNumberSafe(item.occupiedSlots),
-          total: toNumberSafe(item.totalSlots),
-        }),
-      ),
-    [occupancy?.buildings],
   );
 
   const reservationStatusData = useMemo(
@@ -172,7 +167,7 @@ const AdminDashboard = () => {
     () =>
       (Array.isArray(stats?.revenueTrend) ? stats.revenueTrend : []).map(
         (item, index) => ({
-          date: item.date || `D${index + 1}`,
+          date: item.date ? formatDateDMY(item.date) : `D${index + 1}`,
           revenue: toNumberSafe(item.revenue),
           transactions: toNumberSafe(item.count),
         }),
@@ -181,13 +176,6 @@ const AdminDashboard = () => {
   );
 
   const derivedMetrics = useMemo(() => {
-    const totalReservationToday = toNumberSafe(reservations.totalToday);
-    const completedToday = toNumberSafe(reservations.totalCompleted);
-    const successRate =
-      totalReservationToday > 0
-        ? (completedToday / totalReservationToday) * 100
-        : 0;
-
     const totalRevenue = revenueTrendData.reduce(
       (sum, item) => sum + toNumberSafe(item.revenue),
       0,
@@ -198,16 +186,11 @@ const AdminDashboard = () => {
     );
 
     return {
-      successRate: successRate.toFixed(1),
       totalRevenue,
       avgRevenuePerTransaction:
         totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
     };
-  }, [
-    reservations.totalCompleted,
-    reservations.totalToday,
-    revenueTrendData,
-  ]);
+  }, [revenueTrendData]);
 
   const buildingColumns = [
     {
@@ -322,7 +305,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-[#f5f7ff] p-4 md:p-8">
       <div className="mb-6 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
         <CommonBreadcrumb role="Admin" page="dashboard" />
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-4 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 text-indigo-600">
               <Activity size={28} strokeWidth={2.5} />
@@ -336,10 +319,6 @@ const AdminDashboard = () => {
               </p>
             </div>
           </div>
-          <Tag color="blue" className="px-3! py-1! text-xs! font-semibold!">
-            Generated:{" "}
-            {generatedAt ? new Date(generatedAt).toLocaleString() : "—"}
-          </Tag>
         </div>
         <div className="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
           <div className="min-w-[270px]">
@@ -375,13 +354,14 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <StatCard
           label="Revenue (Selected Trend)"
           value={formatCurrency(derivedMetrics.totalRevenue)}
           note={`Avg/txn: ${formatCurrency(derivedMetrics.avgRevenuePerTransaction)}`}
           icon={<CircleDollarSign size={18} className="text-emerald-600" />}
           accentClass="bg-emerald-50"
+          containerClass="border-emerald-100 bg-emerald-50/40"
         />
         <StatCard
           label="Occupancy Rate"
@@ -389,20 +369,7 @@ const AdminDashboard = () => {
           note={`${formatCount(occupancy.occupiedSlots)} / ${formatCount(occupancy.totalSlots)} slots occupied`}
           icon={<ParkingCircle size={18} className="text-blue-600" />}
           accentClass="bg-blue-50"
-        />
-        <StatCard
-          label="Active Sessions"
-          value={formatCount(sessions.totalActiveSessions)}
-          note={`Today: ${formatCount(sessions.sessionsToday)}`}
-          icon={<CalendarDays size={18} className="text-amber-600" />}
-          accentClass="bg-amber-50"
-        />
-        <StatCard
-          label="Drivers Currently Parked"
-          value={formatCount(users.driversCurrentlyParked)}
-          note={`Reservation success today: ${derivedMetrics.successRate}%`}
-          icon={<Users size={18} className="text-indigo-600" />}
-          accentClass="bg-indigo-50"
+          containerClass="border-blue-100 bg-blue-50/40"
         />
       </div>
 
@@ -449,8 +416,8 @@ const AdminDashboard = () => {
         <>
           <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <ChartCard
-              title="Occupancy Composition"
-              subtitle="How current slots are distributed: occupied, reserved, pending exit, and available."
+              title="Current Parking Status"
+              subtitle="Real-time parking occupancy (not affected by date filter). Unit: slots and %."
             >
               {occupancyPieData.length === 0 ? (
                 <Empty description="No occupancy data" />
@@ -477,7 +444,9 @@ const AdminDashboard = () => {
                           />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatCount(value)} />
+                      <Tooltip
+                        formatter={(value) => [`${formatCount(value)} slots`, "Slot Count"]}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -486,30 +455,29 @@ const AdminDashboard = () => {
             </ChartCard>
 
             <ChartCard
-              title="Occupancy Rate by Building"
-              subtitle="Compare building utilization to detect overloaded areas."
+              title="Reservations by Status"
+              subtitle="Reservation status distribution for the selected date range (affected by date filter). Unit: reservations."
             >
-              {buildingOccupancyData.length === 0 ? (
-                <Empty description="No building occupancy data" />
+              {reservationStatusData.every((item) => item.count === 0) ? (
+                <Empty description="No reservation status data" />
               ) : (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={buildingOccupancyData}>
+                    <BarChart data={reservationStatusData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis unit="%" />
+                      <XAxis dataKey="status" />
+                      <YAxis />
                       <Tooltip
-                        formatter={(value, name) =>
-                          name === "occupancyRate"
-                            ? [`${value}%`, "Occupancy Rate"]
-                            : [formatCount(value), name]
-                        }
+                        formatter={(value) => [
+                          `${formatCount(value)} reservations`,
+                          "Reservations",
+                        ]}
                       />
                       <Legend />
                       <Bar
-                        dataKey="occupancyRate"
-                        name="Occupancy Rate"
-                        fill="#2563eb"
+                        dataKey="count"
+                        name="Reservations (count)"
+                        fill="#f59e0b"
                         radius={[8, 8, 0, 0]}
                       />
                     </BarChart>
@@ -517,12 +485,13 @@ const AdminDashboard = () => {
                 </div>
               )}
             </ChartCard>
+
           </div>
 
           <div className="mb-4">
             <ChartCard
               title="Revenue Trend"
-              subtitle="Track revenue trajectory for the selected period."
+              subtitle="Track revenue trajectory for the selected period (unit: VND)."
             >
               {revenueTrendData.length === 0 ? (
                 <Empty description="No revenue trend data" />
@@ -533,12 +502,12 @@ const AdminDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value) => formatCurrency(value)} />
+                      <Tooltip formatter={(value) => [formatCurrency(value), "Revenue (VND)"]} />
                       <Legend />
                       <Line
                         type="monotone"
                         dataKey="revenue"
-                        name="Revenue"
+                        name="Revenue (VND)"
                         stroke="#16a34a"
                         strokeWidth={2.5}
                         dot={{ r: 3 }}
@@ -550,10 +519,10 @@ const AdminDashboard = () => {
             </ChartCard>
           </div>
 
-          <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="mb-4">
             <ChartCard
               title="Transactions Trend"
-              subtitle="Understand transaction volume for the selected period."
+              subtitle="Understand transaction volume for the selected period (unit: transactions)."
             >
               {revenueTrendData.length === 0 ? (
                 <Empty description="No transaction trend data" />
@@ -564,39 +533,17 @@ const AdminDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value) => formatCount(value)} />
+                      <Tooltip
+                        formatter={(value) => [
+                          `${formatCount(value)} transactions`,
+                          "Transactions",
+                        ]}
+                      />
                       <Legend />
                       <Bar
                         dataKey="transactions"
-                        name="Transactions"
+                        name="Transactions (count)"
                         fill="#7c3aed"
-                        radius={[8, 8, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </ChartCard>
-
-            <ChartCard
-              title="Reservations by Status"
-              subtitle="Track reservation pipeline health and bottlenecks."
-            >
-              {reservationStatusData.every((item) => item.count === 0) ? (
-                <Empty description="No reservation status data" />
-              ) : (
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reservationStatusData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="status" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => formatCount(value)} />
-                      <Legend />
-                      <Bar
-                        dataKey="count"
-                        name="Reservations"
-                        fill="#f59e0b"
                         radius={[8, 8, 0, 0]}
                       />
                     </BarChart>
