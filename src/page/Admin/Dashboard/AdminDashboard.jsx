@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/preserve-manual-memoization */
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, DatePicker, Empty, Spin, Table } from "antd";
+import { Button, DatePicker, Empty, Spin, Table, Tag } from "antd";
 import {
   Activity,
   CircleDollarSign,
   ParkingCircle,
 } from "lucide-react";
+import dayjs from "dayjs";
 import {
   ResponsiveContainer,
   PieChart,
@@ -24,6 +25,7 @@ import {
 } from "recharts";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getAdminDashboardStatsRequest } from "../../../redux/admin/dashboardStats/getAdminDashboardStatsSlice";
+import { getAllPaymentsRequest } from "../../../redux/staff/payment/getAllPayments/getAllPaymentsSlice";
 
 const CHART_COLORS = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#7c3aed"];
 
@@ -59,6 +61,22 @@ const formatDateDMY = (value) => {
   return parsed.toLocaleDateString("vi-VN");
 };
 
+const normalizeStatus = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
+const PAYMENT_STATUS_COLORS = {
+  CONFIRMED: "green",
+  PAID: "green",
+  UNPAID: "gold",
+  PENDING: "orange",
+  FAILED: "red",
+};
+
+const resolveDriverName = (record) =>
+  record?.driverName ?? record?.fullName ?? record?.driver?.fullName ?? "—";
+
 const normalizePercentValue = (value) => {
   const num = toNumberSafe(value);
   if (num <= 1) return num * 100;
@@ -93,30 +111,41 @@ const StatCard = ({ icon, label, value, note, accentClass, containerClass }) => 
   </div>
 );
 
+const getDefaultLast7DaysRange = () => [dayjs().subtract(6, "day"), dayjs()];
+
+const toDashboardDateFilters = (range) => {
+  const [from, to] = Array.isArray(range) ? range : [];
+  return {
+    fromDay: from ? from.format("YYYY-MM-DD") : undefined,
+    toDay: to ? to.format("YYYY-MM-DD") : undefined,
+  };
+};
+
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const [dateRange, setDateRange] = useState([]);
+  const [dateRange, setDateRange] = useState(getDefaultLast7DaysRange);
   const { stats, loading, error } = useSelector(
     (state) => state.getAdminDashboardStats,
   );
+  const { payments: allPayments } = useSelector((state) => state.getAllPayments);
 
   useEffect(() => {
-    dispatch(getAdminDashboardStatsRequest());
+    dispatch(
+      getAdminDashboardStatsRequest(
+        toDashboardDateFilters(getDefaultLast7DaysRange()),
+      ),
+    );
+    dispatch(getAllPaymentsRequest());
   }, [dispatch]);
 
   const applyDateFilter = () => {
-    const [from, to] = Array.isArray(dateRange) ? dateRange : [];
-    dispatch(
-      getAdminDashboardStatsRequest({
-        fromDay: from ? from.format("YYYY-MM-DD") : undefined,
-        toDay: to ? to.format("YYYY-MM-DD") : undefined,
-      }),
-    );
+    dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(dateRange)));
   };
 
   const resetDateFilter = () => {
-    setDateRange([]);
-    dispatch(getAdminDashboardStatsRequest());
+    const defaultRange = getDefaultLast7DaysRange();
+    setDateRange(defaultRange);
+    dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(defaultRange)));
   };
 
   const occupancy = useMemo(() => stats?.occupancy || {}, [stats?.occupancy]);
@@ -148,19 +177,6 @@ const AdminDashboard = () => {
       { status: "Expired", count: toNumberSafe(reservations.totalExpired) },
     ],
     [reservations],
-  );
-
-  const paymentMethodData = useMemo(
-    () =>
-      (Array.isArray(stats?.revenueByPaymentMethod)
-        ? stats.revenueByPaymentMethod
-        : []
-      ).map((item) => ({
-        method: item.method || "Unknown",
-        totalRevenue: toNumberSafe(item.totalRevenue),
-        count: toNumberSafe(item.count),
-      })),
-    [stats?.revenueByPaymentMethod],
   );
 
   const revenueTrendData = useMemo(
@@ -246,45 +262,70 @@ const AdminDashboard = () => {
     },
   ];
 
-  const paymentMethodColumns = [
+  const transactionColumns = [
     {
-      title: "Payment Method",
-      dataIndex: "method",
-      key: "method",
-      render: (value) => (
-        <span className="font-semibold text-slate-700">{value || "—"}</span>
+      title: "Payment ID",
+      dataIndex: "paymentId",
+      key: "paymentId",
+      render: (id) => (
+        <code className="text-xs font-mono text-slate-600">{id || "—"}</code>
       ),
     },
     {
-      title: "Transactions",
-      dataIndex: "count",
-      key: "count",
-      align: "right",
-      render: (value) => formatCount(value),
+      title: "Session ID",
+      dataIndex: "sessionId",
+      key: "sessionId",
+      render: (id) => (
+        <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
+      ),
     },
     {
-      title: "Total Revenue",
-      dataIndex: "totalRevenue",
-      key: "totalRevenue",
-      align: "right",
-      render: (value) => (
-        <span className="font-bold text-emerald-700">
-          {formatCurrency(value)}
+      title: "Driver",
+      key: "driverName",
+      render: (_, record) => (
+        <span className="font-semibold text-slate-700">
+          {resolveDriverName(record)}
         </span>
       ),
     },
     {
-      title: "Avg / Transaction",
-      key: "avgPerTxn",
+      title: "Method",
+      dataIndex: "paymentMethod",
+      key: "paymentMethod",
+      render: (method) => <Tag>{method || "—"}</Tag>,
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
       align: "right",
-      render: (_, row) => {
-        const count = toNumberSafe(row.count);
-        const avg = count > 0 ? toNumberSafe(row.totalRevenue) / count : 0;
-        return (
-          <span className="font-semibold text-indigo-700">
-            {formatCurrency(avg)}
-          </span>
-        );
+      render: (amount) => (
+        <span className="font-bold text-emerald-700">{formatCurrency(amount)}</span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "paymentStatus",
+      key: "paymentStatus",
+      render: (status) => {
+        const normalized = normalizeStatus(status);
+        return <Tag color={PAYMENT_STATUS_COLORS[normalized] || "default"}>{status || "—"}</Tag>;
+      },
+    },
+    {
+      title: "Transaction",
+      dataIndex: "transactionCode",
+      key: "transactionCode",
+      render: (code) => code || "—",
+    },
+    {
+      title: "Time",
+      dataIndex: "paymentTime",
+      key: "paymentTime",
+      align: "right",
+      render: (time, record) => {
+        const resolved = time || record.createdAt || record.updatedAt;
+        return resolved ? dayjs(resolved).format("DD/MM/YYYY HH:mm") : "—";
       },
     },
   ];
@@ -296,10 +337,32 @@ const AdminDashboard = () => {
     ...item,
   }));
 
-  const paymentTableData = paymentMethodData.map((item, index) => ({
-    key: `${item.method}-${index}`,
-    ...item,
-  }));
+  const paymentTableData = useMemo(() => {
+    const [from, to] = Array.isArray(dateRange) ? dateRange : [];
+    const fromMs = from ? from.startOf("day").valueOf() : null;
+    const toMs = to ? to.endOf("day").valueOf() : null;
+
+    const list = Array.isArray(allPayments) ? allPayments : [];
+    return list
+      .filter((item) => {
+        const raw = item.paymentTime || item.createdAt || item.updatedAt;
+        if (!raw || (!fromMs && !toMs)) return true;
+        const value = dayjs(raw).valueOf();
+        if (Number.isNaN(value)) return false;
+        if (fromMs != null && value < fromMs) return false;
+        if (toMs != null && value > toMs) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const aValue = dayjs(a.paymentTime || a.createdAt || a.updatedAt || 0).valueOf();
+        const bValue = dayjs(b.paymentTime || b.createdAt || b.updatedAt || 0).valueOf();
+        return bValue - aValue;
+      })
+      .map((item, index) => ({
+        key: item.paymentId || index,
+        ...item,
+      }));
+  }, [allPayments, dateRange]);
 
   return (
     <div className="min-h-screen bg-[#f5f7ff] p-4 md:p-8">
@@ -567,13 +630,14 @@ const AdminDashboard = () => {
 
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-base font-bold text-slate-800">
-              Payment Method Detail
+              Payment Transactions Detail
             </h2>
             <Table
-              columns={paymentMethodColumns}
+              columns={transactionColumns}
               dataSource={paymentTableData}
               pagination={{ pageSize: 5 }}
               rowClassName="hover:!bg-slate-50"
+              scroll={{ x: 1100 }}
             />
           </div>
         </>

@@ -1,28 +1,16 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Empty, Modal, Spin, Table, Tag } from "antd";
-import { CheckCircle2, CreditCard, RefreshCw } from "lucide-react";
+import { Button, Empty, Spin, Table, Tag } from "antd";
+import { CreditCard, RefreshCw } from "lucide-react";
 import dayjs from "dayjs";
 
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
-import { getProfileUserRequest } from "../../../redux/profileUser/getProfileUserSlice";
 import { getAllPaymentsRequest } from "../../../redux/staff/payment/getAllPayments/getAllPaymentsSlice";
-import { confirmPaymentByStaffRequest } from "../../../redux/staff/payment/confirmPaymentByStaff/confirmPaymentByStaffSlice";
 
 const normalizeStatus = (value) =>
   String(value || "")
     .trim()
     .toUpperCase();
-
-const getPaidStatus = (record) => normalizeStatus(record.paidStatus);
-const getPaymentStatus = (record) => normalizeStatus(record.paymentStatus);
-
-/** Chỉ confirm khi driver đã PAID (paidStatus), chưa staff confirm (paymentStatus ≠ CONFIRMED) */
-const canStaffConfirm = (record) => {
-  if (getPaidStatus(record) !== "PAID") return false;
-  if (getPaymentStatus(record) === "CONFIRMED") return false;
-  return true;
-};
 
 const PAYMENT_STATUS_COLORS = {
   CONFIRMED: "green",
@@ -42,65 +30,18 @@ const renderPaymentStatusTag = (record) => {
   );
 };
 
-const renderPaidStatusTag = (record) => {
-  const paid = getPaidStatus(record);
-  const colors = {
-    PAID: "cyan",
-    UNPAID: "gold",
-    PENDING: "orange",
-  };
-  if (!record.paidStatus) return "—";
-  return <Tag color={colors[paid] || "default"}>{record.paidStatus}</Tag>;
-};
-
 const resolveDriverName = (record) =>
   record.driverName ?? record.fullName ?? record.driver?.fullName ?? "—";
 
-const buildConfirmPayload = (payment, staffProfile) => ({
-  paymentId: payment.paymentId,
-  sessionId: payment.sessionId ?? "",
-  driverId: payment.driverId ?? "",
-  staffId: staffProfile?.id ?? staffProfile?.userId ?? "",
-  amount: payment.amount ?? 0,
-  paymentMethod: payment.paymentMethod ?? "",
-  transactionCode: payment.transactionCode ?? "",
-  isConfirmed: true,
-  confirmationStatus: "CONFIRMED",
-  reason: "",
-  message: "",
-  confirmedAt: dayjs().toISOString(),
-  note: payment.note ?? "",
-});
-
 const PaymentManagement = () => {
   const dispatch = useDispatch();
-  const { getProfileUser } = useSelector((state) => state.getProfileUser);
   const { payments, loading, error } = useSelector(
     (state) => state.getAllPayments,
   );
-  const { loading: confirmLoading } = useSelector(
-    (state) => state.confirmPaymentByStaff,
-  );
 
   useEffect(() => {
-    dispatch(getProfileUserRequest());
     dispatch(getAllPaymentsRequest());
   }, [dispatch]);
-
-  const handleConfirm = (payment) => {
-    Modal.confirm({
-      title: "Confirm payment?",
-      content: `Xác nhận payment ${payment.paymentId}?`,
-      okText: "Confirm",
-      cancelText: "Cancel",
-      onOk: () =>
-        dispatch(
-          confirmPaymentByStaffRequest(
-            buildConfirmPayload(payment, getProfileUser),
-          ),
-        ),
-    });
-  };
 
   const columns = [
     {
@@ -146,12 +87,6 @@ const PaymentManagement = () => {
       ),
     },
     {
-      title: "Paid Status",
-      dataIndex: "paidStatus",
-      key: "paidStatus",
-      render: (_, record) => renderPaidStatusTag(record),
-    },
-    {
       title: "Status",
       dataIndex: "paymentStatus",
       key: "paymentStatus",
@@ -168,30 +103,6 @@ const PaymentManagement = () => {
       dataIndex: "paymentTime",
       key: "paymentTime",
       render: (time) => (time ? dayjs(time).format("DD/MM/YYYY HH:mm") : "—"),
-    },
-    {
-      title: "Action",
-      key: "action",
-      width: 110,
-      render: (_, record) => {
-        if (canStaffConfirm(record)) {
-          return (
-            <Button
-              type="primary"
-              size="small"
-              icon={<CheckCircle2 size={14} />}
-              loading={confirmLoading}
-              onClick={() => handleConfirm(record)}
-            >
-              Confirm
-            </Button>
-          );
-        }
-        if (getPaymentStatus(record) === "CONFIRMED") {
-          return <Tag color="green">Confirmed</Tag>;
-        }
-        return <Tag color="gold">Unpaid</Tag>;
-      },
     },
   ];
 
@@ -237,7 +148,7 @@ const PaymentManagement = () => {
             columns={columns}
             dataSource={payments}
             pagination={{ pageSize: 10 }}
-            scroll={{ x: 1000 }}
+            scroll={{ x: 900 }}
           />
         )}
       </div>
