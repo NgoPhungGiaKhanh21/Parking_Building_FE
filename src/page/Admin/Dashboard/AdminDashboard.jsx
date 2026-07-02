@@ -2,11 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, DatePicker, Empty, Spin, Table, Tag } from "antd";
-import {
-  Activity,
-  CircleDollarSign,
-  ParkingCircle,
-} from "lucide-react";
+import { Activity, CircleDollarSign } from "lucide-react";
 import dayjs from "dayjs";
 import {
   ResponsiveContainer,
@@ -75,7 +71,7 @@ const PAYMENT_STATUS_COLORS = {
 };
 
 const resolveDriverName = (record) =>
-  record?.driverName ?? record?.fullName ?? record?.driver?.fullName ?? "—";
+  record?.driverName ?? record?.fullName ?? record?.driver?.fullName ?? "Guest";
 
 const normalizePercentValue = (value) => {
   const num = toNumberSafe(value);
@@ -94,12 +90,21 @@ const ChartCard = ({ title, subtitle, children }) => (
   </div>
 );
 
-const StatCard = ({ icon, label, value, note, accentClass, containerClass }) => (
+const StatCard = ({
+  icon,
+  label,
+  value,
+  note,
+  accentClass,
+  containerClass,
+}) => (
   <div
     className={`rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ${containerClass || ""}`}
   >
     <div className="mb-3 flex items-center justify-between">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </p>
       <div
         className={`flex h-10 w-10 items-center justify-center rounded-xl ${accentClass}`}
       >
@@ -107,7 +112,9 @@ const StatCard = ({ icon, label, value, note, accentClass, containerClass }) => 
       </div>
     </div>
     <p className="text-3xl font-black text-slate-800">{value}</p>
-    {note && <p className="mt-1.5 text-xs font-medium text-slate-500">{note}</p>}
+    {note && (
+      <p className="mt-1.5 text-xs font-medium text-slate-500">{note}</p>
+    )}
   </div>
 );
 
@@ -127,7 +134,9 @@ const AdminDashboard = () => {
   const { stats, loading, error } = useSelector(
     (state) => state.getAdminDashboardStats,
   );
-  const { payments: allPayments } = useSelector((state) => state.getAllPayments);
+  const { payments: allPayments } = useSelector(
+    (state) => state.getAllPayments,
+  );
 
   useEffect(() => {
     dispatch(
@@ -145,7 +154,9 @@ const AdminDashboard = () => {
   const resetDateFilter = () => {
     const defaultRange = getDefaultLast7DaysRange();
     setDateRange(defaultRange);
-    dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(defaultRange)));
+    dispatch(
+      getAdminDashboardStatsRequest(toDashboardDateFilters(defaultRange)),
+    );
   };
 
   const occupancy = useMemo(() => stats?.occupancy || {}, [stats?.occupancy]);
@@ -263,22 +274,22 @@ const AdminDashboard = () => {
   ];
 
   const transactionColumns = [
-    {
-      title: "Payment ID",
-      dataIndex: "paymentId",
-      key: "paymentId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-600">{id || "—"}</code>
-      ),
-    },
-    {
-      title: "Session ID",
-      dataIndex: "sessionId",
-      key: "sessionId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
-      ),
-    },
+    // {
+    //   title: "Payment ID",
+    //   dataIndex: "paymentId",
+    //   key: "paymentId",
+    //   render: (id) => (
+    //     <code className="text-xs font-mono text-slate-600">{id || "—"}</code>
+    //   ),
+    // },
+    // {
+    //   title: "Session ID",
+    //   dataIndex: "sessionId",
+    //   key: "sessionId",
+    //   render: (id) => (
+    //     <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
+    //   ),
+    // },
     {
       title: "Driver",
       key: "driverName",
@@ -300,7 +311,9 @@ const AdminDashboard = () => {
       key: "amount",
       align: "right",
       render: (amount) => (
-        <span className="font-bold text-emerald-700">{formatCurrency(amount)}</span>
+        <span className="font-bold text-emerald-700">
+          {formatCurrency(amount)}
+        </span>
       ),
     },
     {
@@ -309,7 +322,11 @@ const AdminDashboard = () => {
       key: "paymentStatus",
       render: (status) => {
         const normalized = normalizeStatus(status);
-        return <Tag color={PAYMENT_STATUS_COLORS[normalized] || "default"}>{status || "—"}</Tag>;
+        return (
+          <Tag color={PAYMENT_STATUS_COLORS[normalized] || "default"}>
+            {status || "—"}
+          </Tag>
+        );
       },
     },
     {
@@ -354,8 +371,12 @@ const AdminDashboard = () => {
         return true;
       })
       .sort((a, b) => {
-        const aValue = dayjs(a.paymentTime || a.createdAt || a.updatedAt || 0).valueOf();
-        const bValue = dayjs(b.paymentTime || b.createdAt || b.updatedAt || 0).valueOf();
+        const aValue = dayjs(
+          a.paymentTime || a.createdAt || a.updatedAt || 0,
+        ).valueOf();
+        const bValue = dayjs(
+          b.paymentTime || b.createdAt || b.updatedAt || 0,
+        ).valueOf();
         return bValue - aValue;
       })
       .map((item, index) => ({
@@ -417,57 +438,48 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
         <StatCard
           label="Revenue (Selected Trend)"
           value={formatCurrency(derivedMetrics.totalRevenue)}
           note={`Avg/txn: ${formatCurrency(derivedMetrics.avgRevenuePerTransaction)}`}
           icon={<CircleDollarSign size={18} className="text-emerald-600" />}
           accentClass="bg-emerald-50"
-          containerClass="border-emerald-100 bg-emerald-50/40"
+          containerClass="h-full border-emerald-100 bg-emerald-50/40"
         />
-        <StatCard
-          label="Occupancy Rate"
-          value={formatPercentValue(occupancy.occupancyRate)}
-          note={`${formatCount(occupancy.occupiedSlots)} / ${formatCount(occupancy.totalSlots)} slots occupied`}
-          icon={<ParkingCircle size={18} className="text-blue-600" />}
-          accentClass="bg-blue-50"
-          containerClass="border-blue-100 bg-blue-50/40"
-        />
-      </div>
-
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-500">
-            Total Drivers
-          </p>
-          <p className="mt-1 text-2xl font-black text-slate-800">
-            {formatCount(users.totalDrivers)}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-500">
-            Total Staff
-          </p>
-          <p className="mt-1 text-2xl font-black text-slate-800">
-            {formatCount(users.totalStaff)}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-500">
-            Total Managers
-          </p>
-          <p className="mt-1 text-2xl font-black text-slate-800">
-            {formatCount(users.totalManagers)}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-500">
-            New Users This Month
-          </p>
-          <p className="mt-1 text-2xl font-black text-slate-800">
-            {formatCount(users.newUsersThisMonth)}
-          </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase text-slate-500">
+              Total Drivers
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-800">
+              {formatCount(users.totalDrivers)}
+            </p>
+          </div>
+          <div className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase text-slate-500">
+              Total Staff
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-800">
+              {formatCount(users.totalStaff)}
+            </p>
+          </div>
+          <div className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase text-slate-500">
+              Total Managers
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-800">
+              {formatCount(users.totalManagers)}
+            </p>
+          </div>
+          <div className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase text-slate-500">
+              New Users This Month
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-800">
+              {formatCount(users.newUsersThisMonth)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -508,7 +520,10 @@ const AdminDashboard = () => {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) => [`${formatCount(value)} slots`, "Slot Count"]}
+                        formatter={(value) => [
+                          `${formatCount(value)} slots`,
+                          "Slot Count",
+                        ]}
                       />
                       <Legend />
                     </PieChart>
@@ -526,10 +541,26 @@ const AdminDashboard = () => {
               ) : (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reservationStatusData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="status" />
-                      <YAxis />
+                    <PieChart>
+                      <Pie
+                        data={reservationStatusData}
+                        dataKey="count"
+                        nameKey="status"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={55}
+                        label={({ status, percent }) =>
+                          `${status}: ${(percent * 100).toFixed(0)}%`
+                        }
+                      >
+                        {reservationStatusData.map((entry, index) => (
+                          <Cell
+                            key={`reservation-cell-${entry.status}`}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
                       <Tooltip
                         formatter={(value) => [
                           `${formatCount(value)} reservations`,
@@ -537,18 +568,11 @@ const AdminDashboard = () => {
                         ]}
                       />
                       <Legend />
-                      <Bar
-                        dataKey="count"
-                        name="Reservations (count)"
-                        fill="#f59e0b"
-                        radius={[8, 8, 0, 0]}
-                      />
-                    </BarChart>
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               )}
             </ChartCard>
-
           </div>
 
           <div className="mb-4">
@@ -565,7 +589,12 @@ const AdminDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [formatCurrency(value), "Revenue (VND)"]} />
+                      <Tooltip
+                        formatter={(value) => [
+                          formatCurrency(value),
+                          "Revenue (VND)",
+                        ]}
+                      />
                       <Legend />
                       <Line
                         type="monotone"
