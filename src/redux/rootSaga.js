@@ -62,7 +62,9 @@ import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/ge
 import { watchGetRevenue } from "./manager/Revenue/getRevenueSaga";
 import { watchGetSessionByPlateNumber } from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSaga";
 import { watchCheckInGuest } from "./staff/guest_parking/checkin_guest/checkOutGuestSaga";
-
+import {watchForgotPassword} from "./admin/resetPassword/forgotPassword/forgotPasswordSaga";
+import {watchVerifyOtp} from "./admin/resetPassword/verifyOtp/verifyOtpSaga";
+import {watchResetPassword} from "./admin/resetPassword/reset-Password/resetPasswordSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -75,6 +77,9 @@ export default function* rootSaga() {
     watchGetAdminDashboardStats(),
     watchGetProfileUser(),
     watchChangePassword(),
+    watchForgotPassword(),
+    watchVerifyOtp(),
+    watchResetPassword(),
 
     //manager
     watchCreateBuilding(),
