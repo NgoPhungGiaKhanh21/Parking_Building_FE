@@ -97,7 +97,7 @@ const SlotDetailModal = ({ visible, onClose, slotName }) => {
             <h2 className="text-3xl font-extrabold mb-1 tracking-tight">Slot {data?.slotName || slotName || 'Details'}</h2>
             <p className="text-violet-100 text-sm flex items-center gap-1.5 font-medium">
               <MapPin size={16} />
-              {data ? `${data.buildingName} • ${data.floorName} • Zone ${data.zoneName}` : 'Location Loading...'}
+              {data ? `${data.buildingName} • ${data.floorName} • ${data.zoneName}` : 'Location Loading...'}
             </p>
           </div>
           {data?.slotStatus && (

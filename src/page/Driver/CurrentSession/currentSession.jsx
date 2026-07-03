@@ -361,7 +361,7 @@ const CurrentSession = () => {
   }, [dispatch, driverId]);
 
   // Handle API response: { totalActiveSessions, sessions: [...] }
-  const sessions = useMemo(() => {
+  const allSessions = useMemo(() => {
     if (!currentSession) return [];
     if (currentSession.sessions && Array.isArray(currentSession.sessions)) {
       return currentSession.sessions;
@@ -371,31 +371,59 @@ const CurrentSession = () => {
     return [];
   }, [currentSession]);
 
+  const { activeSessions, paidSessions } = useMemo(() => {
+    const active = [];
+    const paid = [];
+    allSessions.forEach((s) => {
+      if (
+        s.paymentStatus === "PAID" ||
+        s.paymentStatus === "CONFIRMED" ||
+        s.paymentStatus === "PARTIAL"
+      ) {
+        paid.push(s);
+      } else {
+        active.push(s);
+      }
+    });
+    return { activeSessions: active, paidSessions: paid };
+  }, [allSessions]);
+
   const totalFee = useMemo(
-    () => sessions.reduce((sum, s) => sum + (s.estimatedFee || 0), 0),
-    [sessions],
+    () => activeSessions.reduce((sum, s) => sum + (s.estimatedFee || 0), 0),
+    [activeSessions],
   );
 
   // ── No active session
-  if (!loading && (error || sessions.length === 0)) {
+  if (!loading && (error || activeSessions.length === 0)) {
     return (
       <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
         <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
           <div className="mb-4">
             <CommonBreadcrumb role="Driver" page="session" />
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-600">
-              <Timer size={28} strokeWidth={2.5} />
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-600">
+                <Timer size={28} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
+                  Current Sessions
+                </h1>
+                <p className="mt-1 font-medium text-slate-500">
+                  View your active parking session details.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">
-                Current Sessions
-              </h1>
-              <p className="mt-1 font-medium text-slate-500">
-                View your active parking session details.
-              </p>
-            </div>
+            {paidSessions.length > 0 && (
+              <Button
+                onClick={() => setIsPaidModalOpen(true)}
+                className="!font-semibold"
+                type="dashed"
+              >
+                View Paid Sessions
+              </Button>
+            )}
           </div>
         </div>
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-20">
@@ -407,12 +435,20 @@ const CurrentSession = () => {
                   No Active Sessions
                 </p>
                 <p className="text-sm text-slate-400">
-                  You don't have any active parking sessions right now.
+                  You don't have any unpaid or active parking sessions right now.
                 </p>
               </div>
             }
           />
         </div>
+
+        {/* ── Paid Sessions Modal ── */}
+        <PaidSessionsModal
+          open={isPaidModalOpen}
+          onCancel={() => setIsPaidModalOpen(false)}
+          sessions={paidSessions}
+          payments={payments}
+        />
       </div>
     );
   }
@@ -445,9 +481,9 @@ const CurrentSession = () => {
               <p className="mt-1 font-medium text-slate-500">
                 You have{" "}
                 <span className="font-bold text-emerald-600">
-                  {sessions.length}
+                  {activeSessions.length}
                 </span>{" "}
-                active parking {sessions.length === 1 ? "session" : "sessions"}.
+                active parking {activeSessions.length === 1 ? "session" : "sessions"}.
               </p>
             </div>
           </div>
@@ -465,7 +501,7 @@ const CurrentSession = () => {
                 Sessions
               </p>
               <p className="text-xl font-black text-blue-700">
-                {sessions.length}
+                {activeSessions.length}
               </p>
             </div>
             <Button
@@ -481,7 +517,7 @@ const CurrentSession = () => {
 
       {/* ── Session Cards ── */}
       <div className="space-y-6">
-        {sessions.map((session) => (
+        {activeSessions.map((session) => (
           <SessionCard
             key={session.sessionId}
             session={session}
@@ -498,12 +534,7 @@ const CurrentSession = () => {
       <PaidSessionsModal
         open={isPaidModalOpen}
         onCancel={() => setIsPaidModalOpen(false)}
-        sessions={sessions.filter(
-          (s) =>
-            s.paymentStatus === "PAID" ||
-            s.paymentStatus === "CONFIRMED" ||
-            s.paymentStatus === "PARTIAL",
-        )}
+        sessions={paidSessions}
         payments={payments}
       />
     </div>

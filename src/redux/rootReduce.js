@@ -62,7 +62,9 @@ import getOccupiedSlotReducer from "./manager/Building/zone/getOccupiedSlot/getO
 import getRevenueReducer from "./manager/Revenue/getRevenueSlice";
 import getSessionByPlateNumberReducer from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSlice";
 import checkInGuestReducer from "./staff/guest_parking/checkin_guest/checkInGuestSlice";
-
+import forgotPasswordReducer from "./admin/resetPassword/forgotPassword/forgotPasswordSlice";
+import verifyOtpReducer from "./admin/resetPassword/verifyOtp/verifyOtpSlice";
+import resetPasswordReducer from "./admin/resetPassword/reset-Password/resetPasswordSlice";
 const rootReducer = combineReducers({
   //login - register
   auth: authReducer,
@@ -74,6 +76,9 @@ const rootReducer = combineReducers({
   getAdminDashboardStats: getAdminDashboardStatsReducer,
   getProfileUser: getProfileUserReducer,
   changePassword: changePasswordReducer,
+  forgotPassword: forgotPasswordReducer,
+  verifyOtp: verifyOtpReducer,
+  resetPassword: resetPasswordReducer,
 
   //manager
   createBuilding: createBuildingReducer,

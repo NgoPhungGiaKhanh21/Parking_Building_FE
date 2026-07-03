@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
@@ -10,12 +10,14 @@ import { Form, Input, Button } from "antd";
 
 import pic6 from "../../assets/pic/pic7.jpg";
 import pic8 from "../../assets/pic/pic9.jpg";
+import ResetPasswordFlow from "../Admin/ResetPassword/resetPassword";
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [form] = Form.useForm();
+  const [showForgot, setShowForgot] = useState(false);
 
   const { token, loading } = useSelector((state) => state.auth);
 
@@ -65,97 +67,132 @@ const Login = () => {
 
       {/* CONTAINER */}
       <div className="w-full max-w-6xl overflow-hidden rounded-3xl border shadow-2xl md:grid md:grid-cols-2">
-        {/* LEFT SIDE - LOGIN FORM */}
+        {/* LEFT SIDE */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
           className="flex flex-col justify-center bg-white p-10 md:p-14"
         >
-          {/* TITLE */}
-          <div className="mb-10">
-            <h1 className="text-center text-4xl font-bold text-slate-900">
-              Welcome Back
-            </h1>
-
-            <p className="mt-3 text-center text-slate-500">
-              Login to your Parking Manager account
-            </p>
-          </div>
-
-          {/* FORM */}
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleLogin}
-            requiredMark={false}
-          >
-            {/* USERNAME */}
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter your Email!",
-                },
-              ]}
-            >
-              <Input
-                size="large"
-                prefix={<Mail size={18} className="text-slate-400" />}
-                placeholder="Enter your Gmail"
-                className="rounded-xl py-2"
-              />
-            </Form.Item>
-
-            {/* PASSWORD */}
-            <Form.Item
-              label="Password"
-              name="password"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter your password!",
-                },
-                {
-                  min: 6,
-                  message: "Password must be at least 6 characters!",
-                },
-              ]}
-            >
-              <Input.Password
-                size="large"
-                prefix={<Lock size={18} className="text-slate-400" />}
-                placeholder="Enter your password"
-                className="rounded-xl py-2"
-              />
-            </Form.Item>
-
-            {/* BUTTON */}
-            <Form.Item className="mb-0 mt-6">
-              <Button
-                htmlType="submit"
-                loading={loading}
-                type="primary"
-                size="large"
-                className="h-14 w-full rounded-xl !bg-blue-600 text-base font-semibold hover:!bg-blue-500"
+          <AnimatePresence mode="wait">
+            {/* ── FORGOT PASSWORD FLOW ── */}
+            {showForgot ? (
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.35 }}
               >
-                Sign In
-              </Button>
-            </Form.Item>
-          </Form>
+                <ResetPasswordFlow onBack={() => setShowForgot(false)} />
+              </motion.div>
+            ) : (
+              /* ── LOGIN FORM ── */
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.35 }}
+              >
+                {/* TITLE */}
+                <div className="mb-10">
+                  <h1 className="text-center text-4xl font-bold text-slate-900">
+                    Welcome Back
+                  </h1>
 
-          {/* FOOTER */}
-          <p className="mt-8 text-center text-slate-500">
-            Don’t have an account?{" "}
-            <Link
-              to="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Sign Up
-            </Link>
-          </p>
+                  <p className="mt-3 text-center text-slate-500">
+                    Login to your Parking Manager account
+                  </p>
+                </div>
+
+                {/* FORM */}
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleLogin}
+                  requiredMark={false}
+                >
+                  {/* EMAIL */}
+                  <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your Email!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      prefix={<Mail size={18} className="text-slate-400" />}
+                      placeholder="Enter your Gmail"
+                      className="rounded-xl py-2"
+                    />
+                  </Form.Item>
+
+                  {/* PASSWORD */}
+                  <Form.Item
+                    label="Password"
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your password!",
+                      },
+                      {
+                        min: 6,
+                        message: "Password must be at least 6 characters!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      size="large"
+                      prefix={<Lock size={18} className="text-slate-400" />}
+                      placeholder="Enter your password"
+                      className="rounded-xl py-2"
+                    />
+                  </Form.Item>
+
+                  {/* FORGOT PASSWORD LINK */}
+                  <div className="mb-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgot(true)}
+                      className="text-sm text-blue-600 hover:text-blue-500 hover:underline transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  {/* BUTTON */}
+                  <Form.Item className="mb-0 mt-4">
+                    <Button
+                      htmlType="submit"
+                      loading={loading}
+                      type="primary"
+                      size="large"
+                      className="h-14 w-full rounded-xl !bg-blue-600 text-base font-semibold hover:!bg-blue-500"
+                    >
+                      Sign In
+                    </Button>
+                  </Form.Item>
+                </Form>
+
+                {/* FOOTER */}
+                <p className="mt-8 text-center text-slate-500">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign Up
+                  </Link>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* RIGHT SIDE - IMAGE */}

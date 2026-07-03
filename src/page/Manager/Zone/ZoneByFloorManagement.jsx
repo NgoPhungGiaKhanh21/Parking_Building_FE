@@ -351,7 +351,7 @@ const ZoneByFloorManagement = () => {
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                     <div>
                       <h3 className="text-2xl font-bold text-slate-800">
-                        {getZoneTitle(selectedMasterZone, zoneList.indexOf(selectedMasterZone))}
+                        Zone name: {getZoneTitle(selectedMasterZone, zoneList.indexOf(selectedMasterZone))}
                       </h3>
                       <p className="text-sm text-slate-500 mt-1">
                         Select an action below or toggle the status.
