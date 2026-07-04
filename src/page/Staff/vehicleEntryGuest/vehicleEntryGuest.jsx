@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
-import { getAllSlotDriverRequest } from "../../../redux/driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSlice";
+import { getAvailableBuildingsRequest } from "../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice";
+import { getBuildingFloorsRequest, getBuildingFloorsReset } from "../../../redux/driver/reservationManagement/getBuildingFloors/getBuildingFloorsSlice";
+import { getZoneSlotsRequest, getZoneSlotsReset } from "../../../redux/driver/reservationManagement/getZoneSlots/getZoneSlotsSlice";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 import {
   checkInGuestRequest,
@@ -34,7 +36,7 @@ const VehicleEntryGuest = () => {
   const [plateNumber, setPlateNumber] = useState("");
   const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState(null);
-  const [selectedFloorName, setSelectedFloorName] = useState(null);
+  const [selectedFloorId, setSelectedFloorId] = useState(null);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [vehicleColor, setVehicleColor] = useState("");
@@ -48,12 +50,14 @@ const VehicleEntryGuest = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   // ── Redux
-  const { listSlot, loading: slotsLoading } = useSelector((s) => s.getAllSlotDriver);
+  const { buildings: rawBuildings, loading: buildingsLoading } = useSelector((s) => s.getAvailableBuildings);
+  const { floors: rawFloors, loading: floorsLoading } = useSelector((s) => s.getBuildingFloorsDriver);
+  const { slots: rawZoneSlots, loading: slotsLoading } = useSelector((s) => s.getZoneSlots);
   const { vehicleTypes, loading: vtLoading } = useSelector((s) => s.getVehicleTypeList);
   const { loading: checkinLoading, checkInGuest } = useSelector((s) => s.checkInGuest);
 
   useEffect(() => {
-    dispatch(getAllSlotDriverRequest());
+    dispatch(getAvailableBuildingsRequest());
     dispatch(getVehicleTypeListRequest());
   }, [dispatch]);
 
@@ -62,15 +66,9 @@ const VehicleEntryGuest = () => {
     if (checkInGuest) {
       resetForm();
       dispatch(checkInGuestReset());
-      dispatch(getAllSlotDriverRequest());
+      dispatch(getAvailableBuildingsRequest());
     }
   }, [checkInGuest, dispatch]);
-
-  // ── Derived data: filter zones by vehicle type
-  const zones = useMemo(() => {
-    if (!listSlot || !Array.isArray(listSlot)) return [];
-    return listSlot;
-  }, [listSlot]);
 
   // Get vehicle type name by id
   const selectedVehicleTypeName = useMemo(() => {
@@ -78,6 +76,35 @@ const VehicleEntryGuest = () => {
     const vt = vehicleTypes.find((v) => String(v.vehicleTypeId) === String(selectedVehicleTypeId));
     return vt?.typeName || null;
   }, [selectedVehicleTypeId, vehicleTypes]);
+
+  // Buildings from API
+  const buildings = useMemo(
+    () => (rawBuildings || []).map((b) => ({ id: b.buildingId, name: b.name })),
+    [rawBuildings]
+  );
+
+  // Floors from API filtered by vehicleType
+  const floors = useMemo(() => {
+    if (!rawFloors || !selectedVehicleTypeId) return [];
+    return rawFloors
+      .filter((f) => String(f.vehicleTypeId) === String(selectedVehicleTypeId))
+      .map((f) => ({ id: f.floorId, name: f.floorName, level: f.floorLevel, zones: f.zones || [] }));
+  }, [rawFloors, selectedVehicleTypeId]);
+
+  // Zones for selected floor (with availableSlots > 0)
+  const zonesForFloor = useMemo(() => {
+    if (!selectedFloorId) return [];
+    const floor = floors.find((f) => f.id === selectedFloorId);
+    return (floor?.zones || []).filter((z) => z.availableSlots > 0);
+  }, [floors, selectedFloorId]);
+
+  // Slot grid from getZoneSlots
+  const allSlotsForZone = useMemo(() => {
+    if (!rawZoneSlots || !Array.isArray(rawZoneSlots)) return [];
+    return [...rawZoneSlots].sort((a, b) =>
+      (a.slotName || "").localeCompare(b.slotName || "", undefined, { numeric: true, sensitivity: "base" })
+    );
+  }, [rawZoneSlots]);
 
   // Check if selected type is motorbike
   const isMotorbike = useMemo(() => {
@@ -100,56 +127,6 @@ const VehicleEntryGuest = () => {
     }
   };
 
-  // Filter zones matching selected vehicle type
-  const filteredZones = useMemo(() => {
-    if (!selectedVehicleTypeName) return [];
-    return zones.filter(
-      (z) =>
-        z.floorVehicleTypeName?.toLowerCase() === selectedVehicleTypeName.toLowerCase() &&
-        z.availableSlots > 0
-    );
-  }, [zones, selectedVehicleTypeName]);
-
-  // Unique buildings from filtered zones
-  const buildings = useMemo(() => {
-    const map = new Map();
-    filteredZones.forEach((z) => {
-      if (!map.has(z.buildingId)) {
-        map.set(z.buildingId, { id: z.buildingId, name: z.buildingName });
-      }
-    });
-    return Array.from(map.values());
-  }, [filteredZones]);
-
-  // Floors for selected building
-  const floors = useMemo(() => {
-    if (!selectedBuildingId) return [];
-    const set = new Set();
-    filteredZones
-      .filter((z) => String(z.buildingId) === String(selectedBuildingId))
-      .forEach((z) => set.add(z.floorName));
-    return Array.from(set);
-  }, [filteredZones, selectedBuildingId]);
-
-  // Zones for selected floor
-  const zonesForFloor = useMemo(() => {
-    if (!selectedBuildingId || !selectedFloorName) return [];
-    return filteredZones.filter(
-      (z) =>
-        String(z.buildingId) === String(selectedBuildingId) &&
-        z.floorName === selectedFloorName
-    );
-  }, [filteredZones, selectedBuildingId, selectedFloorName]);
-
-  // All slots for selected zone (for visual grid)
-  const allSlotsForZone = useMemo(() => {
-    if (!selectedZoneId) return [];
-    const zone = zones.find((z) => String(z.zoneId) === String(selectedZoneId));
-    if (!zone?.slots || !Array.isArray(zone.slots)) return [];
-    return [...zone.slots].sort((a, b) =>
-      (a.slotName || "").localeCompare(b.slotName || "", undefined, { numeric: true, sensitivity: "base" })
-    );
-  }, [zones, selectedZoneId]);
 
   // Split slots into 2 rows for visual parking layout
   const [topRow, bottomRow] = useMemo(() => {
@@ -170,7 +147,7 @@ const VehicleEntryGuest = () => {
     setPlateNumber("");
     setSelectedVehicleTypeId(null);
     setSelectedBuildingId(null);
-    setSelectedFloorName(null);
+    setSelectedFloorId(null);
     setSelectedZoneId(null);
     setSelectedSlotId(null);
     setVehicleColor("");
@@ -187,27 +164,41 @@ const VehicleEntryGuest = () => {
     setSelectedVehicleTypeId(val);
     setPlateNumber("");
     setSelectedBuildingId(null);
-    setSelectedFloorName(null);
+    setSelectedFloorId(null);
     setSelectedZoneId(null);
     setSelectedSlotId(null);
+    dispatch(getBuildingFloorsReset());
+    dispatch(getZoneSlotsReset());
   };
 
   const handleBuildingChange = (val) => {
     setSelectedBuildingId(val);
-    setSelectedFloorName(null);
+    setSelectedFloorId(null);
     setSelectedZoneId(null);
     setSelectedSlotId(null);
+    dispatch(getZoneSlotsReset());
+    if (val && selectedVehicleTypeId) {
+      dispatch(getBuildingFloorsRequest({ buildingId: val, vehicleTypeId: selectedVehicleTypeId }));
+    } else {
+      dispatch(getBuildingFloorsReset());
+    }
   };
 
   const handleFloorChange = (val) => {
-    setSelectedFloorName(val);
+    setSelectedFloorId(val);
     setSelectedZoneId(null);
     setSelectedSlotId(null);
+    dispatch(getZoneSlotsReset());
   };
 
   const handleZoneChange = (val) => {
     setSelectedZoneId(val);
     setSelectedSlotId(null);
+    if (val) {
+      dispatch(getZoneSlotsRequest(val));
+    } else {
+      dispatch(getZoneSlotsReset());
+    }
   };
 
   const handleSubmit = useCallback(() => {
@@ -350,11 +341,11 @@ const VehicleEntryGuest = () => {
                     Please select a vehicle type first to see available slots.
                   </p>
                 </div>
-              ) : filteredZones.length === 0 ? (
+              ) : buildings.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 p-8 text-center">
                   <ParkingCircle size={32} className="mx-auto text-amber-400 mb-2" />
                   <p className="text-sm text-amber-600 font-medium">
-                    No available slots for this vehicle type.
+                    No available parking buildings.
                   </p>
                 </div>
               ) : (
@@ -384,12 +375,12 @@ const VehicleEntryGuest = () => {
                       <Layers size={12} /> Floor
                     </label>
                     <Select
-                      value={selectedFloorName}
+                      value={selectedFloorId}
                       onChange={handleFloorChange}
                       placeholder="Select floor"
                       className="w-full !h-[46px]"
                       disabled={!selectedBuildingId}
-                      options={floors.map((f) => ({ value: f, label: f }))}
+                      options={floors.map((f) => ({ value: f.id, label: `${f.name} (Level ${f.level})` }))}
                       allowClear
                     />
                   </div>
@@ -404,7 +395,7 @@ const VehicleEntryGuest = () => {
                       onChange={handleZoneChange}
                       placeholder="Select zone"
                       className="w-full !h-[46px]"
-                      disabled={!selectedFloorName}
+                      disabled={!selectedFloorId}
                       options={zonesForFloor.map((z) => ({
                         value: z.zoneId,
                         label: `${z.zoneName} (${z.availableSlots} available)`,
@@ -426,7 +417,7 @@ const VehicleEntryGuest = () => {
                       <div className="space-y-5">
                         {/* Context breadcrumb */}
                         <p className="text-center text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                          {buildings.find((b) => String(b.id) === String(selectedBuildingId))?.name} · {selectedFloorName} · Zone {selectedZoneName}
+                        {buildings.find((b) => String(b.id) === String(selectedBuildingId))?.name} · {floors.find((f) => String(f.id) === String(selectedFloorId))?.name} · Zone {selectedZoneName}
                         </p>
 
                         {/* Legend */}
@@ -747,7 +738,7 @@ const VehicleEntryGuest = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Floor:</span>
-                    <span className="font-semibold text-slate-800">{selectedFloorName || "—"}</span>
+                    <span className="font-semibold text-slate-800">{floors.find((f) => f.id === selectedFloorId)?.name || "—"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Slot:</span>

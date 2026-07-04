@@ -38,6 +38,9 @@ import { watchCreateVehicleType } from "./manager/Vehicle/createVehicleType/crea
 import { watchUpdateVehicleType } from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSaga";
 import { watchDeteVehicleType } from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSaga";
 import { watchGetAllSlotDriver } from "./driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSaga";
+import { watchGetAvailableBuildings } from "./driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSaga";
+import { watchGetBuildingFloors as watchGetBuildingFloorsDriver } from "./driver/reservationManagement/getBuildingFloors/getBuildingFloorsSaga";
+import { watchGetZoneSlots } from "./driver/reservationManagement/getZoneSlots/getZoneSlotsSaga";
 import { watchCreateReservations } from "./driver/reservationManagement/createReservations/createReservationsSaga";
 import { watchGetMyReservations } from "./driver/reservationManagement/getMyReservations/getMyReservationsSaga";
 import { watchUpdateZoneStatus } from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSaga";
@@ -135,6 +138,9 @@ export default function* rootSaga() {
     watchUpdateVehicle(),
     watchDeleteVehicle(),
     watchGetAllSlotDriver(),
+    watchGetAvailableBuildings(),
+    watchGetBuildingFloorsDriver(),
+    watchGetZoneSlots(),
     watchCreateReservations(),
     watchGetMyReservations(),
     watchGetCurrentSession(),
