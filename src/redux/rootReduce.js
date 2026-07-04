@@ -39,6 +39,9 @@ import createVehicleTypeReducer from "./manager/Vehicle/createVehicleType/create
 import updateVehicleTypeReducer from "./manager/Vehicle/updateVehicleType/updateVehicleTypeSlice";
 import deleteVehicleTypeReducer from "./manager/Vehicle/deleteVehicleType/deleteVehicleTypeSlice";
 import getAllSlotDriverReducer from "./driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSlice";
+import getAvailableBuildingsReducer from "./driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice";
+import getBuildingFloorsDriverReducer from "./driver/reservationManagement/getBuildingFloors/getBuildingFloorsSlice";
+import getZoneSlotsReducer from "./driver/reservationManagement/getZoneSlots/getZoneSlotsSlice";
 import createReservationReducer from "./driver/reservationManagement/createReservations/createReservationsSlice";
 import getMyReservationsReducer from "./driver/reservationManagement/getMyReservations/getMyReservationsSlice";
 import updateZoneStatusReducer from "./manager/Building/zone/updateZoneStatus/updateZoneStatusSlice";
@@ -135,6 +138,9 @@ const rootReducer = combineReducers({
   updateVehicle: updateVehicleReducer,
   deleteVehicle: deleteVehicleReducer,
   getAllSlotDriver: getAllSlotDriverReducer,
+  getAvailableBuildings: getAvailableBuildingsReducer,
+  getBuildingFloorsDriver: getBuildingFloorsDriverReducer,
+  getZoneSlots: getZoneSlotsReducer,
   createReservation: createReservationReducer,
   getMyReservations: getMyReservationsReducer,
   getCurrentSession: getCurrentSessionReducer,

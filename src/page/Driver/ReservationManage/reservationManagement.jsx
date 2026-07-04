@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 
 import { getAllVehicleRequest } from "../../../redux/driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
-import { getAllSlotDriverRequest } from "../../../redux/driver/reservationManagement/getAllSlotDriver/getAllSlotDriverSlice";
+import { getAvailableBuildingsRequest } from "../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice";
+import { getBuildingFloorsRequest, getBuildingFloorsReset } from "../../../redux/driver/reservationManagement/getBuildingFloors/getBuildingFloorsSlice";
+import { getZoneSlotsRequest, getZoneSlotsReset } from "../../../redux/driver/reservationManagement/getZoneSlots/getZoneSlotsSlice";
 import { createReservationsRequest } from "../../../redux/driver/reservationManagement/createReservations/createReservationsSlice";
 import { getMyReservationsRequest } from "../../../redux/driver/reservationManagement/getMyReservations/getMyReservationsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -170,8 +172,14 @@ const ReservationManagement = () => {
     const { getAllVehicles, loading: vehiclesLoading } = useSelector(
         (state) => state.getAllVehicle
     );
-    const { listSlot, loading: slotsLoading } = useSelector(
-        (state) => state.getAllSlotDriver
+    const { buildings: rawBuildings, loading: buildingsLoading } = useSelector(
+        (state) => state.getAvailableBuildings
+    );
+    const { floors: rawFloors, loading: floorsLoading } = useSelector(
+        (state) => state.getBuildingFloorsDriver
+    );
+    const { slots: rawSlots, loading: slotsLoading } = useSelector(
+        (state) => state.getZoneSlots
     );
     const {
         createReservation,
@@ -186,7 +194,7 @@ const ReservationManagement = () => {
     // ── Fetch on mount
     useEffect(() => {
         dispatch(getAllVehicleRequest());
-        dispatch(getAllSlotDriverRequest());
+        dispatch(getAvailableBuildingsRequest());
         dispatch(getMyReservationsRequest());
     }, [dispatch]);
 
@@ -197,17 +205,20 @@ const ReservationManagement = () => {
             setSelectedSlot(null);
             setSelectedVehicle(null);
             form.resetFields();
-            dispatch(getAllSlotDriverRequest());
+            dispatch(getAvailableBuildingsRequest());
             dispatch(getMyReservationsRequest());
+            // Re-fetch zone slots if a zone is still selected
+            if (selectedZoneId) {
+                dispatch(getZoneSlotsRequest(selectedZoneId));
+            }
         }
-    }, [createReservation, createLoading, createError, dispatch, form]);
+    }, [createReservation, createLoading, createError, dispatch, form, selectedZoneId]);
 
     // ── Derived data
     const vehicleList = useMemo(
         () => getAllVehicles?.data || [],
         [getAllVehicles]
     );
-    const slotData = useMemo(() => (Array.isArray(listSlot) ? listSlot : []), [listSlot]);
 
     const myReservationList = useMemo(() =>
         Array.isArray(myReservations) ? myReservations : [],
@@ -216,73 +227,45 @@ const ReservationManagement = () => {
 
     const ACTIVE_STATUSES = ["ACTIVE", "PENDING", "CONFIRMED"];
 
-    // Buildings (distinct)
-    const buildings = useMemo(() => {
-        const map = new Map();
-        slotData.forEach((z) => {
-            if (z.buildingId && !map.has(z.buildingId)) {
-                map.set(z.buildingId, {
-                    id: z.buildingId,
-                    name: z.buildingName,
-                    operatingStartTime: z.operatingStartTime || null,
-                    operatingEndTime: z.operatingEndTime || null,
-                    operatingHoursDisplay: z.operatingHoursDisplay || null,
-                });
-            }
-        });
-        return [...map.values()];
-    }, [slotData]);
+    // Buildings from API
+    const buildings = useMemo(
+        () => (rawBuildings || []).map((b) => ({
+            id: b.buildingId,
+            name: b.name,
+            operatingStartTime: b.operatingStartTime || null,
+            operatingEndTime: b.operatingEndTime || null,
+            operatingHoursDisplay: b.operatingHoursDisplay || null,
+        })),
+        [rawBuildings]
+    );
 
-    // Floors filtered by selected building + vehicle type
+    // Floors from API (filtered by vehicle type already via query param)
     const floors = useMemo(() => {
-        if (!selectedBuildingId || !selectedVehicle) return [];
-        const map = new Map();
-        slotData
-            .filter(
-                (z) =>
-                    z.buildingId === selectedBuildingId &&
-                    z.floorVehicleTypeId === selectedVehicle.vehicleTypeId
-            )
-            .forEach((z) => {
-                if (z.floorId && !map.has(z.floorId)) {
-                    map.set(z.floorId, {
-                        id: z.floorId,
-                        name: z.floorName,
-                        level: z.floorLevel,
-                    });
-                }
-            });
-        return [...map.values()];
-    }, [slotData, selectedBuildingId, selectedVehicle]);
+        if (!rawFloors || !selectedVehicle) return [];
+        return rawFloors
+            .filter((f) => f.vehicleTypeId === selectedVehicle.vehicleTypeId)
+            .map((f) => ({ id: f.floorId, name: f.floorName, level: f.floorLevel }));
+    }, [rawFloors, selectedVehicle]);
 
-    // Zones filtered by selected floor
+    // Zones for selected floor
     const zones = useMemo(() => {
-        if (!selectedFloorId) return [];
-        const map = new Map();
-        slotData
-            .filter((z) => z.floorId === selectedFloorId)
-            .forEach((z) => {
-                if (z.zoneId && !map.has(z.zoneId)) {
-                    map.set(z.zoneId, {
-                        id: z.zoneId,
-                        name: z.zoneName,
-                        totalSlots: z.totalSlots,
-                        availableSlots: z.availableSlots,
-                    });
-                }
-            });
-        return [...map.values()];
-    }, [slotData, selectedFloorId]);
+        if (!selectedFloorId || !rawFloors) return [];
+        const floor = rawFloors.find((f) => f.floorId === selectedFloorId);
+        return (floor?.zones || []).map((z) => ({
+            id: z.zoneId,
+            name: z.zoneName,
+            totalSlots: z.totalSlots,
+            availableSlots: z.availableSlots,
+        }));
+    }, [rawFloors, selectedFloorId]);
 
-    // Slots for selected zone
+    // Slots for selected zone (from getZoneSlots)
     const slots = useMemo(() => {
-        if (!selectedZoneId) return [];
-        const zone = slotData.find((z) => z.zoneId === selectedZoneId);
-        const raw = Array.isArray(zone?.slots) ? [...zone.slots] : [];
+        const raw = Array.isArray(rawSlots) ? [...rawSlots] : [];
         return raw.sort((a, b) =>
             (a.slotName || "").localeCompare(b.slotName || "", undefined, { numeric: true, sensitivity: "base" })
         );
-    }, [slotData, selectedZoneId]);
+    }, [rawSlots]);
 
     // Split slots into 2 rows for visual parking layout
     const [topRow, bottomRow] = useMemo(() => {
@@ -304,6 +287,8 @@ const ReservationManagement = () => {
         setSelectedFloorId(null);
         setSelectedZoneId(null);
         setSelectedSlot(null);
+        dispatch(getBuildingFloorsReset());
+        dispatch(getZoneSlotsReset());
     };
 
     const handleBuildingChange = (value) => {
@@ -311,17 +296,32 @@ const ReservationManagement = () => {
         setSelectedFloorId(null);
         setSelectedZoneId(null);
         setSelectedSlot(null);
+        dispatch(getZoneSlotsReset());
+        if (value) {
+            dispatch(getBuildingFloorsRequest({
+                buildingId: value,
+                vehicleTypeId: selectedVehicle?.vehicleTypeId || null,
+            }));
+        } else {
+            dispatch(getBuildingFloorsReset());
+        }
     };
 
     const handleFloorChange = (value) => {
         setSelectedFloorId(value);
         setSelectedZoneId(null);
         setSelectedSlot(null);
+        dispatch(getZoneSlotsReset());
     };
 
     const handleZoneChange = (value) => {
         setSelectedZoneId(value);
         setSelectedSlot(null);
+        if (value) {
+            dispatch(getZoneSlotsRequest(value));
+        } else {
+            dispatch(getZoneSlotsReset());
+        }
     };
 
     const handleSlotSelect = (slot) => {
