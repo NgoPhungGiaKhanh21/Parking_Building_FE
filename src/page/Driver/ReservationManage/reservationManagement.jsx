@@ -641,6 +641,9 @@ const ReservationManagement = () => {
                 onClose={handleModalClose}
                 selectedVehicle={selectedVehicle}
                 selectedSlot={selectedSlot}
+                selectedBuilding={selectedBuilding}
+                selectedFloor={selectedFloor}
+                selectedZone={selectedZone}
                 form={form}
                 createLoading={createLoading}
                 onSubmit={handleSubmit}

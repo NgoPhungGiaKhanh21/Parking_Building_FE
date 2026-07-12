@@ -64,10 +64,13 @@ import { watchGetAllVehicleManager } from "./manager/Vehicle/getAllVehicle/getAl
 import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSaga";
 import { watchGetRevenue } from "./manager/Revenue/getRevenueSaga";
 import { watchGetSessionByPlateNumber } from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSaga";
-import { watchCheckInGuest } from "./staff/guest_parking/checkin_guest/checkOutGuestSaga";
+import { watchCheckInGuest } from "./staff/guest_parking/checkin_guest/checkInGuestSaga";
 import {watchForgotPassword} from "./admin/resetPassword/forgotPassword/forgotPasswordSaga";
 import {watchVerifyOtp} from "./admin/resetPassword/verifyOtp/verifyOtpSaga";
 import {watchResetPassword} from "./admin/resetPassword/reset-Password/resetPasswordSaga";
+import {watchOCRPlate} from "./staff/ocrPlate/ocrPlateSaga";
+import {watchGetStaffBuilding} from "./staff/guest_parking/getStaffBuilding/getStaffBuildingSaga";
+import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -130,6 +133,9 @@ export default function* rootSaga() {
     watchConfirmPaymentByStaff(),
     watchGetSessionByPlateNumber(),
     watchCheckInGuest(),
+    watchOCRPlate(),
+    watchGetStaffBuilding(),
+    watchGuestCheckoutOcr(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

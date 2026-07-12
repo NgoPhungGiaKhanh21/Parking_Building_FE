@@ -10,7 +10,7 @@ const checkInGuestSlice = createSlice({
     name: "checkInGuest",
     initialState,
     reducers: {
-        checkInGuestRequest: (state) => {
+        checkInGuestRequest: (state, action) => {
             state.loading = true;
             state.error = null;
         },

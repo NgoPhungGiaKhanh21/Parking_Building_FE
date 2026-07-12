@@ -1,14 +1,14 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { checkInGuestRequest, checkInGuestSuccess, checkInGuestFail } from "./checkInGuestSlice";
-import { guestCheckInApi } from "../../../../service/staff/parking_sessionApi";
+import { quickCheckInApi } from "../../../../service/staff/parking_sessionApi";
 import { toast } from "react-toastify";
 
 function* handleCheckInGuest(action) {
     try {
-        const response = yield call(guestCheckInApi, action.payload);
+        const response = yield call(quickCheckInApi, action.payload);
         const data = response.data;
         yield put(checkInGuestSuccess(data));
-        toast.success("Guest Check-in Success");
+        toast.success("Guest Quick Check-in Success");
     } catch (error) {
         const errorData = error.response?.data;
         const errorMessage =

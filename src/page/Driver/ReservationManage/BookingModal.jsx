@@ -9,6 +9,9 @@ const BookingModal = ({
     onClose,
     selectedVehicle,
     selectedSlot,
+    selectedBuilding,
+    selectedFloor,
+    selectedZone,
     form,
     createLoading,
     onSubmit,
@@ -58,7 +61,7 @@ const BookingModal = ({
                             <p className="text-lg font-extrabold text-blue-600">
                                 {selectedSlot.slotName}
                             </p>
-                            <p className="text-xs text-slate-500">{selectedSlot.zoneName} · {selectedSlot.floorName}</p>
+                            <p className="text-xs text-slate-500">Zone {selectedZone?.name || selectedSlot.zoneName} · {selectedFloor?.name || selectedSlot.floorName}</p>
                         </div>
 
                         {/* Vehicle plate */}
@@ -82,7 +85,7 @@ const BookingModal = ({
                         <div className="rounded-lg bg-white border border-slate-200 p-3">
                             <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Building</p>
                             <p className="text-xs font-semibold text-slate-700 leading-snug">
-                                {selectedSlot.buildingName}
+                                {selectedBuilding?.name || selectedSlot.buildingName}
                             </p>
                         </div>
                     </div>
