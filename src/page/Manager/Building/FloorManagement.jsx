@@ -212,6 +212,11 @@ const FloorManagement = () => {
     setIsUpdateFloorModalOpen(true);
     updateFloorForm.setFieldsValue({
       floorName: floor?.name || floor?.floorName || "",
+      vehicleTypeId:
+        floor?.vehicleTypeId ??
+        floor?.floorVehicleTypeId ??
+        floor?.vehicleType?.vehicleTypeId ??
+        null,
       maxCapacity: floor?.maxCapacity ?? null,
     });
   };
@@ -231,6 +236,7 @@ const FloorManagement = () => {
         floorId,
         data: {
           floorName: values.floorName?.trim(),
+          vehicleTypeId: values.vehicleTypeId,
           maxCapacity: values.maxCapacity,
         },
       })
@@ -466,6 +472,8 @@ const FloorManagement = () => {
         form={updateFloorForm}
         loading={updateFloorLoading}
         onSubmit={handleUpdateFloor}
+        vehicleTypeOptions={vehicleTypeOptions}
+        vehicleTypesLoading={vehicleTypesLoading}
       />
     </div>
   );
