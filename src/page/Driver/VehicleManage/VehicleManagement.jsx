@@ -11,8 +11,11 @@ import {
   Input,
   Select,
   message,
+  Upload,
 } from "antd";
-import { Car, Hash, Plus, X, Trash2 } from "lucide-react";
+import { Car, Hash, Plus, X, Trash2, ScanLine, UploadCloud, CheckCircle2, AlertCircle, ImageIcon } from "lucide-react";
+
+import { ocrPlateRequest, ocrPlateReset } from "../../../redux/staff/ocrPlate/ocrPlateSlice";
 
 // Đảm bảo đường dẫn import đúng với cấu trúc thư mục của bạn
 import { getAllVehicleRequest } from "../../../redux/driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
@@ -49,9 +52,27 @@ const getColorHex = (colorName) => {
   return color ? color.hex : "#E5E7EB";
 };
 
+const formatPlateNumber = (plate) => {
+  if (!plate) return plate;
+  const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9]?)([0-9]{4,5})$/);
+  if (match) {
+    return `${match[1]}-${match[2]}`;
+  }
+  return cleanPlate;
+};
+
 const VehicleList = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+
+  const [plateImageFile, setPlateImageFile] = useState(null);
+  const [plateImageUrl, setPlateImageUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const ocrState = useSelector((state) => state.ocrPlate);
+  const recognizedPlate = ocrState?.ocrPlate?.plateNumber;
+  const ocrLoading = ocrState?.loading;
 
 
   // State cho Modal Create
@@ -100,6 +121,9 @@ const VehicleList = () => {
     if (createVehicle && !createLoading && !createError) {
       setIsCreateModalVisible(false);
       form.resetFields();
+      setPlateImageFile(null);
+      setPlateImageUrl("");
+      dispatch(ocrPlateReset());
       dispatch(getAllVehicleRequest());
     } else if (createError) {
       message.error(createError || "Failed to add vehicle");
@@ -121,6 +145,12 @@ const VehicleList = () => {
     }
   }, [deleteVehicle, deleteLoading, deleteError, dispatch]);
 
+  useEffect(() => {
+    if (recognizedPlate) {
+      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate) });
+    }
+  }, [recognizedPlate, form]);
+
   const getVehicleImage = (type) => {
     const typeName = type?.toLowerCase() || "";
     if (typeName.includes("car")) {
@@ -138,7 +168,15 @@ const VehicleList = () => {
   const isMotorbike = typeName.includes("motor") || typeName.includes("bike");
 
   const handleCreateVehicle = (values) => {
-    dispatch(createVehicleRequest(values));
+    const formData = new FormData();
+    if (plateImageFile) formData.append("image", plateImageFile);
+    formData.append("plateNumber", values.plateNumber);
+    if (values.vehicleTypeId) formData.append("vehicleTypeId", values.vehicleTypeId);
+    if (values.brand) formData.append("brand", values.brand);
+    if (values.model) formData.append("model", values.model);
+    if (values.vehicleColor) formData.append("vehicleColor", values.vehicleColor);
+
+    dispatch(createVehicleRequest(formData));
   };
 
   const showCreateModal = () => {
@@ -148,6 +186,40 @@ const VehicleList = () => {
   const handleCreateCancel = () => {
     setIsCreateModalVisible(false);
     form.resetFields();
+    setPlateImageFile(null);
+    setPlateImageUrl("");
+    dispatch(ocrPlateReset());
+  };
+
+  const handleImageUpload = async (options) => {
+    const { file, onSuccess, onError } = options;
+    setIsUploading(true);
+    dispatch(ocrPlateReset());
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPlateImageUrl(e.target.result);
+        setIsUploading(false);
+        onSuccess("Ok");
+      };
+      reader.readAsDataURL(file);
+      setPlateImageFile(file);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      dispatch(ocrPlateRequest(formData));
+    } catch (err) {
+      setIsUploading(false);
+      onError(err);
+      message.error("Failed to upload image");
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setPlateImageUrl("");
+    setPlateImageFile(null);
+    dispatch(ocrPlateReset());
   };
 
   const handleCardClick = (vehicleId) => {
@@ -332,6 +404,105 @@ const VehicleList = () => {
           className="mt-2"
           requiredMark={false}
         >
+
+          <Form.Item
+            label={
+              <span className="font-semibold text-gray-700">
+                Vehicle Image <span className="text-gray-400 font-normal text-xs">(Auto-detect plate)</span>
+              </span>
+            }
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Upload
+                name="file"
+                customRequest={handleImageUpload}
+                showUploadList={false}
+                accept="image/*"
+              >
+                <div
+                  className={`flex h-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all hover:bg-slate-50 ${
+                    plateImageUrl ? "border-blue-300 bg-blue-50/30" : "border-slate-300 bg-white"
+                  }`}
+                >
+                  {isUploading ? (
+                    <Spin />
+                  ) : plateImageUrl ? (
+                    <div className="relative h-full w-full p-1">
+                      <img
+                        src={plateImageUrl}
+                        alt="Vehicle"
+                        className="h-full w-full rounded-lg object-contain"
+                      />
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<X size={14} />}
+                        className="absolute right-2 top-2 bg-white/80 hover:bg-red-50 hover:text-red-500 shadow-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center p-4 text-center">
+                      <div className="mb-2 rounded-full bg-blue-50 p-2 text-blue-500">
+                        <UploadCloud size={20} />
+                      </div>
+                      <p className="text-sm font-medium text-slate-700">Click to upload</p>
+                      <p className="mt-1 text-[10px] text-slate-400">PNG, JPG up to 5MB</p>
+                    </div>
+                  )}
+                </div>
+              </Upload>
+
+              <div className="flex h-32 flex-col justify-center rounded-xl border border-slate-200 bg-slate-50 p-3">
+                {ocrLoading ? (
+                  <div className="flex flex-col items-center">
+                    <Spin size="small" />
+                    <p className="mt-2 text-xs text-blue-600 animate-pulse">Reading plate...</p>
+                  </div>
+                ) : recognizedPlate ? (
+                  <div className="flex flex-col items-center text-center">
+                    <CheckCircle2 size={20} className="mb-1 text-emerald-500" />
+                    <p className="text-xs font-medium text-emerald-700">Plate Detected</p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-800">{recognizedPlate}</p>
+                  </div>
+                ) : plateImageUrl ? (
+                  <div className="flex flex-col items-center text-center">
+                    <AlertCircle size={20} className="mb-1 text-amber-500" />
+                    <p className="text-xs font-medium text-amber-700">Could not read plate</p>
+                    <p className="text-[10px] text-slate-500">Please enter manually</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center text-center text-slate-400">
+                    <ScanLine size={24} className="mb-2 opacity-50" />
+                    <p className="text-xs">OCR Result</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Form.Item>
+
+          <Form.Item
+            name="plateNumber"
+            label={
+              <span className="font-semibold text-gray-700">
+                Plate Number <span className="text-red-500">*</span>
+              </span>
+            }
+            normalize={(value) => (value ? value.toUpperCase() : value)}
+            rules={[
+              { required: true, message: "Please enter plate number!" }
+            ]}
+          >
+            <Input
+              placeholder={isMotorbike ? "e.g., 59A112345" : "e.g., 51A12345"}
+              size="large"
+              className="rounded-lg font-mono uppercase"
+            />
+          </Form.Item>
+
           <Form.Item
             name="vehicleTypeId"
             label={
@@ -340,7 +511,7 @@ const VehicleList = () => {
               </span>
             }
             rules={[
-              { required: true, message: "Please select a vehicle type!" },
+              { required: false, message: "Please select a vehicle type!" },
             ]}
           >
             <Select
@@ -355,59 +526,6 @@ const VehicleList = () => {
                 </Option>
               ))}
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="plateNumber"
-            label={
-              <span className="font-semibold text-gray-700">
-                Plate Number <span className="text-red-500">*</span>
-              </span>
-            }
-            normalize={(value) => (value ? value.toUpperCase() : value)}
-            rules={[
-              { required: true, message: "Please enter plate number!" },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  if (!value.includes("-")) {
-                    return Promise.reject(
-                      new Error("Plate number must contain a hyphen (-)"),
-                    );
-                  }
-                  if (isMotorbike) {
-                    const regex = /^[1-9][0-9][A-Z][A-Z0-9]\s*-\s*[0-9]{4,5}$/;
-                    if (!regex.test(value)) {
-                      return Promise.reject(
-                        new Error("Invalid format! Expected e.g. 59A1 - 12345"),
-                      );
-                    }
-                  } else if (typeName) {
-                    const regex = /^[1-9][0-9][A-Z]{1,2}\s*-\s*[0-9]{4,5}$/;
-                    if (!regex.test(value)) {
-                      return Promise.reject(
-                        new Error("Invalid format! Expected e.g. 51A - 12345"),
-                      );
-                    }
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-            extra={
-              <span className="text-xs text-gray-500">
-                {isMotorbike
-                  ? "Format: 59A1-12345 or 59A1 - 12345"
-                  : "Format: 51A-12345 or 51A - 12345"}
-              </span>
-            }
-          >
-            <Input
-              placeholder={isMotorbike ? "e.g., 59A1 - 12345" : "e.g., 51A - 12345"}
-              size="large"
-              className="rounded-lg font-mono uppercase"
-              disabled={!selectedVehicleTypeId}
-            />
           </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">

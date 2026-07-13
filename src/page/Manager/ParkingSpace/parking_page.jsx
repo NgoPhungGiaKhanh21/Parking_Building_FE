@@ -26,7 +26,7 @@ const mapSelectOptions = (items, labelKey = "name") =>
     .filter((item) => item?.id)
     .map((item) => ({
       value: item.id,
-      label: item[labelKey] || item.floorName || item.name || "N/A",
+      label: item[labelKey] || item.zoneName || item.floorName || item.name || "N/A",
     }));
 
 const ParkingSlot = ({ slot, isSelected, onSelect }) => {
@@ -94,10 +94,12 @@ const ParkingSpacePage = () => {
     (f) => f.id === selectedFloorId
   );
   const selectedZone = (Array.isArray(zones) ? zones : []).find((z) => z.id === selectedZoneId);
+  const selectedZoneOption = zoneOptions.find((opt) => opt.value === selectedZoneId);
 
   const slotList = Array.isArray(slots) ? slots : [];
   const [topRow, bottomRow] = splitSlotsIntoTwoRows(slotList);
-  const laneLabel = selectedZone?.name ? `LANE ${selectedZone.name}` : "LANE";
+  const zoneDisplayName = selectedZoneOption?.label || selectedZone?.name || selectedZone?.zoneName;
+  const laneLabel = zoneDisplayName && zoneDisplayName !== "N/A" ? `LANE ${zoneDisplayName}` : "LANE";
 
   useEffect(() => {
     dispatch(getBuildingListRequest());
@@ -269,7 +271,7 @@ const ParkingSpacePage = () => {
           <div className="space-y-6">
             <p className="text-center text-sm font-semibold text-slate-500">
               {selectedBuilding?.name} · {selectedFloor?.name || selectedFloor?.floorName} · {" "}
-              {selectedZone?.name}
+              {zoneDisplayName || "Zone"}
             </p>
 
             <div className="flex flex-wrap justify-center gap-3 md:gap-4">
