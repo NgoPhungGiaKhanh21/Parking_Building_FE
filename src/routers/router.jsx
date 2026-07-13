@@ -86,8 +86,7 @@ const router = createBrowserRouter([
         path: "",
         element: <ManagerLayout />,
         children: [
-          { path: "", element: <Dashboard /> },
-          { path: "building", element: <BuildingManager /> },
+          { path: "", element: <BuildingManager /> },
           {
             path: "building/floors/:floorId/:floorSlug",
             element: <ZoneByFloorManagement />,

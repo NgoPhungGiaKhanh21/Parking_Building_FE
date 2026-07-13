@@ -206,7 +206,7 @@ const VehicleExitGuest = () => {
       guestCheckoutOcrRequest({
         plateImage: plateImageFileRef.current,
         ticketCode: normalizedSession.ticketCode,
-        paymentMethod: "CASH",
+        paymentMethod: "PAYOS",
         checkoutImage: plateImageFileRef.current, // Same image for both
       })
     );

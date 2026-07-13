@@ -299,7 +299,7 @@ const FloorManagement = () => {
               </p>
             </div>
           </div>
-          <Link to="/manager/building" className="self-start sm:self-auto">
+          <Link to="/manager" className="self-start sm:self-auto">
             <Button
               size="large"
               className="rounded-xl border-slate-200 hover:border-slate-300"

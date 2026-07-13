@@ -15,7 +15,8 @@ function* handleUpdateVehicle(action) {
 
     const data = response.data;
     yield put(updateVehicleSuccess(data));
-    yield put(getVehicleByIdRequest({ vehicleId: action.payload.vehicleId }));
+    const vehicleId = action.payload.get("vehicleId");
+    yield put(getVehicleByIdRequest({ vehicleId }));
     yield put(getAllVehicleRequest());
     toast.success("Vehicle updated successfully");
   } catch (error) {
