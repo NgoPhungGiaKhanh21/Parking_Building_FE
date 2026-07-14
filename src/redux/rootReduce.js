@@ -71,6 +71,7 @@ import resetPasswordReducer from "./admin/resetPassword/reset-Password/resetPass
 import ocrPlateReducer from "./staff/ocrPlate/ocrPlateSlice";
 import getStaffBuildingReducer from "./staff/guest_parking/getStaffBuilding/getStaffBuildingSlice";
 import unifiedCheckinReducer from './staff/parking_session/checkin/unifiedCheckinSlice';
+import unifiedCheckoutReducer from './staff/parking_session/checkout/unifiedCheckoutSlice';
 
 import guestCheckoutOcrReducer from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSlice";
 
@@ -138,6 +139,7 @@ const rootReducer = combineReducers({
   ocrPlate: ocrPlateReducer,
   getStaffBuilding: getStaffBuildingReducer,
   unifiedCheckin: unifiedCheckinReducer,
+  unifiedCheckout: unifiedCheckoutReducer,
 
   guestCheckoutOcr: guestCheckoutOcrReducer,
 

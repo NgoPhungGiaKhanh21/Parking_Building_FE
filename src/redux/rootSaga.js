@@ -72,6 +72,7 @@ import {watchOCRPlate} from "./staff/ocrPlate/ocrPlateSaga";
 import {watchGetStaffBuilding} from "./staff/guest_parking/getStaffBuilding/getStaffBuildingSaga";
 import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSaga";
 import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
+import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -138,6 +139,7 @@ export default function* rootSaga() {
     watchGetStaffBuilding(),
     watchGuestCheckoutOcr(),
     watchUnifiedCheckin(),
+    watchUnifiedCheckout(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

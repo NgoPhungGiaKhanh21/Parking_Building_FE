@@ -28,8 +28,6 @@ import PaymentSuccess from "../page/Driver/Payment/PaymentSuccess";
 import PaymentCancel from "../page/Driver/Payment/PaymentCancel";
 import PaymentManagement from "../page/Staff/paymentManagement/PaymentManagement";
 import VehicleExit from "../page/Staff/vehicleExit/VehicleExit";
-import VehicleEntryGuest from "../page/Staff/vehicleEntryGuest/vehicleEntryGuest";
-import VehicleExitGuest from "../page/Staff/vehicleExitGuest/vehicleExitGuest";
 import GuestPayment from "../page/Staff/vehicleExitGuest/GuestPayment";
 import GuestPaymentSuccess from "../page/Staff/vehicleExitGuest/GuestPaymentSuccess";
 import GuestPaymentCancel from "../page/Staff/vehicleExitGuest/GuestPaymentCancel";
@@ -111,12 +109,10 @@ const router = createBrowserRouter([
         element: <StaffLayout />,
         children: [
           { path: "", element: <VehicleEntry /> },
-          { path: "guest-checkin", element: <VehicleEntryGuest /> },
           { path: "vehicle-exit", element: <VehicleExit /> },
-          { path: "guest-checkout", element: <VehicleExitGuest /> },
-          { path: "guest-checkout/payment", element: <GuestPayment /> },
-          { path: "guest-checkout/payment/success", element: <GuestPaymentSuccess /> },
-          { path: "guest-checkout/payment/failed", element: <GuestPaymentCancel /> },
+          { path: "vehicle-exit/payment", element: <GuestPayment /> },
+          { path: "vehicle-exit/payment/success", element: <GuestPaymentSuccess /> },
+          { path: "vehicle-exit/payment/failed", element: <GuestPaymentCancel /> },
           { path: "payments", element: <PaymentManagement /> },
         ],
       },

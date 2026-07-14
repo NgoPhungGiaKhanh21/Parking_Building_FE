@@ -36,7 +36,7 @@ const GuestPaymentSuccess = () => {
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
       <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <CommonBreadcrumb role="Staff" page="guest-checkout" subPage="guest-payment" />
+        <CommonBreadcrumb role="Staff" page="vehicle-exit" subPage="guest-payment" />
       </div>
 
       <div className="mx-auto max-w-lg rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm text-center">
@@ -55,7 +55,7 @@ const GuestPaymentSuccess = () => {
           type="primary"
           size="large"
           icon={<LogOut size={16} />}
-          onClick={() => navigate("/staff/guest-checkout?checkout=1")}
+          onClick={() => navigate("/staff/vehicle-exit?checkout=1")}
         >
           Continue to Check Out
         </Button>
