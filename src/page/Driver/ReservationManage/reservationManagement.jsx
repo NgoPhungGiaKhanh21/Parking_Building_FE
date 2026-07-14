@@ -244,7 +244,7 @@ const ReservationManagement = () => {
         if (!rawFloors || !selectedVehicle) return [];
         return rawFloors
             .filter((f) => f.vehicleTypeId === selectedVehicle.vehicleTypeId)
-            .map((f) => ({ id: f.floorId, name: f.floorName, level: f.floorLevel }));
+            .map((f) => ({ id: f.floorId, name: f.floorName || `Floor ${f.floorNumber}`, level: f.floorLevel ?? f.floorNumber }));
     }, [rawFloors, selectedVehicle]);
 
     // Zones for selected floor
@@ -254,8 +254,8 @@ const ReservationManagement = () => {
         return (floor?.zones || []).map((z) => ({
             id: z.zoneId,
             name: z.zoneName,
-            totalSlots: z.totalSlots,
-            availableSlots: z.availableSlots,
+            totalSlots: z.slotSummary?.total ?? z.totalSlots,
+            availableSlots: z.slotSummary?.available ?? z.availableSlots,
         }));
     }, [rawFloors, selectedFloorId]);
 

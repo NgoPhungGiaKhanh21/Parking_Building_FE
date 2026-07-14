@@ -10,8 +10,8 @@ import { toast } from "react-toastify";
 function* handleGetBuildingFloors(action) {
     try {
         const response = yield call(getBuildingFloorsApi, action.payload);
-        // response.data.data.floors = array of floors
-        yield put(getBuildingFloorsSuccess(response.data.data.floors));
+        // response.data.data = array of floors
+        yield put(getBuildingFloorsSuccess(response.data.data));
     } catch (error) {
         const message =
             error.response?.data?.message ||

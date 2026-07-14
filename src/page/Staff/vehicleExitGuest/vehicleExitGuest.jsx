@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Spin, Tag, Upload, message } from "antd";
+import { Spin, Tag, Upload, message, Input } from "antd";
 import {
   CheckCircle2,
   CreditCard,
@@ -61,6 +61,7 @@ const VehicleExitGuest = () => {
   const [checkoutDone, setCheckoutDone] = useState(
     () => sessionStorage.getItem(GUEST_EXIT_CHECKOUT_DONE_KEY) === "true"
   );
+  const [plateInput, setPlateInput] = useState("");
 
   // ── Redux selectors
   const { ocrPlate, loading: ocrLoading } = useSelector((s) => s.ocrPlate);
@@ -91,12 +92,21 @@ const VehicleExitGuest = () => {
     [session]
   );
 
-  // ── Auto-search session when plate is recognized via OCR
+  // Initialize input when OCR finishes
   useEffect(() => {
-    if (recognizedPlate && !session && !sessionLoading) {
-      dispatch(getSessionByPlateNumberRequest({ plateNumber: recognizedPlate }));
+    if (recognizedPlate) {
+      setPlateInput(recognizedPlate);
     }
-  }, [recognizedPlate, session, sessionLoading, dispatch]);
+  }, [recognizedPlate]);
+
+  // ── Debounced search session when plate changes
+  useEffect(() => {
+    if (!plateInput) return;
+    const handler = setTimeout(() => {
+      dispatch(getSessionByPlateNumberRequest({ plateNumber: plateInput }));
+    }, 800);
+    return () => clearTimeout(handler);
+  }, [plateInput, dispatch]);
 
   // ── Load payments on mount + handle returning from PayOS
   useEffect(() => {
@@ -179,6 +189,7 @@ const VehicleExitGuest = () => {
   const handleRemoveImage = useCallback(() => {
     setPlateImageUrl("");
     plateImageFileRef.current = null;
+    setPlateInput("");
     if (!(isPaid && showCheckout)) {
       dispatch(ocrPlateReset());
       dispatch(getSessionByPlateNumberReset());
@@ -190,9 +201,9 @@ const VehicleExitGuest = () => {
   // Navigate to payment page (keeps existing PayOS flow)
   const handleGoPayment = useCallback(() => {
     if (!session) return;
-    sessionStorage.setItem(GUEST_EXIT_PLATE_KEY, session.vehiclePlate || recognizedPlate || "");
+    sessionStorage.setItem(GUEST_EXIT_PLATE_KEY, session.vehiclePlate || plateInput || "");
     navigate("/staff/guest-checkout/payment");
-  }, [navigate, session, recognizedPlate]);
+  }, [navigate, session, plateInput]);
 
   // Confirm checkout using the new OCR checkout API
   const handleConfirmCheckout = useCallback(() => {
@@ -221,6 +232,7 @@ const VehicleExitGuest = () => {
     sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
     setCheckoutDone(false);
     setPlateImageUrl("");
+    setPlateInput("");
     plateImageFileRef.current = null;
     navigate("/staff/guest-checkout", { replace: true });
   }, [dispatch, navigate]);
@@ -337,7 +349,7 @@ const VehicleExitGuest = () => {
                         Reading plate number...
                       </p>
                     </div>
-                  ) : recognizedPlate ? (
+                  ) : plateInput || recognizedPlate ? (
                     <div className="p-5 rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
                       <div className="flex items-center gap-2 mb-2">
                         <CheckCircle2 size={16} className="text-emerald-500" />
@@ -345,11 +357,16 @@ const VehicleExitGuest = () => {
                           Recognized Plate
                         </span>
                       </div>
-                      <div className="bg-white rounded-xl border-2 border-emerald-300 p-3 text-center">
-                        <span className="text-2xl font-black font-mono tracking-[0.15em] text-slate-800">
-                          {recognizedPlate}
-                        </span>
+                      <div className="bg-white rounded-xl border-2 border-emerald-300 overflow-hidden text-center flex justify-center focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200 transition-all">
+                        <Input
+                          value={plateInput}
+                          onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
+                          variant="borderless"
+                          className="text-2xl font-black font-mono tracking-[0.15em] text-slate-800 py-3 text-center w-full"
+                          placeholder="ENTER PLATE"
+                        />
                       </div>
+                      <p className="mt-2 text-[10px] text-slate-400 text-center font-medium">Auto-searches after you stop typing</p>
                     </div>
                   ) : plateImageUrl && !ocrLoading ? (
                     <div className="p-5 rounded-xl border border-dashed border-amber-200 bg-amber-50 text-center">
@@ -471,7 +488,7 @@ const VehicleExitGuest = () => {
               </h3>
               <div className="space-y-2 text-xs">
                 {[
-                  { label: "Plate Number", value: recognizedPlate || normalizedSession?.vehiclePlate || "—", mono: true },
+                  { label: "Plate Number", value: plateInput || normalizedSession?.vehiclePlate || "—", mono: true },
                   { label: "Ticket Code", value: normalizedSession?.ticketCode || "—", mono: true },
                   { label: "Fee", value: normalizedSession ? formatCurrency(amount) : "—" },
                   {
@@ -507,7 +524,7 @@ const VehicleExitGuest = () => {
               <div className="space-y-2">
                 {[
                   { label: "Plate image uploaded", ok: !!plateImageUrl },
-                  { label: "Plate recognized (OCR)", ok: !!recognizedPlate },
+                  { label: "Plate identified", ok: !!plateInput },
                   { label: "Session found", ok: !!normalizedSession },
                   { label: "Payment completed", ok: isPaid },
                 ].map((item, i) => (
