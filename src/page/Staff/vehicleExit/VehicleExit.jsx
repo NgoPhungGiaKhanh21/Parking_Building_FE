@@ -281,9 +281,10 @@ const VehicleExit = () => {
         ticketCode: normalizedSession.ticketCode,
         paymentMethod: "PAYOS",
         checkoutImage: plateImageFileRef.current, 
+        isDriver: isDriver,
       })
     );
-  }, [normalizedSession, dispatch]);
+  }, [normalizedSession, dispatch, isDriver]);
 
   const handleResetAfterCheckout = useCallback(() => {
     dispatch(unifiedCheckoutReset());
