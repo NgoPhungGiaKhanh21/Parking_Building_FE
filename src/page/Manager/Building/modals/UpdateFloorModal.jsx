@@ -1,6 +1,14 @@
-import { Button, Form, Input, InputNumber, Modal } from "antd";
+import { Button, Form, Input, InputNumber, Modal, Select, Spin } from "antd";
 
-const UpdateFloorModal = ({ open, onCancel, form, loading, onSubmit }) => {
+const UpdateFloorModal = ({
+  open,
+  onCancel,
+  form,
+  loading,
+  onSubmit,
+  vehicleTypeOptions,
+  vehicleTypesLoading,
+}) => {
   return (
     <Modal
       title={<div className="font-bold text-center">Update Floor</div>}
@@ -21,6 +29,21 @@ const UpdateFloorModal = ({ open, onCancel, form, loading, onSubmit }) => {
           rules={[{ required: true, message: "Please enter floor name." }]}
         >
           <Input placeholder="Enter floor name" />
+        </Form.Item>
+
+        <Form.Item
+          name="vehicleTypeId"
+          label="Vehicle Type"
+          rules={[{ required: true, message: "Please select vehicle type." }]}
+        >
+          <Select
+            loading={vehicleTypesLoading}
+            placeholder="Select vehicle type"
+            options={vehicleTypeOptions}
+            notFoundContent={
+              vehicleTypesLoading ? <Spin size="small" /> : "No data"
+            }
+          />
         </Form.Item>
 
         <Form.Item
