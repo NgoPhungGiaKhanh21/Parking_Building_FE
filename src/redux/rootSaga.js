@@ -71,6 +71,7 @@ import {watchResetPassword} from "./admin/resetPassword/reset-Password/resetPass
 import {watchOCRPlate} from "./staff/ocrPlate/ocrPlateSaga";
 import {watchGetStaffBuilding} from "./staff/guest_parking/getStaffBuilding/getStaffBuildingSaga";
 import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSaga";
+import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -136,6 +137,7 @@ export default function* rootSaga() {
     watchOCRPlate(),
     watchGetStaffBuilding(),
     watchGuestCheckoutOcr(),
+    watchUnifiedCheckin(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),

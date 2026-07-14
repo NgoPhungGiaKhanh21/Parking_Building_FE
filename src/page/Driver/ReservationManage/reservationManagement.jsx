@@ -239,15 +239,19 @@ const ReservationManagement = () => {
         [rawBuildings]
     );
 
-    // Floors from API (filtered by vehicle type already via query param)
+    // Floors from API (filtered by vehicle type on frontend)
+    // vehicleTypeId & vehicleTypeName are on the FLOOR object, not on zones
     const floors = useMemo(() => {
         if (!rawFloors || !selectedVehicle) return [];
         return rawFloors
-            .filter((f) => f.vehicleTypeId === selectedVehicle.vehicleTypeId)
+            .filter((f) =>
+                f.vehicleTypeId === selectedVehicle.vehicleTypeId ||
+                f.vehicleTypeName === selectedVehicle.vehicleTypeName
+            )
             .map((f) => ({ id: f.floorId, name: f.floorName || `Floor ${f.floorNumber}`, level: f.floorLevel ?? f.floorNumber }));
     }, [rawFloors, selectedVehicle]);
 
-    // Zones for selected floor
+    // Zones for selected floor (no extra filter needed — all zones on a matched floor share the same vehicle type)
     const zones = useMemo(() => {
         if (!selectedFloorId || !rawFloors) return [];
         const floor = rawFloors.find((f) => f.floorId === selectedFloorId);
@@ -300,7 +304,6 @@ const ReservationManagement = () => {
         if (value) {
             dispatch(getBuildingFloorsRequest({
                 buildingId: value,
-                vehicleTypeId: selectedVehicle?.vehicleTypeId || null,
             }));
         } else {
             dispatch(getBuildingFloorsReset());

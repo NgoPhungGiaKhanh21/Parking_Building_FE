@@ -70,6 +70,8 @@ import verifyOtpReducer from "./admin/resetPassword/verifyOtp/verifyOtpSlice";
 import resetPasswordReducer from "./admin/resetPassword/reset-Password/resetPasswordSlice";
 import ocrPlateReducer from "./staff/ocrPlate/ocrPlateSlice";
 import getStaffBuildingReducer from "./staff/guest_parking/getStaffBuilding/getStaffBuildingSlice";
+import unifiedCheckinReducer from './staff/parking_session/checkin/unifiedCheckinSlice';
+
 import guestCheckoutOcrReducer from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSlice";
 
 const rootReducer = combineReducers({
@@ -135,6 +137,8 @@ const rootReducer = combineReducers({
   checkInGuest: checkInGuestReducer,
   ocrPlate: ocrPlateReducer,
   getStaffBuilding: getStaffBuildingReducer,
+  unifiedCheckin: unifiedCheckinReducer,
+
   guestCheckoutOcr: guestCheckoutOcrReducer,
 
   //driver
