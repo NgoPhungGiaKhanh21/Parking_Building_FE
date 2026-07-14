@@ -16,7 +16,7 @@ const GuestPaymentCancel = () => {
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
       <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <CommonBreadcrumb role="Staff" page="guest-checkout" subPage="guest-payment" />
+        <CommonBreadcrumb role="Staff" page="vehicle-exit" subPage="guest-payment" />
       </div>
 
       <div className="mx-auto max-w-lg rounded-2xl border border-red-100 bg-white p-8 shadow-sm text-center">
@@ -32,12 +32,12 @@ const GuestPaymentCancel = () => {
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button onClick={() => navigate("/staff/guest-checkout")}>
+          <Button onClick={() => navigate("/staff/vehicle-exit")}>
             Back to Guest Exit
           </Button>
           <Button
             type="primary"
-            onClick={() => navigate("/staff/guest-checkout/payment")}
+            onClick={() => navigate("/staff/vehicle-exit/payment")}
           >
             Retry Payment
           </Button>

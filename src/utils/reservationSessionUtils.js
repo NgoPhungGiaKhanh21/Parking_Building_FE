@@ -62,6 +62,14 @@ export const normalizeReservation = (record) => {
         record.checkinImageUrl,
         session.checkinImageUrl,
         record.checkin_image_url,
+        record.imageCheckIn,
+        session.imageCheckIn,
+        record.checkInImage,
+        session.checkInImage,
+        record.guestImage,
+        session.guestImage,
+        record.plateImageUrl,
+        session.plateImageUrl
       ),
     ),
     checkoutImageUrl: resolveImageUrl(
@@ -69,6 +77,10 @@ export const normalizeReservation = (record) => {
         record.checkoutImageUrl,
         session.checkoutImageUrl,
         record.checkout_image_url,
+        record.imageCheckOut,
+        session.imageCheckOut,
+        record.checkOutImage,
+        session.checkOutImage
       ),
     ),
     paymentTime: pick(

@@ -42,8 +42,8 @@ const BuildingFloorsModal = ({ visible, onClose, floor, buildingName }) => {
   if (!visible || !floor) return null;
 
   const zones = [...(floor.zones || [])].sort((a, b) => (a.zoneName || '').localeCompare(b.zoneName || ''));
-  const totalAvail = zones.reduce((s, z) => s + (z.availableSlots || 0), 0);
-  const totalSlots = zones.reduce((s, z) => s + (z.totalSlots || 0), 0);
+  const totalAvail = zones.reduce((s, z) => s + (z.slotSummary?.available ?? z.availableSlots ?? 0), 0);
+  const totalSlots = zones.reduce((s, z) => s + (z.slotSummary?.total ?? z.totalSlots ?? 0), 0);
 
   const avail = slots?.filter(isAvail) || [];
   const occupied = slots?.filter(s => !isAvail(s)) || [];
@@ -81,7 +81,9 @@ const BuildingFloorsModal = ({ visible, onClose, floor, buildingName }) => {
               </div>
             ) : (
               zones.map(zone => {
-                const pct = zone.totalSlots > 0 ? Math.round((zone.availableSlots / zone.totalSlots) * 100) : 0;
+                const zTotal = zone.slotSummary?.total ?? zone.totalSlots ?? 0;
+                const zAvail = zone.slotSummary?.available ?? zone.availableSlots ?? 0;
+                const pct = zTotal > 0 ? Math.round((zAvail / zTotal) * 100) : 0;
                 const barCl = pct === 0 ? 'bg-red-400' : pct < 30 ? 'bg-amber-400' : 'bg-emerald-400';
                 const txtCl = pct === 0 ? 'text-red-600' : pct < 30 ? 'text-amber-600' : 'text-emerald-600';
                 const isSel = selectedZone?.zoneId === zone.zoneId;
@@ -109,8 +111,8 @@ const BuildingFloorsModal = ({ visible, onClose, floor, buildingName }) => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`text-lg font-extrabold ${txtCl}`}>{zone.availableSlots}</span>
-                        <span className="text-xs text-slate-400 font-medium"> / {zone.totalSlots}</span>
+                        <span className={`text-lg font-extrabold ${txtCl}`}>{zAvail}</span>
+                        <span className="text-xs text-slate-400 font-medium"> / {zTotal}</span>
                       </div>
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
@@ -140,7 +142,7 @@ const BuildingFloorsModal = ({ visible, onClose, floor, buildingName }) => {
                 <p className="text-purple-200 text-[10px] font-bold uppercase tracking-wider mb-0.5">{floor.floorName} · {selectedZone.zoneName}</p>
                 <h3 className="text-lg font-extrabold">Parking Slots</h3>
                 <p className="text-purple-200 text-xs mt-1 font-medium">
-                  {selectedZone.availableSlots} available · {selectedZone.totalSlots} total
+                  {selectedZone.slotSummary?.available ?? selectedZone.availableSlots ?? 0} available · {selectedZone.slotSummary?.total ?? selectedZone.totalSlots ?? 0} total
                 </p>
               </div>
 

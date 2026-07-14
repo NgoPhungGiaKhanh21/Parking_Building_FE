@@ -28,17 +28,17 @@ const SidebarManager = () => {
   }, [dispatch]);
 
   const menuItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      to: "/manager",
-    },
+    // {
+    //   id: "dashboard",
+    //   label: "Dashboard",
+    //   icon: LayoutDashboard,
+    //   to: "/manager",
+    // },
     {
       id: "building",
       label: "Building",
       icon: Building2,
-      to: "/manager/building",
+      to: "/manager",
     },
     {
       id: "parking-space",
@@ -52,12 +52,12 @@ const SidebarManager = () => {
       icon: CarFront,
       to: "/manager/vehicle",
     },
-    {
-      id: "revenue",
-      label: "Revenue",
-      icon: CircleDollarSign,
-      to: "/manager/revenue",
-    },
+    // {
+    //   id: "revenue",
+    //   label: "Revenue",
+    //   icon: CircleDollarSign,
+    //   to: "/manager/revenue",
+    // },
     {
       id: "manage-staff",
       label: "Manage Staff",

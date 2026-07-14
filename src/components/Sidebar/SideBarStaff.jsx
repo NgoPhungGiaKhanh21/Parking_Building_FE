@@ -42,18 +42,6 @@ const SidebarStaff = () => {
       to: "/staff/vehicle-exit",
     },
     {
-      id: "guest-checkin",
-      label: "Guest Check-in",
-      icon: UserRound,
-      to: "/staff/guest-checkin",
-    },
-    {
-      id: "guest-checkout",
-      label: "Guest Check-out",
-      icon: UserRound,
-      to: "/staff/guest-checkout",
-    },
-    {
       id: "parking-ticket",
       label: "Parking Ticket",
       icon: Ticket,
