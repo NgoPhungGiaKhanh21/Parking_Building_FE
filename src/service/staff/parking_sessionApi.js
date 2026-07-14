@@ -153,8 +153,15 @@ export const unifiedCheckoutApi = (data) => {
 
   const params = new URLSearchParams();
   if (data.ticketCode) params.append("ticketCode", data.ticketCode);
-  if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
+  if (data.isDriver) {
+    return api.post(`sessions/driver/checkout?${params.toString()}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  }
 
+  if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
   return api.post(`sessions/checkout?${params.toString()}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
