@@ -40,7 +40,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
       setLoadingFloors(true);
       getBuildingFloorsApi({ buildingId: building.id })
         .then(res => {
-          setFloors(res.data?.data?.floors || []);
+          setFloors(res.data?.data || []);
         })
         .catch(() => setFloors([]))
         .finally(() => setLoadingFloors(false));
@@ -180,21 +180,21 @@ const BuildingRow = ({ building, formatCurrency }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {floors.map((floor) => {
                   const zones = floor.zones || [];
-                  const floorAvail = zones.reduce((s, z) => s + (z.availableSlots || 0), 0);
-                  const floorTotal = zones.reduce((s, z) => s + (z.totalSlots || 0), 0);
+                  const floorAvail = zones.reduce((s, z) => s + (z.slotSummary?.available || z.availableSlots || 0), 0);
+                  const floorTotal = zones.reduce((s, z) => s + (z.slotSummary?.total || z.totalSlots || 0), 0);
                   const floorPct = floorTotal > 0 ? Math.round((floorAvail / floorTotal) * 100) : 0;
                   const fBarCl = floorPct === 0 ? 'bg-red-400' : floorPct < 30 ? 'bg-amber-400' : 'bg-emerald-400';
                   const fTxtCl = floorPct === 0 ? 'text-red-600' : floorPct < 30 ? 'text-amber-600' : 'text-emerald-600';
 
                   return (
-                    <div key={floor.floorName} className="bg-white rounded-2xl border border-slate-200/70 p-4 hover:border-blue-200 hover:shadow-md transition-all">
+                    <div key={floor.floorId || floor.floorName} className="bg-white rounded-2xl border border-slate-200/70 p-4 hover:border-blue-200 hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                             <Layers size={18} />
                           </div>
                           <div>
-                            <h4 className="font-bold text-slate-800 text-sm">{floor.floorName}</h4>
+                            <h4 className="font-bold text-slate-800 text-sm">{floor.floorName || `Floor ${floor.floorNumber}`}</h4>
                             <p className="text-[10px] text-slate-400 font-medium">{zones.length} zone{zones.length !== 1 ? 's' : ''}</p>
                           </div>
                         </div>

@@ -7,21 +7,32 @@ export const getSessionByPlateNumberApi = (data) => {
 
 export const checkInApi = (data) => {
   const formData = new FormData();
-  if (data.checkinImage) {
-    formData.append("checkinImage", data.checkinImage);
-  }
+  if (data.checkinImage) formData.append("checkinImage", data.checkinImage);
+  if (data.plateImage) formData.append("plateImage", data.plateImage);
 
   const params = new URLSearchParams();
   if (data.ticketCode) params.append("ticketCode", data.ticketCode);
   if (data.plateNumber) params.append("plateNumber", data.plateNumber);
   if (data.vehicleColor) params.append("vehicleColor", data.vehicleColor);
   if (data.vehicleTypeId) params.append("vehicleTypeId", data.vehicleTypeId);
+  if (data.buildingId) params.append("buildingId", data.buildingId);
+  if (data.guestName) params.append("guestName", data.guestName);
+  if (data.guestPhone) params.append("guestPhone", data.guestPhone);
+  if (data.note) params.append("note", data.note);
 
-  return api.post(`sessions/checkin?${params.toString()}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  if (data.ticketCode) {
+    return api.post(`sessions/checkin?${params.toString()}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  } else {
+    return api.post(`sessions/guest/checkin?${params.toString()}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  }
 };
 
 // export const guestCheckInApi = (data) => {
@@ -131,3 +142,22 @@ export const guestCheckoutOcrApi = (data) => {
 export const getStaffBuildingApi = (data) => {
   return api.get("/staff/buildings", data);
 }
+
+// Unified Staff Checkout API — POST /api/sessions/checkout
+// Query params: ticketCode, paymentMethod
+// FormData: plateImage (optional), checkoutImage (optional)
+export const unifiedCheckoutApi = (data) => {
+  const formData = new FormData();
+  if (data.plateImage) formData.append("plateImage", data.plateImage);
+  if (data.checkoutImage) formData.append("checkoutImage", data.checkoutImage);
+
+  const params = new URLSearchParams();
+  if (data.ticketCode) params.append("ticketCode", data.ticketCode);
+  if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
+
+  return api.post(`sessions/checkout?${params.toString()}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};

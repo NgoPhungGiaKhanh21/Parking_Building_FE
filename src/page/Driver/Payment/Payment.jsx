@@ -48,16 +48,18 @@ const resolveSessionAmount = (session) =>
 const resolveDriverName = (profile) =>
   profile?.fullName ?? profile?.driverName ?? profile?.name ?? "—";
 
-const buildPaymentPayload = (session, profile, note, amount) => ({
-  sessionId: session.sessionId ?? session.id,
-  ticketCode: session.ticketCode ?? "",
-  reservationCode: session.reservationCode ?? "",
-  paymentMethod: "PAYOS",
-  amount: amount ?? resolveSessionAmount(session),
-  driverId: profile?.id ?? profile?.userId ?? "",
-  note: note?.trim() || "",
-  ...getFrontendRedirectUrls(),
-});
+const buildPaymentPayload = (session, profile, note, amount) => {
+  return {
+    sessionId: session.sessionId ?? session.id,
+    ticketCode: session.ticketCode ?? "",
+    reservationCode: session.reservationCode ?? "",
+    paymentMethod: "PAYOS",
+    amount: amount ?? resolveSessionAmount(session),
+    driverId: profile?.id ?? profile?.userId ?? "",
+    note: note?.trim() || "",
+    ...getFrontendRedirectUrls(),
+  };
+};
 
 const Payment = () => {
   const dispatch = useDispatch();

@@ -104,11 +104,11 @@ const GuestPayment = () => {
     return (
       <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
         <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-          <CommonBreadcrumb role="Staff" page="guest-checkout" subPage="guest-payment" />
+          <CommonBreadcrumb role="Staff" page="vehicle-exit" subPage="guest-payment" />
         </div>
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-20">
           <Empty description="No guest session found. Search by plate first.">
-            <Button type="primary" onClick={() => navigate("/staff/guest-checkout")}>
+            <Button type="primary" onClick={() => navigate("/staff/vehicle-exit")}>
               Back to Guest Exit
             </Button>
           </Empty>
@@ -120,7 +120,7 @@ const GuestPayment = () => {
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
       <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <CommonBreadcrumb role="Staff" page="guest-checkout" subPage="guest-payment" />
+        <CommonBreadcrumb role="Staff" page="vehicle-exit" subPage="guest-payment" />
         <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-violet-600">
@@ -218,7 +218,7 @@ const GuestPayment = () => {
             >
               <Button
                 type="primary"
-                onClick={() => navigate("/staff/guest-checkout?checkout=1")}
+                onClick={() => navigate("/staff/vehicle-exit?checkout=1")}
               >
                 Proceed to Check Out
               </Button>
@@ -268,7 +268,7 @@ const GuestPayment = () => {
               </Form.Item>
 
               <div className="flex gap-3">
-                <Button onClick={() => navigate("/staff/guest-checkout")} block>
+                <Button onClick={() => navigate("/staff/vehicle-exit")} block>
                   Back
                 </Button>
                 <Button
