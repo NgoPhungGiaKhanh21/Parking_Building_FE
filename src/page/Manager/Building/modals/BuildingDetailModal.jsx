@@ -81,15 +81,6 @@ const BuildingDetailModal = ({
                 <span className="font-semibold">Slot Count:</span>{" "}
                 {buildingDetail?.slotCount ?? 0}
               </p>
-              <p>
-                <span className="font-semibold">Occupancy:</span>{" "}
-                {buildingDetail?.currentOccupancy ?? 0}/
-                {buildingDetail?.maxCapacity ?? 0}
-              </p>
-              <p>
-                <span className="font-semibold">Created Slots:</span>{" "}
-                {buildingDetail?.createdSlots ?? 0}
-              </p>
             </div>
             <p className="mt-2 text-xs text-slate-500">
               These values are calculated by the system after you create floors,
