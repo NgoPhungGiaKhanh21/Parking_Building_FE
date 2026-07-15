@@ -20,19 +20,11 @@ export const checkInApi = (data) => {
   if (data.guestPhone) params.append("guestPhone", data.guestPhone);
   if (data.note) params.append("note", data.note);
 
-  if (data.ticketCode) {
-    return api.post(`sessions/checkin?${params.toString()}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  } else {
-    return api.post(`sessions/guest/checkin?${params.toString()}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  }
+  return api.post(`sessions/checkin?${params.toString()}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 // export const guestCheckInApi = (data) => {
@@ -82,28 +74,28 @@ export const quickCheckInApi = (data) => {
   });
 };
 
-export const checkOutApi = (data) => {
-  if (data.checkoutImage) {
-    const formData = new FormData();
-    formData.append("checkoutImage", data.checkoutImage);
+// export const checkOutApi = (data) => {
+//   if (data.checkoutImage) {
+//     const formData = new FormData();
+//     formData.append("checkoutImage", data.checkoutImage);
 
-    const params = new URLSearchParams();
-    if (data.ticketCode) params.append("ticketCode", data.ticketCode);
-    if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
+//     const params = new URLSearchParams();
+//     if (data.ticketCode) params.append("ticketCode", data.ticketCode);
+//     if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
 
-    return api.post(`sessions/checkout?${params.toString()}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  }
+//     return api.post(`sessions/checkout?${params.toString()}`, formData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//       },
+//     });
+//   }
 
-  return api.post("/sessions/checkout", {
-    ticketCode: data.ticketCode,
-    paymentMethod: data.paymentMethod,
-    checkoutImageUrl: data.checkoutImageUrl || "",
-  });
-};
+//   return api.post("/sessions/checkout", {
+//     ticketCode: data.ticketCode,
+//     paymentMethod: data.paymentMethod,
+//     checkoutImageUrl: data.checkoutImageUrl || "",
+//   });
+// };
 
 export const ocrPlateApi = (data) => {
   return api.post(`/ocr/plate/upload`, data, {
@@ -153,15 +145,8 @@ export const unifiedCheckoutApi = (data) => {
 
   const params = new URLSearchParams();
   if (data.ticketCode) params.append("ticketCode", data.ticketCode);
-  if (data.isDriver) {
-    return api.post(`sessions/driver/checkout?${params.toString()}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  }
-
   if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
+
   return api.post(`sessions/checkout?${params.toString()}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",

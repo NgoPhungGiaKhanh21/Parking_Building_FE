@@ -47,12 +47,17 @@ const getVehicleImage = (type) => {
   return "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80";
 };
 
-const formatPlateNumber = (plate) => {
+const formatPlateNumber = (plate, isMotorbike = true) => {
   if (!plate) return plate;
   const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9]?)([0-9]{4,5})$/);
-  if (match) {
-    return `${match[1]}-${match[2]}`;
+  if (isMotorbike) {
+    // Motorbike: 59A1-12345 (prefix includes digit after letter)
+    const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9])([0-9]{4,5})$/);
+    if (match) return `${match[1]}-${match[2]}`;
+  } else {
+    // Car: 30H-68888 (prefix is digits + letters only)
+    const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2})([0-9]{4,5})$/);
+    if (match) return `${match[1]}-${match[2]}`;
   }
   return cleanPlate;
 };
@@ -110,9 +115,9 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
 
   useEffect(() => {
     if (isEditing && recognizedPlate) {
-      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate) });
+      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, isMotorbike) });
     }
-  }, [recognizedPlate, isEditing, form]);
+  }, [recognizedPlate, isEditing, form, isMotorbike]);
 
   // Xử lý logic đóng Modal khi update thành công
   useEffect(() => {
@@ -454,7 +459,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
                     ]}
                   >
                     <Input
-                      placeholder={isMotorbike ? "e.g., 59A112345" : "e.g., 51A12345"}
+                      placeholder={isMotorbike ? "e.g., 59A1-12345" : "e.g., 30H-68888"}
                       size="large"
                       className="rounded-lg font-mono uppercase"
                     />

@@ -52,12 +52,17 @@ const getColorHex = (colorName) => {
   return color ? color.hex : "#E5E7EB";
 };
 
-const formatPlateNumber = (plate) => {
+const formatPlateNumber = (plate, isMotorbike = true) => {
   if (!plate) return plate;
   const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9]?)([0-9]{4,5})$/);
-  if (match) {
-    return `${match[1]}-${match[2]}`;
+  if (isMotorbike) {
+    // Motorbike: 59A1-12345 (prefix includes digit after letter)
+    const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9])([0-9]{4,5})$/);
+    if (match) return `${match[1]}-${match[2]}`;
+  } else {
+    // Car: 30H-68888 (prefix is digits + letters only)
+    const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2})([0-9]{4,5})$/);
+    if (match) return `${match[1]}-${match[2]}`;
   }
   return cleanPlate;
 };
@@ -145,11 +150,6 @@ const VehicleList = () => {
     }
   }, [deleteVehicle, deleteLoading, deleteError, dispatch]);
 
-  useEffect(() => {
-    if (recognizedPlate) {
-      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate) });
-    }
-  }, [recognizedPlate, form]);
 
   const getVehicleImage = (type) => {
     const typeName = type?.toLowerCase() || "";
@@ -166,6 +166,12 @@ const VehicleList = () => {
   const selectedTypeObj = vehicleTypes.find((t) => t.vehicleTypeId === selectedVehicleTypeId);
   const typeName = selectedTypeObj?.typeName?.toLowerCase() || "";
   const isMotorbike = typeName.includes("motor") || typeName.includes("bike");
+
+  useEffect(() => {
+    if (recognizedPlate) {
+      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, isMotorbike) });
+    }
+  }, [recognizedPlate, form, isMotorbike]);
 
   const handleCreateVehicle = (values) => {
     const formData = new FormData();
@@ -406,6 +412,31 @@ const VehicleList = () => {
         >
 
           <Form.Item
+            name="vehicleTypeId"
+            label={
+              <span className="font-semibold text-gray-700">
+                Vehicle Type <span className="text-red-500">*</span>
+              </span>
+            }
+            rules={[
+              { required: false, message: "Please select a vehicle type!" },
+            ]}
+          >
+            <Select
+              placeholder="Select vehicle type"
+              size="large"
+              loading={typeLoading}
+              className="rounded-lg"
+            >
+              {vehicleTypes.map((type) => (
+                <Option key={type.vehicleTypeId} value={type.vehicleTypeId}>
+                  {type.typeName}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
             label={
               <span className="font-semibold text-gray-700">
                 Vehicle Image <span className="text-gray-400 font-normal text-xs">(Auto-detect plate)</span>
@@ -497,35 +528,10 @@ const VehicleList = () => {
             ]}
           >
             <Input
-              placeholder={isMotorbike ? "e.g., 59A112345" : "e.g., 51A12345"}
+              placeholder={isMotorbike ? "e.g., 59A1-12345" : "e.g., 30H-68888"}
               size="large"
               className="rounded-lg font-mono uppercase"
             />
-          </Form.Item>
-
-          <Form.Item
-            name="vehicleTypeId"
-            label={
-              <span className="font-semibold text-gray-700">
-                Vehicle Type <span className="text-red-500">*</span>
-              </span>
-            }
-            rules={[
-              { required: false, message: "Please select a vehicle type!" },
-            ]}
-          >
-            <Select
-              placeholder="Select vehicle type"
-              size="large"
-              loading={typeLoading}
-              className="rounded-lg"
-            >
-              {vehicleTypes.map((type) => (
-                <Option key={type.vehicleTypeId} value={type.vehicleTypeId}>
-                  {type.typeName}
-                </Option>
-              ))}
-            </Select>
           </Form.Item>
 
           <div className="grid grid-cols-2 gap-4">
