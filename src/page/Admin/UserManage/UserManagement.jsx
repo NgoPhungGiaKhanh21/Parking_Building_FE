@@ -1,6 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Table, Tag, Tooltip, Popconfirm, Avatar, Select } from "antd";
+import {
+  Avatar,
+  Button,
+  Input,
+  Popconfirm,
+  Select,
+  Table,
+  Tag,
+  Tooltip,
+} from "antd";
 import { getAllUserRequest } from "../../../redux/admin/getAllUser/getAllUserSlice";
 import { changeStatusUserRequest } from "../../../redux/admin/changeStatusUser/ChangeStatusUserSlice";
 import { changeRoleUserRequest } from "../../../redux/admin/changeRoleUser/changeRoleUserSlice";
@@ -15,11 +24,16 @@ import {
   User,
   AlertCircle,
   Info,
+  Search,
 } from "lucide-react";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 
 const UserManagement = () => {
   const dispatch = useDispatch();
+  const [userNameFilter, setUserNameFilter] = useState("");
+  const [emailFilter, setEmailFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
 
   const { getAllUser, loading } = useSelector((state) => state.getAllUser);
 
@@ -40,7 +54,42 @@ const UserManagement = () => {
   };
 
   const userList = Array.isArray(getAllUser?.data) ? getAllUser.data : [];
-  const filteredUsers = userList.filter((user) => user.role !== "ROLE_ADMIN");
+  const filteredUsers = useMemo(() => {
+    const nameKeyword = userNameFilter.trim().toLowerCase();
+    const emailKeyword = emailFilter.trim().toLowerCase();
+    return userList.filter((user) => {
+      const isNotAdmin = user.role !== "ROLE_ADMIN";
+      const matchesName =
+        !nameKeyword ||
+        String(user.fullName || "")
+          .toLowerCase()
+          .includes(nameKeyword);
+      const matchesEmail =
+        !emailKeyword ||
+        String(user.email || "")
+          .toLowerCase()
+          .includes(emailKeyword);
+      const matchesRole = !roleFilter || user.role === roleFilter;
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === "ACTIVE" && user.status === "ACTIVE") ||
+        (statusFilter === "INACTIVE" && user.status !== "ACTIVE");
+      return (
+        isNotAdmin &&
+        matchesName &&
+        matchesEmail &&
+        matchesRole &&
+        matchesStatus
+      );
+    });
+  }, [emailFilter, roleFilter, statusFilter, userList, userNameFilter]);
+
+  const resetFilters = () => {
+    setUserNameFilter("");
+    setEmailFilter("");
+    setRoleFilter(null);
+    setStatusFilter(null);
+  };
 
   // 1. Định nghĩa sẵn UI của các Role để tái sử dụng
   const roleDefinitions = {
@@ -113,7 +162,7 @@ const UserManagement = () => {
             src={record.avatarUrl}
             icon={!record.avatarUrl && <User size={18} />}
             size={42}
-            className="border border-slate-100 flex-shrink-0 bg-blue-50 text-blue-500"
+            className="shrink-0 border border-slate-100 bg-blue-50 text-blue-500"
           />
           <div className="flex flex-col">
             <span className="font-bold text-slate-800 leading-tight">
@@ -325,6 +374,49 @@ const UserManagement = () => {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-slate-800">User List</h2>
+          <Button onClick={resetFilters}>Reset Filters</Button>
+        </div>
+
+        <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Input
+            allowClear
+            value={userNameFilter}
+            onChange={(event) => setUserNameFilter(event.target.value)}
+            placeholder="Filter by user name"
+            prefix={<Search size={16} className="text-slate-400" />}
+          />
+          <Input
+            allowClear
+            value={emailFilter}
+            onChange={(event) => setEmailFilter(event.target.value)}
+            placeholder="Filter by email"
+            prefix={<Mail size={16} className="text-slate-400" />}
+          />
+          <Select
+            allowClear
+            placeholder="Filter by role"
+            value={roleFilter}
+            onChange={(value) => setRoleFilter(value ?? null)}
+            options={[
+              { value: "ROLE_DRIVER", label: "Driver" },
+              { value: "ROLE_STAFF", label: "Staff" },
+              { value: "ROLE_MANAGER", label: "Manager" },
+            ]}
+          />
+          <Select
+            allowClear
+            placeholder="Filter by status"
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value ?? null)}
+            options={[
+              { value: "ACTIVE", label: "Active" },
+              { value: "INACTIVE", label: "Inactive" },
+            ]}
+          />
+        </div>
+
         <Table
           columns={columns}
           dataSource={filteredUsers}

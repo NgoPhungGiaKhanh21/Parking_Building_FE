@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Form, Input, Popconfirm, Table, Tag } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  Popconfirm,
+  Select,
+  Table,
+  Tag,
+} from "antd";
 import {
   CircleDollarSign,
   Eye,
@@ -45,6 +53,7 @@ const PriceManager = () => {
   const [createForm] = Form.useForm();
   const [updateForm] = Form.useForm();
   const [searchText, setSearchText] = useState("");
+  const [vehicleTypeFilter, setVehicleTypeFilter] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -100,15 +109,32 @@ const PriceManager = () => {
 
   const filteredList = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
-    if (!keyword) return policyList;
-    return policyList.filter(
-      (p) =>
-        p.policyName?.toLowerCase().includes(keyword) ||
-        p.typeName?.toLowerCase().includes(keyword) ||
-        p.vehicleTypeName?.toLowerCase().includes(keyword) ||
-        p.status?.toLowerCase().includes(keyword),
-    );
-  }, [policyList, searchText]);
+    return policyList.filter((policy) => {
+      const matchesPolicyName =
+        !keyword ||
+        String(policy.policyName || "")
+          .toLowerCase()
+          .includes(keyword);
+      const matchesVehicleType =
+        !vehicleTypeFilter ||
+        getVehicleTypeName(policy) === vehicleTypeFilter;
+
+      return matchesPolicyName && matchesVehicleType;
+    });
+  }, [policyList, searchText, vehicleTypeFilter]);
+
+  const vehicleTypeFilterOptions = useMemo(
+    () =>
+      [...new Set(policyList.map(getVehicleTypeName))]
+        .filter((name) => name && name !== "—")
+        .map((name) => ({ value: name, label: name })),
+    [policyList],
+  );
+
+  const resetFilters = () => {
+    setSearchText("");
+    setVehicleTypeFilter(null);
+  };
 
   const openDetail = (policyId) => {
     setIsDetailOpen(true);
@@ -151,18 +177,21 @@ const PriceManager = () => {
       title: "Base Price",
       dataIndex: "basePrice",
       key: "basePrice",
+      sorter: (a, b) => Number(a.basePrice || 0) - Number(b.basePrice || 0),
       render: formatCurrency,
     },
     {
       title: "Hourly Rate",
       dataIndex: "hourlyRate",
       key: "hourlyRate",
+      sorter: (a, b) => Number(a.hourlyRate || 0) - Number(b.hourlyRate || 0),
       render: formatCurrency,
     },
     {
       title: "Max Hours",
       dataIndex: "maxHours",
       key: "maxHours",
+      sorter: (a, b) => Number(a.maxHours || 0) - Number(b.maxHours || 0),
       render: (v) => (v != null ? `${v}h` : "—"),
     },
     {
@@ -269,13 +298,25 @@ const PriceManager = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-bold text-slate-800">Policy List</h2>
+          <Button onClick={resetFilters}>Reset Filters</Button>
+        </div>
+
+        <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            placeholder="Search policy..."
+            placeholder="Filter by policy name"
             prefix={<Search size={16} className="text-slate-400" />}
-            className="max-w-xs"
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+          />
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Filter by vehicle type"
+            value={vehicleTypeFilter}
+            onChange={(value) => setVehicleTypeFilter(value ?? null)}
+            options={vehicleTypeFilterOptions}
           />
         </div>
 

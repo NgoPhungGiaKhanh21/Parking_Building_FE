@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Empty, Spin, Table, Tag } from "antd";
-import { CreditCard, RefreshCw } from "lucide-react";
+import { Button, Empty, Input, Select, Spin, Table, Tag } from "antd";
+import { CreditCard, RefreshCw, Search } from "lucide-react";
 import dayjs from "dayjs";
 
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -21,20 +21,31 @@ const PAYMENT_STATUS_COLORS = {
 };
 
 const renderPaymentStatusTag = (record) => {
-  const status = normalizeStatus(record.paymentStatus);
-  if (!record.paymentStatus) return "—";
+  const statusValue = record.paymentStatus ?? record.paidStatus;
+  const status = normalizeStatus(statusValue);
+  if (!statusValue) return "—";
   return (
-    <Tag color={PAYMENT_STATUS_COLORS[status] || "default"}>
-      {record.paymentStatus}
-    </Tag>
+    <Tag color={PAYMENT_STATUS_COLORS[status] || "default"}>{statusValue}</Tag>
   );
 };
 
 const resolveDriverName = (record) =>
-  record.driverName ?? record.fullName ?? record.driver?.fullName ?? "—";
+  record.driverName ?? record.fullName ?? record.driver?.fullName ?? "Guest";
+
+const resolvePaymentStatus = (record) =>
+  normalizeStatus(record.paymentStatus ?? record.paidStatus);
+
+const isPaidStatus = (status) => status === "PAID" || status === "CONFIRMED";
+
+const getPaymentTime = (record) =>
+  dayjs(
+    record.paymentTime || record.createdAt || record.updatedAt || 0,
+  ).valueOf();
 
 const PaymentManagement = () => {
   const dispatch = useDispatch();
+  const [driverNameFilter, setDriverNameFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const { payments, loading, error } = useSelector(
     (state) => state.getAllPayments,
   );
@@ -43,15 +54,25 @@ const PaymentManagement = () => {
     dispatch(getAllPaymentsRequest());
   }, [dispatch]);
 
+  const filteredPayments = useMemo(() => {
+    const keyword = driverNameFilter.trim().toLowerCase();
+    const list = Array.isArray(payments) ? payments : [];
+
+    return list.filter((payment) => {
+      const matchesName =
+        !keyword ||
+        resolveDriverName(payment).toLowerCase().includes(keyword);
+      const status = resolvePaymentStatus(payment);
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "PAID" && isPaidStatus(status)) ||
+        (statusFilter !== "PAID" && status === statusFilter);
+
+      return matchesName && matchesStatus;
+    });
+  }, [driverNameFilter, payments, statusFilter]);
+
   const columns = [
-    {
-      title: "Payment ID",
-      dataIndex: "paymentId",
-      key: "paymentId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-600">{id}</code>
-      ),
-    },
     {
       title: "Session ID",
       dataIndex: "sessionId",
@@ -102,7 +123,15 @@ const PaymentManagement = () => {
       title: "Time",
       dataIndex: "paymentTime",
       key: "paymentTime",
-      render: (time) => (time ? dayjs(time).format("DD/MM/YYYY HH:mm") : "—"),
+      sorter: (a, b) => getPaymentTime(a) - getPaymentTime(b),
+      defaultSortOrder: "descend",
+      sortDirections: ["descend", "ascend"],
+      render: (time, record) => {
+        const resolvedTime = time || record.createdAt || record.updatedAt;
+        return resolvedTime
+          ? dayjs(resolvedTime).format("DD/MM/YYYY HH:mm")
+          : "—";
+      },
     },
   ];
 
@@ -134,19 +163,42 @@ const PaymentManagement = () => {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
+        <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Input
+            allowClear
+            value={driverNameFilter}
+            onChange={(event) => setDriverNameFilter(event.target.value)}
+            placeholder="Filter by driver name"
+            prefix={<Search size={16} className="text-slate-400" />}
+          />
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "ALL", label: "All payment statuses" },
+              { value: "PAID", label: "Paid" },
+              { value: "UNPAID", label: "Unpaid" },
+              { value: "PENDING", label: "Pending" },
+              { value: "FAILED", label: "Failed" },
+            ]}
+          />
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-20">
             <Spin size="large" />
           </div>
         ) : error ? (
           <Empty description={error} />
-        ) : payments.length === 0 ? (
+        ) : !Array.isArray(payments) || payments.length === 0 ? (
           <Empty description="No payments found" />
+        ) : filteredPayments.length === 0 ? (
+          <Empty description="No payments match the selected filters" />
         ) : (
           <Table
             rowKey="paymentId"
             columns={columns}
-            dataSource={payments}
+            dataSource={filteredPayments}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 900 }}
           />
