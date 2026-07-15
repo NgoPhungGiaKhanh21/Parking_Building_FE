@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Avatar, Button, Form, Input, Select, Table, Tag } from "antd";
+import { Avatar, Button, Form, Input, message, Select, Table, Tag } from "antd";
 import { Eye, RefreshCw, Search, User, UserPlus, Users } from "lucide-react";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getAllStaffRequest } from "../../../redux/manager/StaffManagement/GetAllStaff/getAllStaffSlice";
@@ -24,6 +24,19 @@ import { getBuildingListRequest } from "../../../redux/manager/Building/getBuild
 import AssignStaffModal from "./modals/AssignStaffModal";
 import StaffBuildingsModal from "./modals/StaffBuildingsModal";
 import { getStaffBuildingLabel, getStaffId } from "./utils/staffUtils";
+
+const hasAssignedBuilding = (staff) => {
+  const assignedBuildings = staff?.buildings || staff?.assignedBuildings;
+  return (
+    (Array.isArray(assignedBuildings) && assignedBuildings.length > 0) ||
+    Boolean(
+      staff?.buildingId ||
+        staff?.buildingName ||
+        staff?.building ||
+        staff?.buildingNames
+    )
+  );
+};
 
 const StaffManagement = () => {
   const dispatch = useDispatch();
@@ -113,9 +126,42 @@ const StaffManagement = () => {
   }, [staffList, searchText]);
 
   const activeCount = staffList.filter((s) => s.status === "ACTIVE").length;
+  const allStaffList = useMemo(
+    () => (Array.isArray(staffs) ? staffs : []),
+    [staffs]
+  );
+  const unassignedStaffList = useMemo(
+    () => allStaffList.filter((staff) => !hasAssignedBuilding(staff)),
+    [allStaffList]
+  );
   const filteredBuildingName = buildingList.find(
     (b) => b.id === selectedBuildingId
   )?.name;
+
+  const handleAssignStaff = (values) => {
+    const selected = allStaffList.find(
+      (staff) => String(getStaffId(staff)) === String(values.userId)
+    );
+
+    if (!selected) {
+      message.error("Staff data is unavailable. Please refresh and try again.");
+      return;
+    }
+
+    if (hasAssignedBuilding(selected)) {
+      message.error(
+        `${selected.fullName || selected.email || "This staff member"} is already assigned to ${getStaffBuildingLabel(selected) || "another building"}.`
+      );
+      return;
+    }
+
+    dispatch(
+      assignStaffRequest({
+        buildingId: values.buildingId,
+        userId: values.userId,
+      })
+    );
+  };
 
   const handleFilterChange = (value) => {
     setSelectedBuildingId(value ?? null);
@@ -321,15 +367,8 @@ const StaffManagement = () => {
         form={assignForm}
         loading={assignLoading}
         buildings={buildingList}
-        staffs={Array.isArray(staffs) ? staffs : []}
-        onSubmit={(values) =>
-          dispatch(
-            assignStaffRequest({
-              buildingId: values.buildingId,
-              userId: values.userId,
-            })
-          )
-        }
+        staffs={unassignedStaffList}
+        onSubmit={handleAssignStaff}
       />
 
       <StaffBuildingsModal
