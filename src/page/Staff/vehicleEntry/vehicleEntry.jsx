@@ -46,6 +46,7 @@ import {
 } from "../../../redux/staff/ocrPlate/ocrPlateSlice";
 import { getStaffBuildingRequest } from "../../../redux/staff/guest_parking/getStaffBuilding/getStaffBuildingSlice";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
+import { getSessionByPlateNumberApi } from "../../../service/staff/parking_sessionApi";
 
 // ─── Status config ─────────────────────────────────────────────────────────────
 const reservationStatusConfig = {
@@ -273,11 +274,65 @@ const VehicleEntry = () => {
   // Match plate to pending driver reservation
   // Normalize plates: remove hyphens/spaces and compare case-insensitively
   const normalizePlate = (p) => (p || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  
   const driverReservation = useMemo(() => {
     if (!plateInput) return null;
     const norm = normalizePlate(plateInput);
     return pendingList.find(r => normalizePlate(r.vehiclePlate) === norm);
   }, [plateInput, pendingList]);
+
+  const alreadyCheckedInReservation = useMemo(() => {
+    if (!plateInput) return null;
+    const norm = normalizePlate(plateInput);
+    return checkedInList.find(r => normalizePlate(r.vehiclePlate) === norm);
+  }, [plateInput, checkedInList]);
+
+  // Warning for already checked-in vehicles (DRIVER)
+  useEffect(() => {
+    if (alreadyCheckedInReservation) {
+      message.error(`Vehicle plate ${alreadyCheckedInReservation.vehiclePlate} is already checked in!`);
+      // Reset the plate inputs to prevent duplicate guest check-in
+      setPlateInput("");
+      setPlateImageUrl("");
+      if (plateImageFileRef?.current) plateImageFileRef.current = null;
+      setCheckinImageUrl("");
+      if (checkinImageFileRef?.current) checkinImageFileRef.current = null;
+      dispatch(ocrPlateReset());
+    }
+  }, [alreadyCheckedInReservation, dispatch]);
+
+  // Warning for already checked-in vehicles (GUEST)
+  useEffect(() => {
+    if (!plateInput || alreadyCheckedInReservation) return;
+
+    const checkGuestSession = async () => {
+      try {
+        const response = await getSessionByPlateNumberApi({ plateNumber: plateInput });
+        // Axios returns response.data as the body. The body has { success, data: {...} }
+        const sessionData = response?.data?.data || response?.data;
+        
+        if (sessionData && (sessionData.status === "PENDING_PAYMENT" || sessionData.status === "ACTIVE" || sessionData.reservationStatus === "CHECKED_IN")) {
+          message.error(`Guest vehicle plate ${sessionData.vehiclePlate || plateInput} is already in the parking lot!`);
+          
+          // Reset the plate inputs
+          setPlateInput("");
+          setPlateImageUrl("");
+          if (plateImageFileRef?.current) plateImageFileRef.current = null;
+          setCheckinImageUrl("");
+          if (checkinImageFileRef?.current) checkinImageFileRef.current = null;
+          dispatch(ocrPlateReset());
+        }
+      } catch (err) {
+        // Ignored: 404 means no active session found, which is good (vehicle can check in)
+      }
+    };
+
+    const timer = setTimeout(() => {
+      checkGuestSession();
+    }, 600); // Debounce to prevent spamming while typing
+
+    return () => clearTimeout(timer);
+  }, [plateInput, alreadyCheckedInReservation, dispatch]);
 
   // Staff building
   const buildingName = useMemo(() => {

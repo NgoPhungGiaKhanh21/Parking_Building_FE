@@ -47,15 +47,17 @@ const getVehicleImage = (type) => {
   return "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80";
 };
 
-const formatPlateNumber = (plate, isMotorbike = true) => {
+const formatPlateNumber = (plate, typeName = "") => {
   if (!plate) return plate;
   const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (isMotorbike) {
+  const type = (typeName || "").toLowerCase();
+
+  if (type.includes("motor") || type.includes("bike")) {
     // Motorbike: 59A1-12345 (prefix includes digit after letter)
     const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9])([0-9]{4,5})$/);
     if (match) return `${match[1]}-${match[2]}`;
-  } else {
-    // Car: 30H-68888 (prefix is digits + letters only)
+  } else if (type.includes("car") || type.includes("suv") || type.includes("truck")) {
+    // Car/SUV/Truck: 30H-68888 (prefix is digits + letters only)
     const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2})([0-9]{4,5})$/);
     if (match) return `${match[1]}-${match[2]}`;
   }
@@ -95,6 +97,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
   const selectedTypeObj = vehicleTypes.find((t) => t.vehicleTypeId === selectedVehicleTypeId);
   const typeName = selectedTypeObj?.typeName?.toLowerCase() || "";
   const isMotorbike = typeName.includes("motor") || typeName.includes("bike");
+  const isCarOrTruck = typeName.includes("car") || typeName.includes("suv") || typeName.includes("truck");
 
   // Tự động điền dữ liệu vào form khi bật chế độ Edit
   useEffect(() => {
@@ -115,9 +118,9 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
 
   useEffect(() => {
     if (isEditing && recognizedPlate) {
-      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, isMotorbike) });
+      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, typeName) });
     }
-  }, [recognizedPlate, isEditing, form, isMotorbike]);
+  }, [recognizedPlate, isEditing, form, typeName]);
 
   // Xử lý logic đóng Modal khi update thành công
   useEffect(() => {
@@ -459,7 +462,7 @@ const VehicleDetailModal = ({ isVisible, onClose }) => {
                     ]}
                   >
                     <Input
-                      placeholder={isMotorbike ? "e.g., 59A1-12345" : "e.g., 30H-68888"}
+                      placeholder={isMotorbike ? "e.g., 59A1-12345" : isCarOrTruck ? "e.g., 30H-68888" : "ENTER PLATE NUMBER"}
                       size="large"
                       className="rounded-lg font-mono uppercase"
                     />

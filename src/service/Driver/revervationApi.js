@@ -25,3 +25,7 @@ export const createReservationApi = (data) => {
 export const getMyReservationsApi = () => {
     return api.get("/reservations/me")
 }
+
+export const cancelReservationApi = (reservationCode, reason) => {
+    return api.post(`/reservations/${reservationCode}/cancel`, { reason: reason });
+};

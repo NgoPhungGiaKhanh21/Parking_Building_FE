@@ -52,15 +52,17 @@ const getColorHex = (colorName) => {
   return color ? color.hex : "#E5E7EB";
 };
 
-const formatPlateNumber = (plate, isMotorbike = true) => {
+const formatPlateNumber = (plate, typeName = "") => {
   if (!plate) return plate;
   const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (isMotorbike) {
+  const type = (typeName || "").toLowerCase();
+
+  if (type.includes("motor") || type.includes("bike")) {
     // Motorbike: 59A1-12345 (prefix includes digit after letter)
     const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2}[0-9])([0-9]{4,5})$/);
     if (match) return `${match[1]}-${match[2]}`;
-  } else {
-    // Car: 30H-68888 (prefix is digits + letters only)
+  } else if (type.includes("car") || type.includes("suv") || type.includes("truck")) {
+    // Car/SUV/Truck: 30H-68888 (prefix is digits + letters only)
     const match = cleanPlate.match(/^([0-9]{2}[A-Z]{1,2})([0-9]{4,5})$/);
     if (match) return `${match[1]}-${match[2]}`;
   }
@@ -166,12 +168,13 @@ const VehicleList = () => {
   const selectedTypeObj = vehicleTypes.find((t) => t.vehicleTypeId === selectedVehicleTypeId);
   const typeName = selectedTypeObj?.typeName?.toLowerCase() || "";
   const isMotorbike = typeName.includes("motor") || typeName.includes("bike");
+  const isCarOrTruck = typeName.includes("car") || typeName.includes("suv") || typeName.includes("truck");
 
   useEffect(() => {
     if (recognizedPlate) {
-      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, isMotorbike) });
+      form.setFieldsValue({ plateNumber: formatPlateNumber(recognizedPlate, typeName) });
     }
-  }, [recognizedPlate, form, isMotorbike]);
+  }, [recognizedPlate, form, typeName]);
 
   const handleCreateVehicle = (values) => {
     const formData = new FormData();
@@ -528,7 +531,7 @@ const VehicleList = () => {
             ]}
           >
             <Input
-              placeholder={isMotorbike ? "e.g., 59A1-12345" : "e.g., 30H-68888"}
+              placeholder={isMotorbike ? "e.g., 59A1-12345" : isCarOrTruck ? "e.g., 30H-68888" : "ENTER PLATE NUMBER"}
               size="large"
               className="rounded-lg font-mono uppercase"
             />

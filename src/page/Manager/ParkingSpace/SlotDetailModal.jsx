@@ -152,11 +152,23 @@ const SlotDetailModal = ({ visible, onClose, slotName }) => {
             <div className="col-span-1">
               <SectionHeading icon={User} title="Driver Profile" />
               <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow h-[170px]">
-                <DetailRow label="Full Name" value={data.driverFullName} isBold />
-                <div className="my-2 border-t border-dashed border-slate-100" />
-                <DetailRow label="Phone" value={data.driverPhoneNumber} />
-                <div className="my-2 border-t border-dashed border-slate-100" />
-                <DetailRow label="Email" value={data.driverEmail} />
+                {data.driverFullName || data.driverPhoneNumber || data.driverEmail ? (
+                  <>
+                    <DetailRow label="Full Name" value={data.driverFullName} isBold />
+                    <div className="my-2 border-t border-dashed border-slate-100" />
+                    <DetailRow label="Phone" value={data.driverPhoneNumber} />
+                    <div className="my-2 border-t border-dashed border-slate-100" />
+                    <DetailRow label="Email" value={data.driverEmail} />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center pb-2">
+                    <div className="w-12 h-12 bg-orange-50 text-orange-400 rounded-full flex items-center justify-center mb-3">
+                      <User size={24} />
+                    </div>
+                    <p className="text-orange-600 font-bold text-sm tracking-wide">GUEST SESSION</p>
+                    <p className="text-slate-400 text-xs mt-1">No driver profile associated</p>
+                  </div>
+                )}
               </div>
             </div>
 
