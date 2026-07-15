@@ -27,7 +27,5 @@ export const getMyReservationsApi = () => {
 }
 
 export const cancelReservationApi = (reservationCode, reason) => {
-    // Note: Changed from /staff/reservations to /reservations (Driver API)
-    // and changed payload key to 'reason' based on Swagger
     return api.post(`/reservations/${reservationCode}/cancel`, { reason: reason });
 };

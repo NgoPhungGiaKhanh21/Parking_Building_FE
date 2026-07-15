@@ -132,8 +132,9 @@ export const recordsMatch = (a, b) => {
 };
 
 export const formatParkingDurationLabel = (r) => {
-  if (r.checkinTime && r.checkoutTime) {
-    const diffMinutes = dayjs(r.checkoutTime).diff(dayjs(r.checkinTime), "minute");
+  if (r.checkinTime) {
+    const endTime = r.checkoutTime ? dayjs(r.checkoutTime) : dayjs();
+    const diffMinutes = endTime.diff(dayjs(r.checkinTime), "minute");
     if (diffMinutes >= 0) {
       return `${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`;
     }
