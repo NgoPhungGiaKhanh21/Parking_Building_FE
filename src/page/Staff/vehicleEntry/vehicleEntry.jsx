@@ -201,7 +201,7 @@ const VehicleEntry = () => {
   const { ocrPlate, loading: ocrLoading } = useSelector((s) => s.ocrPlate);
   const { getStaffBuilding: staffBuilding, loading: staffBuildingLoading } = useSelector((s) => s.getStaffBuilding);
   const { vehicleTypes, loading: vtLoading } = useSelector((s) => s.getVehicleTypeList);
-  const { unifiedCheckin, loading: checkinLoading } = useSelector((s) => s.unifiedCheckin || {});
+  const { unifiedCheckin, loading: checkinLoading, error: checkinError } = useSelector((s) => s.unifiedCheckin || {});
 
   // Fetch data
   useEffect(() => {
@@ -226,12 +226,31 @@ const VehicleEntry = () => {
   // Handle successful checkin
   useEffect(() => {
     if (unifiedCheckin) {
-      setCheckoutDone(true);
       message.success("Vehicle checked in successfully");
       dispatch(unifiedCheckinReset());
       dispatch(getAllReservationRequest());
+      
+      // Auto-reset form for the next vehicle
+      setPlateImageUrl("");
+      if (plateImageFileRef?.current) plateImageFileRef.current = null;
+      setPlateInput("");
+      dispatch(ocrPlateReset());
+      
+      setCheckinImageUrl("");
+      if (checkinImageFileRef?.current) checkinImageFileRef.current = null;
+      setSelectedVehicleTypeId(null);
+      setCheckoutDone(false);
     }
   }, [unifiedCheckin, dispatch]);
+
+  // Handle checkin error
+  useEffect(() => {
+    if (checkinError) {
+      const errStr = typeof checkinError === 'string' ? checkinError : (checkinError.message || checkinError.error || "Check-in failed");
+      message.error(errStr);
+      dispatch(unifiedCheckinReset());
+    }
+  }, [checkinError, dispatch]);
 
   // Reservation list processing
   const reservationList = useMemo(
@@ -426,23 +445,8 @@ const VehicleEntry = () => {
         </button>
       </div>
 
-      {checkoutDone ? (
-        <div className="rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 size={36} />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">Check-in Successful</h3>
-          <p className="text-slate-500 mb-6">The vehicle has been successfully checked in.</p>
-          <button
-            type="button"
-            onClick={resetAll}
-            className="rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-bold text-white cursor-pointer hover:bg-slate-700 transition-colors"
-          >
-            New Check-in
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Main Content ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Flow */}
           <div className="lg:col-span-2 space-y-5">
             {/* 1. Plate Upload */}
@@ -697,8 +701,6 @@ const VehicleEntry = () => {
             </button>
           </div>
         </div>
-      )}
-
       {/* ── Manage Reservations Modal ── */}
       <Modal
         open={isManageModalOpen}

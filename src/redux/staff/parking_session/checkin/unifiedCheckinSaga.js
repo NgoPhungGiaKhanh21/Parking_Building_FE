@@ -15,9 +15,15 @@ function* handleUnifiedCheckin(action) {
     toast.success("Check-in successful");
   } catch (error) {
     const errorData = error.response?.data;
-    const errorMessage =
-      errorData?.message || error.message || "Failed to check in";
-    yield put(unifiedCheckinFail(errorData || errorMessage));
+    let errorMessage = "Failed to check in";
+    
+    if (errorData) {
+      errorMessage = errorData.message || errorData.error || errorData.details || (typeof errorData === 'string' ? errorData : error.message);
+    } else {
+      errorMessage = error.message;
+    }
+
+    yield put(unifiedCheckinFail(errorMessage));
     toast.error(errorMessage);
   }
 }

@@ -17,6 +17,7 @@ import {
   Building2,
   User,
   Palette,
+  Clock,
 } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -191,15 +192,21 @@ const VehicleExit = () => {
   // ── Handle checkout success
   useEffect(() => {
     if (!checkoutResult) return;
-    setCheckoutDone(true);
+    message.success(checkoutResult.message || "Vehicle checked out successfully.");
+    dispatch(unifiedCheckoutReset());
+    dispatch(ocrPlateReset());
     dispatch(getSessionByPlateNumberReset());
     dispatch(getAllReservationRequest()); // Refresh reservations
-    sessionStorage.setItem(GUEST_EXIT_CHECKOUT_DONE_KEY, "true");
+    sessionStorage.removeItem(GUEST_EXIT_CHECKOUT_DONE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PLATE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
+    
+    // Auto-reset form for next vehicle
+    setCheckoutDone(false);
     setPlateImageUrl("");
-    plateImageFileRef.current = null;
-    message.success(checkoutResult.message || "Vehicle checked out successfully.");
+    setPlateInput("");
+    if (plateImageFileRef?.current) plateImageFileRef.current = null;
+    
     navigate("/staff/vehicle-exit", { replace: true });
   }, [checkoutResult, dispatch, navigate]);
 
@@ -277,14 +284,12 @@ const VehicleExit = () => {
 
     dispatch(
       unifiedCheckoutRequest({
-        plateImage: plateImageFileRef.current, // Might be checkout image if uploaded at checkout stage
         ticketCode: normalizedSession.ticketCode,
         paymentMethod: "PAYOS",
         checkoutImage: plateImageFileRef.current, 
-        isDriver: isDriver,
       })
     );
-  }, [normalizedSession, dispatch, isDriver]);
+  }, [normalizedSession, dispatch]);
 
   const handleResetAfterCheckout = useCallback(() => {
     dispatch(unifiedCheckoutReset());
@@ -311,7 +316,7 @@ const VehicleExit = () => {
       {/* Header */}
       <div className="mb-6 rounded-2xl border border-orange-100 bg-white p-6 shadow-sm">
         <div className="mb-4">
-          <CommonBreadcrumb role="Staff" page="vehicle-exit" />
+          <CommonBreadcrumb role="Staff" page="exit" />
         </div>
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 text-orange-600">
@@ -328,27 +333,8 @@ const VehicleExit = () => {
         </div>
       </div>
 
-      {/* ── Checkout Success Screen */}
-      {checkoutDone && (
-        <div className="rounded-2xl border border-emerald-100 bg-white p-8 shadow-sm text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 size={36} />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">Check Out Successful</h3>
-          <p className="text-slate-500 mb-6">Session completed. You can process the next vehicle.</p>
-          <button
-            type="button"
-            onClick={handleResetAfterCheckout}
-            className="rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-bold text-white cursor-pointer hover:bg-slate-700 transition-colors"
-          >
-            New Exit
-          </button>
-        </div>
-      )}
-
-      {/* ── Main Content (when not checkout done) */}
-      {!checkoutDone && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Main Content ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Upload + Session Info */}
           <div className="lg:col-span-2 space-y-5">
             {/* Upload Plate Image Card */}
@@ -574,6 +560,20 @@ const VehicleExit = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Guest specific info */}
+                {isGuest && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <div className="rounded-lg border border-orange-100 bg-orange-50 p-2.5">
+                      <p className="text-[9px] font-bold uppercase text-orange-400 flex items-center gap-1 mb-0.5">
+                        <Clock size={10} /> Parking Duration
+                      </p>
+                      <p className="text-xs font-bold text-orange-700 truncate">
+                        {formatParkingDurationLabel(normalizedSession)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -650,8 +650,8 @@ const VehicleExit = () => {
             {/* ── Action Buttons ── */}
             {normalizedSession && (
               <div className="space-y-3">
-                {/* NOT PAID → Payment Button */}
-                {!isPaid && (
+                {/* NOT PAID → Payment Button (Guest only, Drivers pay via app) */}
+                {!isPaid && !isDriver && (
                   <button
                     type="button"
                     onClick={handleGoPayment}
@@ -715,8 +715,7 @@ const VehicleExit = () => {
               </div>
             )}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
