@@ -1,11 +1,13 @@
-import { useMemo } from "react";
-import { Tabs } from "antd";
+import { useMemo, useState } from "react";
+import { Tabs, Modal, Input } from "antd";
 import {
     Clock,
     CheckCircle2,
     XCircle,
     ShieldCheck,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { cancelReservations } from "../../../redux/driver/reservationManagement/cancelReservations/cancelReservationsSlice";
 
 import { renderReservationCards } from "./ReservationCard";
 
@@ -16,6 +18,25 @@ const MyReservationsTab = ({
     setReservationSubTab,
     onOpenVehicleModal,
 }) => {
+    const dispatch = useDispatch();
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [selectedCancelReservationId, setSelectedCancelReservationId] = useState(null);
+    const [cancelReasonInput, setCancelReasonInput] = useState("");
+
+    const handleCancelReservation = (reservationId) => {
+        setSelectedCancelReservationId(reservationId);
+        setCancelReasonInput(""); // reset input
+        setCancelModalOpen(true);
+    };
+
+    const handleConfirmCancel = () => {
+        dispatch(cancelReservations({ 
+            reservationCode: selectedCancelReservationId, 
+            reason: cancelReasonInput.trim() || "Cancelled by driver"
+        }));
+        setCancelModalOpen(false);
+    };
+
     const pendingReservations = useMemo(
         () => myReservationList.filter((r) => r.reservationStatus === "PENDING"),
         [myReservationList]
@@ -46,6 +67,7 @@ const MyReservationsTab = ({
     );
 
     return (
+        <>
         <Tabs
             activeKey={reservationSubTab}
             onChange={setReservationSubTab}
@@ -66,7 +88,7 @@ const MyReservationsTab = ({
                     ),
                     children: (
                         <div className="space-y-4">
-                            {renderReservationCards(pendingReservations, reservationsLoading, onOpenVehicleModal)}
+                            {renderReservationCards(pendingReservations, reservationsLoading, onOpenVehicleModal, handleCancelReservation)}
                         </div>
                     ),
                 },
@@ -148,6 +170,27 @@ const MyReservationsTab = ({
                 },
             ]}
         />
+        
+        <Modal
+            title="Cancel Reservation"
+            open={cancelModalOpen}
+            onOk={handleConfirmCancel}
+            onCancel={() => setCancelModalOpen(false)}
+            okText="Confirm Cancel"
+            okButtonProps={{ danger: true }}
+            cancelText="Close"
+            centered
+        >
+            <p className="mb-3 text-slate-600">Are you sure you want to cancel this reservation? You can provide a reason below.</p>
+            <Input.TextArea 
+                placeholder="Reason for cancellation (optional)..." 
+                value={cancelReasonInput}
+                onChange={(e) => setCancelReasonInput(e.target.value)}
+                rows={3}
+                className="rounded-lg"
+            />
+        </Modal>
+        </>
     );
 };
 

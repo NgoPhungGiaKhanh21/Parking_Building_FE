@@ -23,7 +23,7 @@ export const reservationStatusConfig = {
 };
 
 // ─── Single Reservation Card ──────────────────────────────────────────────────
-const ReservationCard = ({ r, onOpenVehicleModal }) => {
+const ReservationCard = ({ r, onOpenVehicleModal, onCancelReservation }) => {
     const cfg = reservationStatusConfig[r.reservationStatus] || {
         color: "default",
         icon: null,
@@ -113,6 +113,16 @@ const ReservationCard = ({ r, onOpenVehicleModal }) => {
                     </div>
                 </div>
             )}
+            {/* Cancel Reason */}
+            {r.reservationStatus === "CANCELLED" && (r.cancelReason || r.reason) && (
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 p-3">
+                    <XCircle size={14} className="mt-0.5 flex-shrink-0 text-red-500" />
+                    <div>
+                        <p className="text-[10px] font-bold uppercase text-red-500 mb-0.5">Cancel Reason</p>
+                        <p className="text-xs text-red-800 leading-relaxed">{r.cancelReason || r.reason}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Reservation Note */}
             {r.reservationNote && (
@@ -147,13 +157,23 @@ const ReservationCard = ({ r, onOpenVehicleModal }) => {
                     <Car size={14} />
                     View Vehicle
                 </button>
+                {r.reservationStatus === "PENDING" && onCancelReservation && (
+                    <button
+                        type="button"
+                        onClick={() => onCancelReservation(r.reservationCode || r.ticketCode || r.reservationId)}
+                        className="flex items-center gap-1.5 rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100 hover:border-red-300 hover:shadow-sm cursor-pointer"
+                    >
+                        <XCircle size={14} />
+                        Cancel
+                    </button>
+                )}
             </div>
         </div>
     );
 };
 
 // ─── Render helper: list of cards with loading / empty ─────────────────────────
-export const renderReservationCards = (list, reservationsLoading, onOpenVehicleModal) => {
+export const renderReservationCards = (list, reservationsLoading, onOpenVehicleModal, onCancelReservation) => {
     if (reservationsLoading) {
         return <div className="flex justify-center py-16"><Spin size="large" /></div>;
     }
@@ -169,6 +189,7 @@ export const renderReservationCards = (list, reservationsLoading, onOpenVehicleM
             key={r.reservationId}
             r={r}
             onOpenVehicleModal={onOpenVehicleModal}
+            onCancelReservation={onCancelReservation}
         />
     ));
 };

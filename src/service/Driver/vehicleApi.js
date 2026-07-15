@@ -9,8 +9,11 @@ export const getAllVehicleTypesApi = (data) => {
 };
 
 export const createVehicleApi = (data) => {
-  // If data is FormData, headers are automatically set by axios
-  return api.post("/vehicles/me", data);
+  return api.post("/vehicles/me", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 export const getVehicleByIdApi = (data) => {

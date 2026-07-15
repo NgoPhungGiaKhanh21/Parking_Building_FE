@@ -73,6 +73,7 @@ import {watchGetStaffBuilding} from "./staff/guest_parking/getStaffBuilding/getS
 import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSaga";
 import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
 import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
+import {watchCancelReservations} from "./driver/reservationManagement/cancelReservations/cancelReservationsSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -140,6 +141,7 @@ export default function* rootSaga() {
     watchGuestCheckoutOcr(),
     watchUnifiedCheckin(),
     watchUnifiedCheckout(),
+    watchCancelReservations(),
     //driver
     watchGetAllVehicle(),
     watchGetVehicleById(),
