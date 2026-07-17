@@ -23,13 +23,13 @@ const SidebarAdmin = () => {
       id: "admin-dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-      to: "/admin/dashboard",
+      to: "/admin",
     },
     {
       id: "user-management",
       label: "User Management",
       icon: User,
-      to: "/admin",
+      to: "/admin/user-management",
     },
   ];
 

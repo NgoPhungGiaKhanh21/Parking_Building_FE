@@ -41,12 +41,12 @@ const SidebarStaff = () => {
       icon: ArrowLeftSquare,
       to: "/staff/vehicle-exit",
     },
-    {
-      id: "parking-ticket",
-      label: "Parking Ticket",
-      icon: Ticket,
-      to: "/staff/parking-ticket",
-    },
+    // {
+    //   id: "parking-ticket",
+    //   label: "Parking Ticket",
+    //   icon: Ticket,
+    //   to: "/staff/parking-ticket",
+    // },
     {
       id: "payments",
       label: "Payments",
