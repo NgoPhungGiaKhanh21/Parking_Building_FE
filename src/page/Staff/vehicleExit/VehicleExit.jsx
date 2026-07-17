@@ -292,11 +292,11 @@ const VehicleExit = () => {
     dispatch(
       unifiedCheckoutRequest({
         ticketCode: normalizedSession.ticketCode,
-        paymentMethod: isCashCheckout ? "CASH" : "PAYOS",
+        paymentMethod: (isCashCheckout || (!isPaid && isDriver)) ? "CASH" : "PAYOS",
         checkoutImage: plateImageFileRef.current, 
       })
     );
-  }, [dispatch, isCashCheckout, normalizedSession]);
+  }, [dispatch, isCashCheckout, isPaid, isDriver, normalizedSession]);
 
   const handleResetAfterCheckout = useCallback(() => {
     dispatch(unifiedCheckoutReset());
@@ -678,40 +678,53 @@ const VehicleExit = () => {
                     <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">
                       Payment Method
                     </p>
-                    <Radio.Group
-                      value={paymentMethod}
-                      onChange={(event) => setPaymentMethod(event.target.value)}
-                      optionType="button"
-                      buttonStyle="solid"
-                      className="flex w-full"
-                    >
-                      <Radio.Button
-                        value="PAYOS"
-                        className="flex-1 text-center"
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <CreditCard size={15} /> PayOS
-                        </span>
-                      </Radio.Button>
-                      <Radio.Button
-                        value="CASH"
-                        className="flex-1 text-center"
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Banknote size={15} /> Cash
-                        </span>
-                      </Radio.Button>
-                    </Radio.Group>
-                    <p className="mt-3 text-xs text-slate-500">
-                      {paymentMethod === "CASH"
-                        ? "Collect cash and check out directly without opening the payment page."
-                        : "Continue to PayOS to complete the online payment first."}
-                    </p>
+                    {isDriver ? (
+                      <div className="rounded-xl bg-orange-50 border border-orange-200 p-3 text-center">
+                        <p className="text-sm font-bold text-orange-700 mb-1 flex items-center justify-center gap-2">
+                          <Banknote size={18} /> Cash Only
+                        </p>
+                        <p className="text-xs text-orange-600">
+                          Drivers paying at the gate must use cash. Online payments should be done via the Driver App.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Radio.Group
+                          value={paymentMethod}
+                          onChange={(event) => setPaymentMethod(event.target.value)}
+                          optionType="button"
+                          buttonStyle="solid"
+                          className="flex w-full"
+                        >
+                          <Radio.Button
+                            value="PAYOS"
+                            className="flex-1 text-center"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <CreditCard size={15} /> PayOS
+                            </span>
+                          </Radio.Button>
+                          <Radio.Button
+                            value="CASH"
+                            className="flex-1 text-center"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Banknote size={15} /> Cash
+                            </span>
+                          </Radio.Button>
+                        </Radio.Group>
+                        <p className="mt-3 text-xs text-slate-500">
+                          {paymentMethod === "CASH"
+                            ? "Collect cash and check out directly without opening the payment page."
+                            : "Continue to PayOS to complete the online payment first."}
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
 
-                {/* UNPAID + PAYOS → Payment page */}
-                {!isPaid && paymentMethod === "PAYOS" && (
+                {/* UNPAID + PAYOS → Payment page (Guests only) */}
+                {!isPaid && !isDriver && paymentMethod === "PAYOS" && (
                   <button
                     type="button"
                     onClick={handleGoPayment}
@@ -727,7 +740,7 @@ const VehicleExit = () => {
                 )}
 
                 {/* PAID after PayOS, or direct CASH → Confirm checkout */}
-                {((isPaid && showCheckout) || isCashCheckout) && (
+                {((isPaid && showCheckout) || isCashCheckout || (isDriver && !isPaid)) && (
                   <button
                     type="button"
                     onClick={handleConfirmCheckout}
@@ -746,7 +759,7 @@ const VehicleExit = () => {
                   >
                     {checkoutLoading && <Spin size="small" />}
                     <LogOut size={22} />
-                    {isCashCheckout
+                    {(!isPaid && isDriver) || isCashCheckout
                       ? "Collect Cash & Check-out"
                       : "Confirm Check-out"}
                   </button>
