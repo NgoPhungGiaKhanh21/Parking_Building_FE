@@ -421,6 +421,19 @@ const VehicleEntry = () => {
     }
 
     if (driverReservation) {
+      const now = dayjs();
+      const resStart = dayjs(driverReservation.reservationStart);
+
+      if (now.isBefore(resStart)) {
+        message.error(`Cannot check-in before reservation start time (${resStart.format("HH:mm")})`);
+        return;
+      }
+
+      if (now.diff(resStart, 'minute') > 15) {
+        message.error("Reservation has expired (over 15 minutes late)");
+        return;
+      }
+
       // Driver check-in
       if (!checkinImageFileRef.current) {
         message.error("Vehicle check-in image is required for drivers");

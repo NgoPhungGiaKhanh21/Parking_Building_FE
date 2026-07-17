@@ -194,7 +194,14 @@ const BuildingRow = ({ building, formatCurrency }) => {
                             <Layers size={18} />
                           </div>
                           <div>
-                            <h4 className="font-bold text-slate-800 text-sm">{floor.floorName || `Floor ${floor.floorNumber}`}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-slate-800 text-sm">{floor.floorName || `Floor ${floor.floorNumber}`}</h4>
+                              {floor.vehicleTypeName && (
+                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase tracking-wider border border-blue-100">
+                                  {floor.vehicleTypeName}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] text-slate-400 font-medium">{zones.length} zone{zones.length !== 1 ? 's' : ''}</p>
                           </div>
                         </div>
