@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Spin, Tag, Upload, message, Input } from "antd";
+import { Spin, Tag, Upload, message, Input, Radio } from "antd";
 import {
+  Banknote,
   CheckCircle2,
   CreditCard,
   ImageIcon,
@@ -85,6 +86,7 @@ const VehicleExit = () => {
   // ── Form state
   const [plateImageUrl, setPlateImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("PAYOS");
   const [checkoutDone, setCheckoutDone] = useState(
     () => sessionStorage.getItem(GUEST_EXIT_CHECKOUT_DONE_KEY) === "true"
   );
@@ -153,6 +155,8 @@ const VehicleExit = () => {
   );
 
   const isPaid = isGuestSessionPaid(activeSession, payments);
+  const isCashCheckout = !isPaid && paymentMethod === "CASH";
+  const paymentReady = isPaid || isCashCheckout;
   const amount = resolveGuestSessionAmount(activeSession);
   const isDriver = !!driverReservation;
   const isGuest = !isDriver && !!guestSession;
@@ -205,6 +209,7 @@ const VehicleExit = () => {
     setCheckoutDone(false);
     setPlateImageUrl("");
     setPlateInput("");
+    setPaymentMethod("PAYOS");
     if (plateImageFileRef?.current) plateImageFileRef.current = null;
     
     navigate("/staff/vehicle-exit", { replace: true });
@@ -226,6 +231,7 @@ const VehicleExit = () => {
         sessionStorage.removeItem(GUEST_EXIT_CHECKOUT_DONE_KEY);
         sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
         setCheckoutDone(false);
+        setPaymentMethod("PAYOS");
       }
 
       try {
@@ -263,6 +269,7 @@ const VehicleExit = () => {
       dispatch(getSessionByPlateNumberReset());
       dispatch(unifiedCheckoutReset());
       setCheckoutDone(false);
+      setPaymentMethod("PAYOS");
     }
   }, [dispatch, isPaid, showCheckout]);
 
@@ -285,11 +292,11 @@ const VehicleExit = () => {
     dispatch(
       unifiedCheckoutRequest({
         ticketCode: normalizedSession.ticketCode,
-        paymentMethod: "PAYOS",
+        paymentMethod: isCashCheckout ? "CASH" : "PAYOS",
         checkoutImage: plateImageFileRef.current, 
       })
     );
-  }, [normalizedSession, dispatch]);
+  }, [dispatch, isCashCheckout, normalizedSession]);
 
   const handleResetAfterCheckout = useCallback(() => {
     dispatch(unifiedCheckoutReset());
@@ -301,6 +308,7 @@ const VehicleExit = () => {
     setCheckoutDone(false);
     setPlateImageUrl("");
     setPlateInput("");
+    setPaymentMethod("PAYOS");
     plateImageFileRef.current = null;
     navigate("/staff/vehicle-exit", { replace: true });
   }, [dispatch, navigate]);
@@ -495,7 +503,9 @@ const VehicleExit = () => {
                   </div>
                   <div className="flex gap-2 mr-32">
                     <Tag color="blue">{normalizedSession.vehicleTypeName || "Vehicle"}</Tag>
-                    <Tag color={isPaid ? "green" : "gold"}>{isPaid ? "Paid" : "Unpaid"}</Tag>
+                    <Tag color={isPaid ? "green" : isCashCheckout ? "cyan" : "gold"}>
+                      {isPaid ? "Paid" : isCashCheckout ? "Cash Selected" : "Unpaid"}
+                    </Tag>
                   </div>
                 </div>
 
@@ -595,7 +605,15 @@ const VehicleExit = () => {
                     label: "Duration",
                     value: normalizedSession ? formatParkingDurationLabel(normalizedSession) : "—",
                   },
-                  { label: "Payment", value: isPaid ? "✓ Paid" : "✗ Unpaid", ok: isPaid },
+                  {
+                    label: "Payment",
+                    value: isPaid
+                      ? "✓ Paid"
+                      : isCashCheckout
+                        ? "Cash at check-out"
+                        : "✗ Unpaid",
+                    ok: paymentReady,
+                  },
                   { label: "Plate Image", value: plateImageUrl ? "✓ Uploaded" : "Not uploaded", ok: !!plateImageUrl },
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
@@ -624,7 +642,12 @@ const VehicleExit = () => {
                   { label: "Plate image uploaded", ok: !!plateImageUrl },
                   { label: "Plate identified", ok: !!plateInput },
                   { label: "Session found", ok: !!normalizedSession },
-                  { label: "Payment completed", ok: isPaid },
+                  {
+                    label: isCashCheckout
+                      ? "Cash payment selected"
+                      : "Payment completed",
+                    ok: paymentReady,
+                  },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <div
@@ -650,8 +673,45 @@ const VehicleExit = () => {
             {/* ── Action Buttons ── */}
             {normalizedSession && (
               <div className="space-y-3">
-                {/* NOT PAID → Payment Button (Guest only, Drivers pay via app) */}
-                {!isPaid && !isDriver && (
+                {!isPaid && (
+                  <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Payment Method
+                    </p>
+                    <Radio.Group
+                      value={paymentMethod}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                      optionType="button"
+                      buttonStyle="solid"
+                      className="flex w-full"
+                    >
+                      <Radio.Button
+                        value="PAYOS"
+                        className="flex-1 text-center"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <CreditCard size={15} /> PayOS
+                        </span>
+                      </Radio.Button>
+                      <Radio.Button
+                        value="CASH"
+                        className="flex-1 text-center"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Banknote size={15} /> Cash
+                        </span>
+                      </Radio.Button>
+                    </Radio.Group>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {paymentMethod === "CASH"
+                        ? "Collect cash and check out directly without opening the payment page."
+                        : "Continue to PayOS to complete the online payment first."}
+                    </p>
+                  </div>
+                )}
+
+                {/* UNPAID + PAYOS → Payment page */}
+                {!isPaid && paymentMethod === "PAYOS" && (
                   <button
                     type="button"
                     onClick={handleGoPayment}
@@ -666,8 +726,8 @@ const VehicleExit = () => {
                   </button>
                 )}
 
-                {/* PAID + checkout=1 → Confirm Checkout Button */}
-                {isPaid && showCheckout && (
+                {/* PAID after PayOS, or direct CASH → Confirm checkout */}
+                {((isPaid && showCheckout) || isCashCheckout) && (
                   <button
                     type="button"
                     onClick={handleConfirmCheckout}
@@ -686,7 +746,9 @@ const VehicleExit = () => {
                   >
                     {checkoutLoading && <Spin size="small" />}
                     <LogOut size={22} />
-                    Confirm Check-out
+                    {isCashCheckout
+                      ? "Collect Cash & Check-out"
+                      : "Confirm Check-out"}
                   </button>
                 )}
 
