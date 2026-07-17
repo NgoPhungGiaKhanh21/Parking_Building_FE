@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/preserve-manual-memoization */
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, DatePicker, Empty, Spin, Table, Tag } from "antd";
+import { Button, DatePicker, Empty, Spin, Table, Tag, Tabs } from "antd";
 import { Activity, CircleDollarSign } from "lucide-react";
 import dayjs from "dayjs";
 import {
@@ -273,23 +273,7 @@ const AdminDashboard = () => {
     },
   ];
 
-  const transactionColumns = [
-    // {
-    //   title: "Payment ID",
-    //   dataIndex: "paymentId",
-    //   key: "paymentId",
-    //   render: (id) => (
-    //     <code className="text-xs font-mono text-slate-600">{id || "—"}</code>
-    //   ),
-    // },
-    // {
-    //   title: "Session ID",
-    //   dataIndex: "sessionId",
-    //   key: "sessionId",
-    //   render: (id) => (
-    //     <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
-    //   ),
-    // },
+  const commonColumns = [
     {
       title: "Driver",
       key: "driverName",
@@ -329,22 +313,33 @@ const AdminDashboard = () => {
         );
       },
     },
+  ];
+
+  const timeColumn = {
+    title: "Time",
+    dataIndex: "paymentTime",
+    key: "paymentTime",
+    align: "right",
+    render: (time, record) => {
+      const resolved = time || record.createdAt || record.updatedAt;
+      return resolved ? dayjs(resolved).format("DD/MM/YYYY HH:mm") : "—";
+    },
+  };
+
+  const payosColumns = [
+    ...commonColumns,
     {
       title: "Transaction",
       dataIndex: "transactionCode",
       key: "transactionCode",
-      render: (code) => code || "—",
+      render: (code) => <code className="text-xs text-slate-600">{code || "—"}</code>,
     },
-    {
-      title: "Time",
-      dataIndex: "paymentTime",
-      key: "paymentTime",
-      align: "right",
-      render: (time, record) => {
-        const resolved = time || record.createdAt || record.updatedAt;
-        return resolved ? dayjs(resolved).format("DD/MM/YYYY HH:mm") : "—";
-      },
-    },
+    timeColumn,
+  ];
+
+  const cashColumns = [
+    ...commonColumns,
+    timeColumn,
   ];
 
   const buildingTableData = (
@@ -362,6 +357,7 @@ const AdminDashboard = () => {
     const list = Array.isArray(allPayments) ? allPayments : [];
     return list
       .filter((item) => {
+        if (toNumberSafe(item.amount) <= 0) return false;
         const raw = item.paymentTime || item.createdAt || item.updatedAt;
         if (!raw || (!fromMs && !toMs)) return true;
         const value = dayjs(raw).valueOf();
@@ -384,6 +380,9 @@ const AdminDashboard = () => {
         ...item,
       }));
   }, [allPayments, dateRange]);
+
+  const payosPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'PAYOS'), [paymentTableData]);
+  const cashPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'CASH'), [paymentTableData]);
 
   return (
     <div className="min-h-screen bg-[#f5f7ff] p-4 md:p-8">
@@ -661,12 +660,36 @@ const AdminDashboard = () => {
             <h2 className="mb-3 text-base font-bold text-slate-800">
               Payment Transactions Detail
             </h2>
-            <Table
-              columns={transactionColumns}
-              dataSource={paymentTableData}
-              pagination={{ pageSize: 5 }}
-              rowClassName="hover:!bg-slate-50"
-              scroll={{ x: 1100 }}
+            <Tabs
+              defaultActiveKey="1"
+              items={[
+                {
+                  key: "1",
+                  label: "PayOS Transactions",
+                  children: (
+                    <Table
+                      columns={payosColumns}
+                      dataSource={payosPayments}
+                      pagination={{ pageSize: 5 }}
+                      rowClassName="hover:!bg-slate-50"
+                      scroll={{ x: 800 }}
+                    />
+                  ),
+                },
+                {
+                  key: "2",
+                  label: "Cash Transactions",
+                  children: (
+                    <Table
+                      columns={cashColumns}
+                      dataSource={cashPayments}
+                      pagination={{ pageSize: 5 }}
+                      rowClassName="hover:!bg-slate-50"
+                      scroll={{ x: 800 }}
+                    />
+                  ),
+                },
+              ]}
             />
           </div>
         </>
