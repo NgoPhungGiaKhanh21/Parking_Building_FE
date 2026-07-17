@@ -362,8 +362,6 @@ const AdminDashboard = () => {
     const list = Array.isArray(allPayments) ? allPayments : [];
     return list
       .filter((item) => {
-        if (String(item.paymentMethod || "").toUpperCase() === "CASH") return false;
-        
         const raw = item.paymentTime || item.createdAt || item.updatedAt;
         if (!raw || (!fromMs && !toMs)) return true;
         const value = dayjs(raw).valueOf();
