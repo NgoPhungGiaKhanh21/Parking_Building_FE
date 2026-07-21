@@ -1,24 +1,23 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Spin } from 'antd';
 import {
-  MapPin,
   Car,
   Search,
   Building2,
   ParkingCircle,
   Clock,
-  AlertCircle,
   Eye,
   ChevronDown,
   ChevronUp,
   Layers,
-  CreditCard,
+  ScrollText,
 } from 'lucide-react';
 import { getAvailableBuildingsRequest } from '../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice';
 import { getBuildingFloorsApi } from '../../../service/driver/revervationApi';
 import CommonBreadcrumb from '../../../components/Commandbreadcrumb/Commandbreadcrumb';
 import BuildingFloorsModal from './BuildingFloorsModal';
+import { getBuildingRulesRequest } from '../../../redux/manager/Building/buildingRules/buildingRulesSlice';
 
 const formatCurrency = (amount) => {
   if (!amount && amount !== 0) return 'N/A';
@@ -27,6 +26,7 @@ const formatCurrency = (amount) => {
 
 /* ─── Building Row Component ──────────────────────────────────────────────── */
 const BuildingRow = ({ building, formatCurrency }) => {
+  const dispatch = useDispatch();
   const [expanded, setExpanded] = useState(false);
   const [floors, setFloors] = useState(null);
   const [loadingFloors, setLoadingFloors] = useState(false);
@@ -34,9 +34,25 @@ const BuildingRow = ({ building, formatCurrency }) => {
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState(null);
+  const {
+    rulesByBuilding,
+    loadingByBuilding,
+    error: rulesError,
+  } = useSelector((state) => state.buildingRules);
+  const buildingRules = rulesByBuilding[building.id];
+  const activeRules = useMemo(
+    () =>
+      (Array.isArray(buildingRules) ? buildingRules : []).filter(
+        (rule) => !rule.status || rule.status === 'ACTIVE',
+      ),
+    [buildingRules],
+  );
 
-  useEffect(() => {
-    if (expanded && !floors) {
+  const handleToggleExpanded = () => {
+    const nextExpanded = !expanded;
+    setExpanded(nextExpanded);
+
+    if (nextExpanded && !floors && !loadingFloors) {
       setLoadingFloors(true);
       getBuildingFloorsApi({ buildingId: building.id })
         .then(res => {
@@ -45,7 +61,11 @@ const BuildingRow = ({ building, formatCurrency }) => {
         .catch(() => setFloors([]))
         .finally(() => setLoadingFloors(false));
     }
-  }, [expanded, building.id, floors]);
+
+    if (nextExpanded && buildingRules === undefined) {
+      dispatch(getBuildingRulesRequest(building.id));
+    }
+  };
 
   const handleViewFloor = (floor) => {
     setSelectedFloor(floor);
@@ -91,7 +111,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
 
             {/* Left: Building Identity */}
             <div className="flex items-start gap-5 flex-1 min-w-0">
-              <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+              <div className="h-16 w-16 shrink-0 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                 <Building2 size={28} strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
@@ -122,7 +142,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
             </div>
 
             {/* Center: Availability Bar */}
-            <div className="flex-shrink-0 lg:w-[280px]">
+            <div className="shrink-0 lg:w-[280px]">
               <div className="flex items-end justify-between mb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Availability</span>
                 <span className="text-xs font-semibold text-slate-500">{availabilityPercentage}%</span>
@@ -140,7 +160,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
             </div>
 
             {/* Right: Pricing + Expand */}
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex shrink-0 items-center gap-4">
               {building.pricingByType?.length > 0 && (
                 <div className="hidden md:flex flex-col gap-1 items-end">
                   {building.pricingByType.slice(0, 2).map((p) => (
@@ -153,14 +173,14 @@ const BuildingRow = ({ building, formatCurrency }) => {
               )}
 
               <button
-                onClick={() => setExpanded(!expanded)}
+                onClick={handleToggleExpanded}
                 className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-200 cursor-pointer active:scale-95 ${
                   expanded
                     ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/25 hover:shadow-lg'
                 }`}
               >
-                {expanded ? 'Hide' : 'View'} Floors
+                {expanded ? 'Hide' : 'View'} Details
                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             </div>
@@ -170,7 +190,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
 
         {/* Expanded Floor Cards */}
         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="border-t border-slate-100 bg-gradient-to-b from-slate-50/80 to-white p-5 md:p-6">
+          <div className="border-t border-slate-100 bg-linear-to-b from-slate-50/80 to-white p-5 md:p-6">
             {loadingFloors ? (
               <div className="flex flex-col items-center py-8">
                 <Spin />
@@ -231,12 +251,58 @@ const BuildingRow = ({ building, formatCurrency }) => {
             )}
 
             {/* Parking Rules */}
-            {building.parkingRules && (
-              <div className="mt-4 bg-amber-50/50 rounded-xl border border-amber-100 p-4">
-                <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5 mb-1"><AlertCircle size={12} />Parking Rules</p>
-                <p className="text-xs text-amber-900 leading-relaxed">{building.parkingRules}</p>
-              </div>
-            )}
+            <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
+              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-900">
+                <ScrollText size={16} />
+                Building Rules
+              </p>
+
+              {loadingByBuilding[building.id] ? (
+                <div className="flex items-center gap-2 py-2 text-xs text-amber-800">
+                  <Spin size="small" />
+                  Loading building rules...
+                </div>
+              ) : rulesError && buildingRules === undefined ? (
+                <p className="text-xs text-red-600">
+                  Unable to load building rules: {rulesError}
+                </p>
+              ) : activeRules.length > 0 ? (
+                <div className="space-y-2">
+                  {activeRules.map((rule) => (
+                    <div
+                      key={rule.ruleId}
+                      className="rounded-xl border border-amber-100 bg-white/80 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">
+                            {rule.title || rule.ruleCode}
+                          </p>
+                          {rule.description && (
+                            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                              {rule.description}
+                            </p>
+                          )}
+                        </div>
+                        {rule.ruleValue && (
+                          <span className="shrink-0 rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                            {rule.ruleValue}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : building.parkingRules ? (
+                <p className="text-xs leading-relaxed text-amber-900">
+                  {building.parkingRules}
+                </p>
+              ) : (
+                <p className="text-xs text-amber-700">
+                  No active rules for this building.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -298,14 +364,14 @@ const AvailabilityPage = () => {
   return (
     <div className="min-h-screen bg-[#f3f0fa] p-4 md:p-8">
       {/* Hero Header */}
-      <div className="mb-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/50 p-6 md:p-8 shadow-sm">
+      <div className="mb-8 rounded-3xl border border-blue-100 bg-linear-to-br from-white via-white to-blue-50/50 p-6 md:p-8 shadow-sm">
         <div className="mb-4">
           <CommonBreadcrumb role="Driver" page="available" />
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="flex items-start gap-5">
-            <div className="flex-shrink-0 h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25 hidden md:flex">
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25 md:flex">
               <ParkingCircle size={32} strokeWidth={2} />
             </div>
             <div>
@@ -320,7 +386,7 @@ const AvailabilityPage = () => {
 
           {/* Stats badges */}
           {!loading && buildings.length > 0 && (
-            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-sm font-bold text-emerald-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 {totalAvailable} Available

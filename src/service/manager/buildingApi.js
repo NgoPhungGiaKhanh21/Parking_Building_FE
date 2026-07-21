@@ -20,6 +20,22 @@ export const updateBuildingStatusApi = (buildingId, status) => {
   return api.patch(`/manager/setup/buildings/${buildingId}/status`, { status });
 };
 
+export const getBuildingRulesApi = (buildingId) => {
+  return api.get(`/manager/buildings/${buildingId}/rules`);
+};
+
+export const createBuildingRuleApi = ({ buildingId, data }) => {
+  return api.post(`/manager/buildings/${buildingId}/rules`, data);
+};
+
+export const updateBuildingRuleApi = ({ buildingId, ruleId, data }) => {
+  return api.put(`/manager/buildings/${buildingId}/rules/${ruleId}`, data);
+};
+
+export const deleteBuildingRuleApi = ({ buildingId, ruleId }) => {
+  return api.delete(`/manager/buildings/${buildingId}/rules/${ruleId}`);
+};
+
 export const getBuildingFloorsApi = (buildingId) => {
   return api.get(`/manager/setup/buildings/${buildingId}/floors`);
 };

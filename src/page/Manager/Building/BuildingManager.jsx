@@ -1,4 +1,10 @@
-import { Building2, Eye, Pencil, Settings2 } from "lucide-react";
+import {
+  Building2,
+  Eye,
+  Pencil,
+  ScrollText,
+  Settings2,
+} from "lucide-react";
 
 import { Button, Form, Spin, Switch, Tag } from "antd";
 
@@ -32,6 +38,7 @@ import CreateBuildingModal from "./modals/CreateBuildingModal";
 import UpdateBuildingModal from "./modals/UpdateBuildingModal";
 
 import BuildingDetailModal from "./modals/BuildingDetailModal";
+import BuildingRulesModal from "./modals/BuildingRulesModal";
 
 import { updateBuildingStatusRequest } from "../../../redux/manager/Building/updateBuildingStatus/updateBuildingStatusSlice";
 import {
@@ -54,6 +61,7 @@ export const BuildingManager = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [rulesBuilding, setRulesBuilding] = useState(null);
 
   const [editingBuildingId, setEditingBuildingId] = useState(null);
 
@@ -325,7 +333,7 @@ export const BuildingManager = () => {
                   </div>
 
                   <div className="mt-auto pt-4">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <Button
                         type="default"
                         icon={<Settings2 size={15} />}
@@ -351,6 +359,15 @@ export const BuildingManager = () => {
                         className="w-full"
                       >
                         Detail
+                      </Button>
+
+                      <Button
+                        type="default"
+                        icon={<ScrollText size={15} />}
+                        onClick={() => setRulesBuilding(building)}
+                        className="w-full"
+                      >
+                        Rules
                       </Button>
                     </div>
                   </div>
@@ -397,6 +414,12 @@ export const BuildingManager = () => {
         loading={detailLoading}
         buildingDetail={buildingDetail}
         buildingImage={BUILDING_IMAGE}
+      />
+
+      <BuildingRulesModal
+        open={Boolean(rulesBuilding)}
+        building={rulesBuilding}
+        onCancel={() => setRulesBuilding(null)}
       />
     </div>
   );
