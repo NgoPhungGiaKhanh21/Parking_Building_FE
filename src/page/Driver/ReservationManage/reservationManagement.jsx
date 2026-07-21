@@ -47,8 +47,8 @@ const STATUS_CONFIG = {
     },
     MAINTENANCE: {
         label: "Maintenance",
-        bg: "bg-slate-500 text-white border-2 border-slate-600 cursor-not-allowed opacity-80",
-        badge: "bg-slate-100 text-slate-700",
+        bg: "bg-orange-400 text-white border-2 border-orange-500 cursor-not-allowed opacity-80",
+        badge: "bg-orange-100 text-orange-700",
     },
 };
 
@@ -520,7 +520,7 @@ const ReservationManagement = () => {
                                                                         ? "border-violet-700 bg-violet-600"
                                                                         : key === "OCCUPIED"
                                                                             ? "border-red-600 bg-red-500"
-                                                                            : "border-slate-600 bg-slate-500"
+                                                                            : "border-orange-500 bg-orange-400"
                                                                 }`}
                                                         />
                                                         <span>{cfg.label}</span>

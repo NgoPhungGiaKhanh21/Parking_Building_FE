@@ -60,6 +60,62 @@ const ZONE_FIELD_LABELS = {
 export const isActiveStatus = (status) =>
   String(status || "").toUpperCase() === "ACTIVE";
 
+export const normalizeStatus = (status) =>
+  String(status || "").toUpperCase();
+
+/**
+ * Returns Ant Design Tag color + Tailwind border/bg classes for each entity status.
+ * Covers: ACTIVE, INACTIVE, MAINTENANCE, FULL
+ */
+export const STATUS_STYLES = {
+  ACTIVE: {
+    tagColor: "green",
+    border: "border-emerald-400",
+    bg: "bg-emerald-50",
+    topStripe: "bg-emerald-500",
+    dot: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
+    label: "Active",
+  },
+  INACTIVE: {
+    tagColor: "gold",
+    border: "border-amber-400",
+    bg: "bg-amber-50",
+    topStripe: "bg-amber-400",
+    dot: "bg-amber-400",
+    label: "Inactive",
+  },
+  MAINTENANCE: {
+    tagColor: "orange",
+    border: "border-orange-400",
+    bg: "bg-orange-50",
+    topStripe: "bg-orange-500",
+    dot: "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]",
+    label: "Maintenance",
+  },
+  FULL: {
+    tagColor: "red",
+    border: "border-red-400",
+    bg: "bg-red-50",
+    topStripe: "bg-red-500",
+    dot: "bg-red-500",
+    label: "Full",
+  },
+};
+
+export const getStatusStyle = (status) => {
+  const key = normalizeStatus(status);
+  return (
+    STATUS_STYLES[key] || {
+      tagColor: "default",
+      border: "border-slate-200",
+      bg: "bg-white",
+      topStripe: "bg-slate-300",
+      dot: "bg-slate-300",
+      label: key || "Unknown",
+    }
+  );
+};
+
 export const floorNameToSlug = (name) => {
   if (!name || typeof name !== "string") return "";
   const parts = name.trim().split(/\s+/).filter(Boolean);

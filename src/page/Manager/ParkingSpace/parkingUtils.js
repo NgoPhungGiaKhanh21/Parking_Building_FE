@@ -17,7 +17,7 @@ export const SLOT_STATUS_LEGEND = [
   {
     key: "MAINTENANCE",
     label: "Maintenance",
-    swatchClass: "bg-slate-600",
+    swatchClass: "bg-orange-500",
   },
 ];
 
@@ -33,7 +33,7 @@ export const getSlotCardClass = (status, isSelected) => {
     case "RESERVED":
       return `${base}${ring} bg-violet-600 text-white shadow-sm`;
     case "MAINTENANCE":
-      return `${base}${ring} bg-slate-600 text-white shadow-sm`;
+      return `${base}${ring} bg-orange-500 text-white shadow-sm`;
     default:
       return `${base}${ring} border-2 border-dashed border-violet-300 bg-violet-50/80 text-slate-700`;
   }

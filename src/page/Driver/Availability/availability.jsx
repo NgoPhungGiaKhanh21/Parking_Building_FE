@@ -77,7 +77,13 @@ const BuildingRow = ({ building, formatCurrency }) => {
     : 0;
 
   let statusColor, statusBg, statusText, barColor;
-  if (availabilityPercentage === 0) {
+  
+  if (building.status === 'MAINTENANCE') {
+    statusColor = 'text-orange-600';
+    statusBg = 'bg-orange-50 border-orange-200';
+    statusText = 'Maintenance';
+    barColor = 'bg-orange-500';
+  } else if (availabilityPercentage === 0) {
     statusColor = 'text-red-600';
     statusBg = 'bg-red-50 border-red-200';
     statusText = 'Full';
@@ -335,6 +341,7 @@ const AvailabilityPage = () => {
     return rawBuildings.map((b) => ({
       id: b.buildingId,
       name: b.name,
+      status: b.status,
       totalSlots: b.totalSlots,
       availableSlots: b.availableSlots,
       vehicleTypes: b.vehicleTypes || [],

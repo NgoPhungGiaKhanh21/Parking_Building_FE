@@ -4,9 +4,10 @@ import {
   Pencil,
   ScrollText,
   Settings2,
+  Wrench,
 } from "lucide-react";
 
-import { Button, Form, Spin, Switch, Tag } from "antd";
+import { Button, Form, Spin, Tag } from "antd";
 
 import { useEffect, useState } from "react";
 
@@ -45,6 +46,8 @@ import {
   BUILDING_IMAGE,
   createTimeValue,
   isActiveStatus,
+  getStatusStyle,
+  normalizeStatus,
 } from "./utils/buildingUtils";
 
 export const BuildingManager = () => {
@@ -206,14 +209,16 @@ export const BuildingManager = () => {
     dispatch(resetBuildingDetail());
   };
 
-  const handleBuildingStatusChange = (buildingId, checked) => {
+  const handleBuildingStatusChange = (buildingId, newStatus) => {
     dispatch(
       updateBuildingStatusRequest({
         buildingId,
-        status: checked ? "ACTIVE" : "INACTIVE",
+        status: newStatus,
       }),
     );
   };
+
+  const BUILDING_STATUSES = ["ACTIVE", "INACTIVE", "MAINTENANCE"];
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
@@ -260,42 +265,54 @@ export const BuildingManager = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {(Array.isArray(buildings) ? buildings : []).map((building) => (
+            {(Array.isArray(buildings) ? buildings : []).map((building) => {
+            const statusStyle = getStatusStyle(building.status);
+            const currentStatus = normalizeStatus(building.status);
+            return (
               <div
                 key={building.id}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                className={`flex flex-col h-full overflow-hidden rounded-xl border-2 ${statusStyle.border} bg-white shadow-sm transition-all duration-300`}
               >
+                <div className={`h-1.5 w-full shrink-0 ${statusStyle.topStripe}`} />
                 <img
                   src={BUILDING_IMAGE}
                   alt="Building"
-                  className="h-44 w-full object-cover"
+                  className="h-44 w-full object-cover shrink-0"
                 />
 
-                <div className="flex min-h-[220px] flex-col p-4">
+                <div className="flex flex-col flex-1 p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <h3 className="text-base font-semibold text-slate-800">
                       {building.name || "N/A"}
                     </h3>
 
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        size="small"
-                        checked={isActiveStatus(building.status)}
-                        loading={updatingBuildingId === building.id}
-                        checkedChildren="On"
-                        unCheckedChildren="Off"
-                        onChange={(checked) =>
-                          handleBuildingStatusChange(building.id, checked)
-                        }
-                      />
-                      <Tag
-                        color={
-                          isActiveStatus(building.status) ? "green" : "gold"
-                        }
-                      >
-                        {building.status || "N/A"}
-                      </Tag>
-                    </div>
+                    <Tag color={statusStyle.tagColor}>
+                      {currentStatus === "MAINTENANCE" && <Wrench size={12} className="mr-1 inline" />}
+                      {statusStyle.label}
+                    </Tag>
+                  </div>
+
+                  {/* Status segmented buttons */}
+                  <div className="mb-3 flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                    {BUILDING_STATUSES.map((st) => {
+                      const isActive = currentStatus === st;
+                      const stStyle = getStatusStyle(st);
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          disabled={updatingBuildingId === building.id}
+                          onClick={() => handleBuildingStatusChange(building.id, st)}
+                          className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                            isActive
+                              ? `${stStyle.bg} ${stStyle.border} border text-slate-800 shadow-sm`
+                              : "border border-transparent text-slate-500 hover:bg-white hover:text-slate-700"
+                          } ${updatingBuildingId === building.id ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
+                        >
+                          {stStyle.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <div className="space-y-2 text-sm text-slate-600">
@@ -373,7 +390,8 @@ export const BuildingManager = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </div>

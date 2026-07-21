@@ -1,5 +1,5 @@
-import { ArrowLeft, Layers, Pencil } from "lucide-react";
-import { Button, Form, Spin, message, Switch, Table } from "antd";
+import { ArrowLeft, Layers, Pencil, Wrench } from "lucide-react";
+import { Button, Form, Spin, message, Tag } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -24,11 +24,13 @@ import ZoneSlotListModal from "./modals/ZoneSlotListModal";
 import {
   FLOOR_CONTEXT_STORAGE_PREFIX,
   getRemainingFloorCapacity,
-  mapSlotNames,
   pickZoneDisplayFields,
   sumZoneCapacities,
-  ZONE_FLOOR_BANNER_IMAGE,
+  getStatusStyle,
+  normalizeStatus,
 } from "../Building/utils/buildingUtils";
+
+const ZONE_STATUSES = ["ACTIVE", "INACTIVE", "MAINTENANCE"];
 
 const readFloorContext = (floorId, floorSlug, locationState) => {
   if (locationState?.floorId) return locationState;
@@ -72,6 +74,7 @@ const ZoneByFloorManagement = () => {
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [selectedZoneName, setSelectedZoneName] = useState("");
   const [selectedMasterZoneId, setSelectedMasterZoneId] = useState(null);
+  const [selectedSlotZoneId, setSelectedSlotZoneId] = useState(null);
 
   const floorContext = useMemo(
     () => readFloorContext(floorId, floorSlug, location.state),
@@ -90,7 +93,6 @@ const ZoneByFloorManagement = () => {
   );
 
   const zoneList = Array.isArray(zones) ? zones : [];
-  const slotNames = mapSlotNames(slots);
   const floorName = floorContext?.floorName || floorSlug || "Floor";
   const buildingName = floorContext?.buildingName;
   const floorMaxCapacity = Number(floorContext?.maxCapacity);
@@ -109,6 +111,10 @@ const ZoneByFloorManagement = () => {
     () => zoneList.find((z) => z.id === selectedMasterZoneId) || null,
     [zoneList, selectedMasterZoneId]
   );
+
+  const isParentMaintenance =
+    normalizeStatus(floorContext?.buildingStatus) === "MAINTENANCE" ||
+    normalizeStatus(floorContext?.floorStatus) === "MAINTENANCE";
 
   useEffect(() => {
     if (zoneList.length > 0 && !selectedMasterZoneId) {
@@ -181,6 +187,7 @@ const ZoneByFloorManagement = () => {
   const handleSelectZone = (zone, title) => {
     if (!zone?.id) return;
     setSelectedZoneName(title);
+    setSelectedSlotZoneId(zone.id);
     setIsSlotModalOpen(true);
     dispatch(getSlotByZoneRequest(zone.id));
   };
@@ -188,6 +195,7 @@ const ZoneByFloorManagement = () => {
   const handleCloseSlotModal = () => {
     setIsSlotModalOpen(false);
     setSelectedZoneName("");
+    setSelectedSlotZoneId(null);
     dispatch(clearGetSlotByZone());
   };
 
@@ -314,7 +322,7 @@ const ZoneByFloorManagement = () => {
                 {zoneList.map((zone, index) => {
                   const isSelected = selectedMasterZoneId === zone.id;
                   const title = getZoneTitle(zone, index);
-                  const isActive = zone.status === "ACTIVE";
+                  const zoneStatusStyle = getStatusStyle(zone.status);
                   return (
                     <div
                       key={zone.id}
@@ -332,12 +340,15 @@ const ZoneByFloorManagement = () => {
                       >
                         {title}
                       </span>
-                      <div
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          isActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-slate-300"
-                        }`}
-                        title={isActive ? "Active" : "Inactive"}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Tag color={zoneStatusStyle.tagColor} className="m-0 text-[10px]">
+                          {zoneStatusStyle.label}
+                        </Tag>
+                        <div
+                          className={`w-2.5 h-2.5 rounded-full ${zoneStatusStyle.dot}`}
+                          title={zoneStatusStyle.label}
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -348,26 +359,47 @@ const ZoneByFloorManagement = () => {
             <div className="w-full md:w-2/3 bg-white p-6 md:p-8 flex flex-col">
               {selectedMasterZone ? (
                 <div className="animate-in fade-in duration-300 h-full flex flex-col">
-                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+                  {(() => {
+                    const zoneStatusStyle = getStatusStyle(selectedMasterZone.status);
+                    const currentZoneStatus = normalizeStatus(selectedMasterZone.status);
+                    return (
+                      <>
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
                     <div>
                       <h3 className="text-2xl font-bold text-slate-800">
                         Zone name: {getZoneTitle(selectedMasterZone, zoneList.indexOf(selectedMasterZone))}
                       </h3>
                       <p className="text-sm text-slate-500 mt-1">
-                        Select an action below or toggle the status.
+                        Select an action below or change the status.
                       </p>
                     </div>
-                    <Switch
-                      checked={selectedMasterZone.status === "ACTIVE"}
-                      onChange={(checked) =>
-                        handleToggleStatus(
-                          selectedMasterZone.id,
-                          checked ? "ACTIVE" : "INACTIVE"
-                        )
-                      }
-                      checkedChildren="Active"
-                      unCheckedChildren="Inactive"
-                    />
+                    <Tag color={zoneStatusStyle.tagColor} className="text-sm px-3 py-1">
+                      {currentZoneStatus === "MAINTENANCE" && <Wrench size={12} className="mr-1 inline" />}
+                      {zoneStatusStyle.label}
+                    </Tag>
+                  </div>
+
+                  {/* Zone Status segmented buttons */}
+                  <div className="mb-6 flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                    {ZONE_STATUSES.map((st) => {
+                      const isActive = currentZoneStatus === st;
+                      const stStyle = getStatusStyle(st);
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          disabled={currentZoneStatus === "FULL" || isParentMaintenance}
+                          onClick={() => handleToggleStatus(selectedMasterZone.id, st)}
+                          className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-all duration-200 ${
+                            isActive
+                              ? `${stStyle.bg} ${stStyle.border} border text-slate-800 shadow-sm`
+                              : "border border-transparent text-slate-500 hover:bg-white hover:text-slate-700"
+                          } ${currentZoneStatus === "FULL" || isParentMaintenance ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          {stStyle.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-8">
@@ -412,6 +444,9 @@ const ZoneByFloorManagement = () => {
                       Edit Zone
                     </Button>
                   </div>
+                      </>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400">
@@ -462,7 +497,15 @@ const ZoneByFloorManagement = () => {
         onCancel={handleCloseSlotModal}
         zoneName={selectedZoneName}
         loading={slotsLoading}
-        slotNames={slotNames}
+        zoneId={selectedSlotZoneId}
+        slots={slots}
+        floorId={floorContext?.floorId}
+        zoneStatus={
+          selectedSlotZoneId
+            ? zoneList.find((z) => z.id === selectedSlotZoneId)?.status
+            : null
+        }
+        isParentMaintenance={isParentMaintenance}
       />
     </div>
   );
