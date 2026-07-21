@@ -62,6 +62,8 @@ export const normalizeReservation = (record) => {
         record.checkinImageUrl,
         session.checkinImageUrl,
         record.checkin_image_url,
+        record.checkinVehicleImage,
+        session.checkinVehicleImage,
         record.imageCheckIn,
         session.imageCheckIn,
         record.checkInImage,

@@ -76,6 +76,7 @@ import cancelReservationsReducer from "./driver/reservationManagement/cancelRese
 import guestCheckoutOcrReducer from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSlice";
 import incidentReducer from "./incident/incidentSlice";
 import buildingRulesReducer from "./manager/Building/buildingRules/buildingRulesSlice";
+import updateSlotStatusReducer from "./manager/Building/zone/updateSlotStatus/updateSlotStatusSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -130,6 +131,7 @@ const rootReducer = combineReducers({
   updateZone: updateZoneReducer,
   getRevenue: getRevenueReducer,
   buildingRules: buildingRulesReducer,
+  updateSlotStatus: updateSlotStatusReducer,
 
   //staff
   getAllReservation: getAllReservationReducer,

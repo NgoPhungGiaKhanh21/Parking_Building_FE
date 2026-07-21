@@ -28,17 +28,17 @@ const SidebarManager = () => {
   }, [dispatch]);
 
   const menuItems = [
-    // {
-    //   id: "dashboard",
-    //   label: "Dashboard",
-    //   icon: LayoutDashboard,
-    //   to: "/manager",
-    // },
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      to: "/manager",
+    },
     {
       id: "building",
       label: "Building",
       icon: Building2,
-      to: "/manager",
+      to: "/manager/building",
     },
     {
       id: "parking-space",

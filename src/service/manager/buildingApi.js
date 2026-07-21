@@ -79,3 +79,7 @@ export const getSlotListApi = (zoneId, data) => {
 export const getOccupiedSlotApi = (data) => {
   return api.get(`/manager/setup/slots/${data.slotId}/occupancy`, data);
 }
+
+export const updateSlotStatusApi = (slotId, status) => {
+  return api.patch(`/manager/setup/slots/${slotId}/status`, { status });
+};

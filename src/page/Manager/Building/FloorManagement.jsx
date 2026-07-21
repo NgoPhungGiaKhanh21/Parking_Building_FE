@@ -1,4 +1,4 @@
-import { ArrowLeft, PenSquare, Settings2, CarFront } from "lucide-react";
+import { ArrowLeft, PenSquare, Settings2, CarFront, Wrench } from "lucide-react";
 import {
   Button,
   Form,
@@ -6,7 +6,6 @@ import {
   InputNumber,
   Select,
   Spin,
-  Switch,
   Tag,
 } from "antd";
 import { useEffect, useMemo, useState } from "react";
@@ -33,8 +32,12 @@ import {
   floorNameToSlug,
   FLOOR_CONTEXT_STORAGE_PREFIX,
   isActiveStatus,
+  getStatusStyle,
+  normalizeStatus,
   mapVehicleTypeOptions,
 } from "./utils/buildingUtils";
+
+const FLOOR_STATUSES = ["ACTIVE", "INACTIVE", "MAINTENANCE"];
 
 const FloorCard = ({
   floor,
@@ -42,11 +45,14 @@ const FloorCard = ({
   onEdit,
   onStatusChange,
   statusLoading,
+  parentMaintenance,
 }) => {
   const name = floor.name || floor.floorName || "N/A";
   const level = floor.level ?? floor.floorLevel ?? "N/A";
   const vehicleType = floor.vehicleTypeName || floor.vehicleType || "N/A";
   const capacity = floor.maxCapacity ?? 0;
+  const statusStyle = getStatusStyle(floor.status);
+  const currentStatus = normalizeStatus(floor.status);
 
   return (
     <div
@@ -59,8 +65,7 @@ const FloorCard = ({
           onSelect(floor);
         }
       }}
-      // Tinh chỉnh hiệu ứng hover mượt mà và bóng đổ tinh tế hơn
-      className="group flex min-h-[200px] cursor-pointer flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-md"
+      className={`group flex min-h-[200px] h-full cursor-pointer flex-col rounded-2xl border-2 ${statusStyle.border} bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}
     >
       <div className="mb-4 flex items-start justify-between gap-2">
         <div>
@@ -77,18 +82,41 @@ const FloorCard = ({
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <Switch
-            size="small"
-            checked={isActiveStatus(floor.status)}
-            loading={statusLoading}
-            checkedChildren="On"
-            unCheckedChildren="Off"
-            onChange={(checked) => onStatusChange(floor.id, checked)}
-          />
+          <Tag color={statusStyle.tagColor}>
+            {currentStatus === "MAINTENANCE" && <Wrench size={10} className="mr-1 inline" />}
+            {statusStyle.label}
+          </Tag>
           <Tag color="blue" className="m-0">
             Level {level}
           </Tag>
         </div>
+      </div>
+
+      {/* Status segmented buttons */}
+      <div
+        className="mb-3 flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        {FLOOR_STATUSES.map((st) => {
+          const isActive = currentStatus === st;
+          const stStyle = getStatusStyle(st);
+          return (
+            <button
+              key={st}
+              type="button"
+              disabled={statusLoading || parentMaintenance}
+              onClick={() => onStatusChange(floor.id, st)}
+              className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                isActive
+                  ? `${stStyle.bg} ${stStyle.border} border text-slate-800 shadow-sm`
+                  : "border border-transparent text-slate-500 hover:bg-white hover:text-slate-700"
+              } ${statusLoading || parentMaintenance ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              {stStyle.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-2 space-y-3">
@@ -103,7 +131,6 @@ const FloorCard = ({
       </div>
 
       <div className="mt-auto flex items-center justify-between pt-5">
-        {/* Nút View zones đổi thành dạng interactive text */}
         <span className="text-sm font-semibold text-indigo-600 transition-colors group-hover:text-indigo-700">
           View zones →
         </span>
@@ -243,12 +270,12 @@ const FloorManagement = () => {
     );
   };
 
-  const handleFloorStatusChange = (floorId, checked) => {
+  const handleFloorStatusChange = (floorId, newStatus) => {
     dispatch(
       updateFloorStatusRequest({
         floorId,
         buildingId,
-        status: checked ? "ACTIVE" : "INACTIVE",
+        status: newStatus,
       })
     );
   };
@@ -261,8 +288,9 @@ const FloorManagement = () => {
     const floorContext = {
       floorId: floor.id,
       floorName,
-      buildingId,
       buildingName,
+      buildingStatus: building?.status,
+      floorStatus: floor.status,
       maxCapacity: floor.maxCapacity ?? null,
     };
 
@@ -305,7 +333,7 @@ const FloorManagement = () => {
               </p>
             </div>
           </div>
-          <Link to="/manager" className="self-start sm:self-auto">
+          <Link to="/manager/building" className="self-start sm:self-auto">
             <Button
               size="large"
               className="rounded-xl border-slate-200 hover:border-slate-300"
@@ -459,6 +487,7 @@ const FloorManagement = () => {
                   onEdit={handleOpenUpdateFloorModal}
                   onStatusChange={handleFloorStatusChange}
                   statusLoading={updatingFloorId === floor.id}
+                  parentMaintenance={normalizeStatus(building?.status) === "MAINTENANCE"}
                 />
               ))}
             </div>
