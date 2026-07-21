@@ -74,6 +74,7 @@ import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/gu
 import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
 import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
 import {watchCancelReservations} from "./driver/reservationManagement/cancelReservations/cancelReservationsSaga";
+import { watchIncident } from "./incident/incidentSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -89,6 +90,7 @@ export default function* rootSaga() {
     watchForgotPassword(),
     watchVerifyOtp(),
     watchResetPassword(),
+    watchIncident(),
 
     //manager
     watchCreateBuilding(),

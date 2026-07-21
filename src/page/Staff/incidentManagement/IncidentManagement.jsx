@@ -1,0 +1,584 @@
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Alert,
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Table,
+  Tag,
+} from "antd";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Eye,
+  FileWarning,
+  LogOut,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
+import dayjs from "dayjs";
+import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
+import {
+  checkoutDriverAfterIncidentRequest,
+  getAllDriverIncidentsRequest,
+  resetIncidentMutationStatus,
+  updateIncidentStatusRequest,
+} from "../../../redux/incident/incidentSlice";
+
+const { TextArea } = Input;
+
+const TYPE_LABELS = {
+  DRIVER_LOST_TICKET: "Lost parking ticket",
+  DRIVER_CANNOT_FIND_VEHICLE: "Cannot find vehicle",
+  DRIVER_INCORRECT_FEE: "Incorrect parking fee",
+  DRIVER_SLOT_OCCUPIED: "Assigned slot occupied",
+  SLOT_CONFLICT: "Slot conflict",
+  RESERVATION_NO_SHOW: "Reservation no-show",
+  PAYMENT_EXCEPTION: "Payment exception",
+  UNAUTHORIZED_PARKING: "Unauthorized parking",
+  MAINTENANCE_CONFLICT: "Maintenance conflict",
+};
+
+const STATUS_COLORS = {
+  OPEN: "red",
+  IN_PROGRESS: "blue",
+  PENDING: "gold",
+  RESOLVED: "green",
+  CLOSED: "default",
+  CANCELLED: "default",
+};
+
+const STATUS_OPTIONS = [
+  { value: "OPEN", label: "Open" },
+  { value: "IN_PROGRESS", label: "In progress" },
+  { value: "PENDING", label: "Pending" },
+  { value: "RESOLVED", label: "Resolved" },
+  { value: "CLOSED", label: "Closed" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+const ACTION_OPTIONS_BY_TYPE = {
+  DRIVER_LOST_TICKET: [
+    { value: "AUTHORIZE_CHECKOUT", label: "Authorize checkout" },
+  ],
+  DRIVER_CANNOT_FIND_VEHICLE: [
+    {
+      value: "PROVIDE_VEHICLE_LOCATION",
+      label: "Provide vehicle location",
+    },
+  ],
+  DRIVER_INCORRECT_FEE: [
+    { value: "UPDATE_PAYMENT", label: "Update payment amount" },
+    { value: "REJECT", label: "Reject report" },
+  ],
+  DRIVER_SLOT_OCCUPIED: [
+    { value: "REASSIGN_SLOT", label: "Reassign slot" },
+    { value: "NO_SLOT_AVAILABLE", label: "No slot available" },
+  ],
+};
+
+const IncidentManagement = () => {
+  const dispatch = useDispatch();
+  const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState(null);
+  const [selectedIncident, setSelectedIncident] = useState(null);
+
+  const {
+    allReports,
+    loadingAllReports,
+    updating,
+    checkingOut,
+    updateSuccess,
+    checkoutSuccess,
+    error,
+  } = useSelector((state) => state.incident);
+
+  const selectedStatus = Form.useWatch("status", form);
+  const selectedAction = Form.useWatch("resolutionAction", form);
+
+  useEffect(() => {
+    dispatch(getAllDriverIncidentsRequest());
+    return () => dispatch(resetIncidentMutationStatus());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!updateSuccess) return;
+    setSelectedIncident(null);
+    form.resetFields();
+    dispatch(resetIncidentMutationStatus());
+  }, [dispatch, form, updateSuccess]);
+
+  useEffect(() => {
+    if (!checkoutSuccess) return;
+    dispatch(resetIncidentMutationStatus());
+  }, [checkoutSuccess, dispatch]);
+
+  const reports = useMemo(
+    () => (Array.isArray(allReports) ? allReports : []),
+    [allReports],
+  );
+
+  const typeOptions = useMemo(
+    () =>
+      [...new Set(reports.map((item) => item.incidentType))]
+        .filter(Boolean)
+        .map((value) => ({
+          value,
+          label: TYPE_LABELS[value] || value.replaceAll("_", " "),
+        })),
+    [reports],
+  );
+
+  const filteredReports = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    return reports.filter((item) => {
+      const searchable = [
+        item.vehiclePlate,
+        item.ticketCode,
+        item.sessionId,
+        item.reporterId,
+        item.description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return (
+        (!keyword || searchable.includes(keyword)) &&
+        (!statusFilter || item.status === statusFilter) &&
+        (!typeFilter || item.incidentType === typeFilter)
+      );
+    });
+  }, [reports, searchText, statusFilter, typeFilter]);
+
+  const summary = useMemo(
+    () => ({
+      open: reports.filter((item) => item.status === "OPEN").length,
+      processing: reports.filter((item) =>
+        ["IN_PROGRESS", "PENDING"].includes(item.status),
+      ).length,
+      resolved: reports.filter((item) => item.status === "RESOLVED").length,
+      closed: reports.filter((item) => item.status === "CLOSED").length,
+    }),
+    [reports],
+  );
+
+  const openIncident = (incident) => {
+    setSelectedIncident(incident);
+    form.setFieldsValue({
+      status: incident.status || "OPEN",
+      resolution: incident.resolution || "",
+      resolutionAction: incident.resolutionAction || undefined,
+      adjustedAmount: incident.adjustedAmount,
+      newSlotId: incident.newSlotId,
+    });
+  };
+
+  const closeIncident = () => {
+    setSelectedIncident(null);
+    form.resetFields();
+    dispatch(resetIncidentMutationStatus());
+  };
+
+  const handleUpdate = (values) => {
+    const data = {};
+    if (values.resolution?.trim()) data.resolution = values.resolution.trim();
+    if (values.resolutionAction) {
+      data.resolutionAction = values.resolutionAction;
+    }
+    if (
+      values.resolutionAction === "UPDATE_PAYMENT" &&
+      values.adjustedAmount != null
+    ) {
+      data.adjustedAmount = Number(values.adjustedAmount);
+    }
+    if (values.resolutionAction === "REASSIGN_SLOT" && values.newSlotId) {
+      data.newSlotId = values.newSlotId.trim();
+    }
+
+    dispatch(
+      updateIncidentStatusRequest({
+        incidentId: selectedIncident.incidentId,
+        status: values.status,
+        data,
+      }),
+    );
+  };
+
+  const handleAuthorizedCheckout = () => {
+    dispatch(
+      checkoutDriverAfterIncidentRequest({
+        sessionId: selectedIncident.sessionId,
+      }),
+    );
+  };
+
+  const columns = [
+    {
+      title: "Driver / Vehicle",
+      key: "driver",
+      render: (_, record) => (
+        <div>
+          <p className="font-semibold text-slate-800">
+            {record.vehiclePlate || "Unknown vehicle"}
+          </p>
+          <p className="text-xs text-slate-400">
+            {record.reporterId || "Driver"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "Incident",
+      key: "incident",
+      render: (_, record) => (
+        <div className="max-w-[320px]">
+          <p className="font-semibold text-slate-700">
+            {TYPE_LABELS[record.incidentType] || record.incidentType}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-slate-500">
+            {record.description || "—"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "Session",
+      key: "session",
+      render: (_, record) => (
+        <div className="font-mono text-xs text-slate-500">
+          <p>{record.ticketCode || "No ticket"}</p>
+          <p>{record.sessionId || "—"}</p>
+        </div>
+      ),
+    },
+    {
+      title: "Source",
+      dataIndex: "reportSource",
+      key: "reportSource",
+      render: (source) => (
+        <Tag color={source === "SYSTEM" ? "purple" : "cyan"}>
+          {source || "DRIVER"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={STATUS_COLORS[status] || "default"}>
+          {String(status || "UNKNOWN").replaceAll("_", " ")}
+        </Tag>
+      ),
+    },
+    {
+      title: "Created",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      sorter: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
+      defaultSortOrder: "descend",
+      render: (value) =>
+        value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—",
+    },
+    {
+      title: "Action",
+      key: "action",
+      fixed: "right",
+      align: "center",
+      render: (_, record) => (
+        <Button
+          size="small"
+          icon={<Eye size={14} />}
+          onClick={() => openIncident(record)}
+        >
+          Review
+        </Button>
+      ),
+    },
+  ];
+
+  const actionOptions =
+    ACTION_OPTIONS_BY_TYPE[selectedIncident?.incidentType] || [];
+  const needsResolution = selectedStatus === "RESOLVED";
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+      <div className="mb-6 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+        <CommonBreadcrumb role="Staff" page="incidents" />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <ShieldCheck size={28} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">
+                Incident Management
+              </h1>
+              <p className="text-slate-500">
+                Review driver reports, record resolutions, and authorize actions.
+              </p>
+            </div>
+          </div>
+          <Button
+            icon={<RefreshCw size={15} />}
+            loading={loadingAllReports}
+            onClick={() => dispatch(getAllDriverIncidentsRequest())}
+          >
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {[
+          {
+            label: "Open",
+            value: summary.open,
+            icon: AlertTriangle,
+            color: "text-red-600",
+          },
+          {
+            label: "Processing",
+            value: summary.processing,
+            icon: Clock3,
+            color: "text-blue-600",
+          },
+          {
+            label: "Resolved",
+            value: summary.resolved,
+            icon: CheckCircle2,
+            color: "text-emerald-600",
+          },
+          {
+            label: "Closed",
+            value: summary.closed,
+            icon: FileWarning,
+            color: "text-slate-600",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500">{item.label}</p>
+                <p className="mt-1 text-3xl font-black text-slate-800">
+                  {item.value}
+                </p>
+              </div>
+              <item.icon size={24} className={item.color} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          className="mb-5"
+          message={typeof error === "string" ? error : "Request failed"}
+        />
+      )}
+
+      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px_260px_auto]">
+          <Input
+            allowClear
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            prefix={<Search size={15} className="text-slate-400" />}
+            placeholder="Search plate, ticket, session, reporter..."
+          />
+          <Select
+            allowClear
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value ?? null)}
+            placeholder="Filter status"
+            options={STATUS_OPTIONS}
+          />
+          <Select
+            allowClear
+            value={typeFilter}
+            onChange={(value) => setTypeFilter(value ?? null)}
+            placeholder="Filter incident type"
+            options={typeOptions}
+          />
+          <Button
+            onClick={() => {
+              setSearchText("");
+              setStatusFilter(null);
+              setTypeFilter(null);
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+
+        <Table
+          rowKey={(record) => record.incidentId}
+          columns={columns}
+          dataSource={filteredReports}
+          loading={loadingAllReports}
+          pagination={{ pageSize: 10, showSizeChanger: true }}
+          scroll={{ x: 1150 }}
+          locale={{ emptyText: "No driver reports found." }}
+        />
+      </div>
+
+      <Modal
+        open={Boolean(selectedIncident)}
+        onCancel={closeIncident}
+        footer={null}
+        width={680}
+        title="Review Incident"
+      >
+        {selectedIncident && (
+          <>
+            <div className="mb-5 grid grid-cols-1 gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Incident
+                </p>
+                <p className="font-semibold text-slate-800">
+                  {TYPE_LABELS[selectedIncident.incidentType] ||
+                    selectedIncident.incidentType}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Vehicle
+                </p>
+                <p className="font-semibold text-slate-800">
+                  {selectedIncident.vehiclePlate || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Session
+                </p>
+                <p className="break-all font-mono text-xs text-slate-700">
+                  {selectedIncident.sessionId || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Reporter
+                </p>
+                <p className="text-slate-700">
+                  {selectedIncident.reporterId || "—"}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Driver description
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-slate-700">
+                  {selectedIncident.description || "—"}
+                </p>
+              </div>
+            </div>
+
+            <Form form={form} layout="vertical" onFinish={handleUpdate}>
+              <Form.Item
+                name="status"
+                label="Status"
+                rules={[{ required: true, message: "Select a status." }]}
+              >
+                <Select options={STATUS_OPTIONS} />
+              </Form.Item>
+
+              {needsResolution && actionOptions.length > 0 && (
+                <Form.Item
+                  name="resolutionAction"
+                  label="Resolution action"
+                  rules={[
+                    { required: true, message: "Select a resolution action." },
+                  ]}
+                >
+                  <Select
+                    placeholder="Select the business action"
+                    options={actionOptions}
+                  />
+                </Form.Item>
+              )}
+
+              {selectedAction === "UPDATE_PAYMENT" && (
+                <Form.Item
+                  name="adjustedAmount"
+                  label="Adjusted amount (VND)"
+                  rules={[
+                    { required: true, message: "Enter the adjusted amount." },
+                  ]}
+                >
+                  <InputNumber min={0} className="w-full" />
+                </Form.Item>
+              )}
+
+              {selectedAction === "REASSIGN_SLOT" && (
+                <Form.Item
+                  name="newSlotId"
+                  label="New slot ID"
+                  rules={[{ required: true, message: "Enter the new slot ID." }]}
+                >
+                  <Input placeholder="Example: SLOT-C-102" />
+                </Form.Item>
+              )}
+
+              {(needsResolution || selectedStatus === "PENDING") && (
+                <Form.Item
+                  name="resolution"
+                  label={
+                    needsResolution ? "Resolution note" : "Pending reason"
+                  }
+                  rules={[
+                    { required: true, message: "Enter a resolution note." },
+                    { min: 5, message: "Enter at least 5 characters." },
+                  ]}
+                >
+                  <TextArea
+                    rows={4}
+                    maxLength={500}
+                    showCount
+                    placeholder="Describe verification and action taken..."
+                  />
+                </Form.Item>
+              )}
+
+              <div className="flex flex-wrap justify-end gap-3">
+                {selectedIncident.status === "RESOLVED" &&
+                  selectedIncident.resolutionAction ===
+                    "AUTHORIZE_CHECKOUT" && (
+                    <Button
+                      type="primary"
+                      ghost
+                      loading={checkingOut}
+                      icon={<LogOut size={15} />}
+                      onClick={handleAuthorizedCheckout}
+                    >
+                      Checkout by Session ID
+                    </Button>
+                  )}
+                <Button onClick={closeIncident}>Cancel</Button>
+                <Button type="primary" htmlType="submit" loading={updating}>
+                  Save Incident
+                </Button>
+              </div>
+            </Form>
+          </>
+        )}
+      </Modal>
+    </div>
+  );
+};
+
+export default IncidentManagement;

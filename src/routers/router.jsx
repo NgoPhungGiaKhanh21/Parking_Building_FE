@@ -32,6 +32,8 @@ import GuestPayment from "../page/Staff/vehicleExitGuest/GuestPayment";
 import GuestPaymentSuccess from "../page/Staff/vehicleExitGuest/GuestPaymentSuccess";
 import GuestPaymentCancel from "../page/Staff/vehicleExitGuest/GuestPaymentCancel";
 import Availability from "../page/Driver/Availability/availability"
+import DriverIncidentReports from "../page/Driver/IncidentReports/DriverIncidentReports";
+import IncidentManagement from "../page/Staff/incidentManagement/IncidentManagement";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -114,6 +116,7 @@ const router = createBrowserRouter([
           { path: "vehicle-exit/payment/success", element: <GuestPaymentSuccess /> },
           { path: "vehicle-exit/payment/failed", element: <GuestPaymentCancel /> },
           { path: "payments", element: <PaymentManagement /> },
+          { path: "incidents", element: <IncidentManagement /> },
         ],
       },
     ],
@@ -135,6 +138,7 @@ const router = createBrowserRouter([
           { path: "payment/success", element: <PaymentSuccess /> },
           { path: "payment/cancel", element: <PaymentCancel /> },
           { path: "payment-history", element: <PaymentHistory /> },
+          { path: "reports", element: <DriverIncidentReports /> },
         ],
       },
     ],
