@@ -75,6 +75,7 @@ import unifiedCheckoutReducer from './staff/parking_session/checkout/unifiedChec
 import cancelReservationsReducer from "./driver/reservationManagement/cancelReservations/cancelReservationsSlice";
 import guestCheckoutOcrReducer from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSlice";
 import incidentReducer from "./incident/incidentSlice";
+import buildingRulesReducer from "./manager/Building/buildingRules/buildingRulesSlice";
 
 const rootReducer = combineReducers({
   //login - register
@@ -128,6 +129,7 @@ const rootReducer = combineReducers({
   deletePricingPolicy: deletePricingPolicyReducer,
   updateZone: updateZoneReducer,
   getRevenue: getRevenueReducer,
+  buildingRules: buildingRulesReducer,
 
   //staff
   getAllReservation: getAllReservationReducer,

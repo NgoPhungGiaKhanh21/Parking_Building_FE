@@ -75,6 +75,7 @@ import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedChecki
 import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
 import {watchCancelReservations} from "./driver/reservationManagement/cancelReservations/cancelReservationsSaga";
 import { watchIncident } from "./incident/incidentSaga";
+import { watchBuildingRules } from "./manager/Building/buildingRules/buildingRulesSaga";
 export default function* rootSaga() {
   yield all([
     //login - register
@@ -128,6 +129,7 @@ export default function* rootSaga() {
     watchDeletePricingPolicy(),
     watchUpdateZone(),
     watchGetRevenue(),
+    watchBuildingRules(),
 
     //staff
     watchGetAllReservation(),
