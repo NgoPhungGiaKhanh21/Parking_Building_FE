@@ -31,7 +31,8 @@
             "guest-checkout": "Guest Check-out",
             "guest-payment": "Guest Payment",
             "ticket": "Parking Ticket Management",
-            "payment": "Payment Management"
+            "payment": "Payment Management",
+            "incidents": "Incident Management"
         }
     },
     "Driver": {
@@ -42,7 +43,8 @@
             "session": "Current Session",
             "reservation": "My Reservations",
             "payment": "Payment",
-            "payment-history": "Payment History"
+            "payment-history": "Payment History",
+            "reports": "Incident Reports"
         }
     }
 }

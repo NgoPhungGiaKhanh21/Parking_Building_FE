@@ -11,6 +11,7 @@ import {
   User,
   CarFront,
   UserRound,
+  ShieldAlert,
 } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
 import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
@@ -52,6 +53,12 @@ const SidebarStaff = () => {
       label: "Payments",
       icon: CreditCard,
       to: "/staff/payments",
+    },
+    {
+      id: "incidents",
+      label: "Incidents",
+      icon: ShieldAlert,
+      to: "/staff/incidents",
     },
   ];
 

@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   User,
   CarFront,
+  FileWarning,
 } from "lucide-react";
 import UserProfileModal from "./UserProfileModal";
 import { getProfileUserRequest } from "../../redux/profileUser/getProfileUserSlice";
@@ -58,6 +59,12 @@ const SidebarDriver = () => {
       label: "Payment History",
       icon: Receipt,
       to: "/driver/payment-history",
+    },
+    {
+      id: "incident-reports",
+      label: "Incident Reports",
+      icon: FileWarning,
+      to: "/driver/reports",
     },
   ];
 
