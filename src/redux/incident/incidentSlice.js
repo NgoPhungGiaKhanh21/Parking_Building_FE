@@ -10,10 +10,12 @@ const initialState = {
   checkingOut: false,
   loadingEvidence: false,
   loadingAvailableSlots: false,
+  loadingRelatedIncidents: false,
   verifyingVehicle: false,
   validatingReassign: false,
   latestReservation: null,
   availableSlots: [],
+  relatedIncidents: [],
   vehicleVerification: null,
   reassignValidation: null,
   enhancementError: null,
@@ -124,6 +126,20 @@ const incidentSlice = createSlice({
       state.enhancementError = action.payload;
     },
 
+    getIncidentsBySessionRequest: (state) => {
+      state.loadingRelatedIncidents = true;
+      state.relatedIncidents = [];
+      state.enhancementError = null;
+    },
+    getIncidentsBySessionSuccess: (state, action) => {
+      state.loadingRelatedIncidents = false;
+      state.relatedIncidents = action.payload;
+    },
+    getIncidentsBySessionFail: (state, action) => {
+      state.loadingRelatedIncidents = false;
+      state.enhancementError = action.payload;
+    },
+
     verifyIncidentVehicleRequest: (state) => {
       state.verifyingVehicle = true;
       state.vehicleVerification = null;
@@ -155,10 +171,12 @@ const incidentSlice = createSlice({
     resetIncidentEnhancement: (state) => {
       state.loadingEvidence = false;
       state.loadingAvailableSlots = false;
+      state.loadingRelatedIncidents = false;
       state.verifyingVehicle = false;
       state.validatingReassign = false;
       state.latestReservation = null;
       state.availableSlots = [];
+      state.relatedIncidents = [];
       state.vehicleVerification = null;
       state.reassignValidation = null;
       state.enhancementError = null;
@@ -195,6 +213,9 @@ export const {
   getIncidentAvailableSlotsRequest,
   getIncidentAvailableSlotsSuccess,
   getIncidentAvailableSlotsFail,
+  getIncidentsBySessionRequest,
+  getIncidentsBySessionSuccess,
+  getIncidentsBySessionFail,
   verifyIncidentVehicleRequest,
   verifyIncidentVehicleSuccess,
   verifyIncidentVehicleFail,

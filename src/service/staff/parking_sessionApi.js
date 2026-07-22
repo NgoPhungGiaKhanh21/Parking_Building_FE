@@ -139,6 +139,12 @@ export const getStaffBuildingApi = (data) => {
 // Query params: ticketCode, paymentMethod
 // FormData: plateImage (optional), checkoutImage (optional)
 export const unifiedCheckoutApi = (data) => {
+  if (!data.plateImage && !data.checkoutImage && !data.paymentMethod) {
+    return api.post("/sessions/checkout", {
+      ticketCode: data.ticketCode,
+    });
+  }
+
   const formData = new FormData();
   if (data.plateImage) formData.append("plateImage", data.plateImage);
   if (data.checkoutImage) formData.append("checkoutImage", data.checkoutImage);
@@ -147,7 +153,7 @@ export const unifiedCheckoutApi = (data) => {
   if (data.ticketCode) params.append("ticketCode", data.ticketCode);
   if (data.paymentMethod) params.append("paymentMethod", data.paymentMethod);
 
-  return api.post(`sessions/checkout?${params.toString()}`, formData, {
+  return api.post(`/sessions/checkout?${params.toString()}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

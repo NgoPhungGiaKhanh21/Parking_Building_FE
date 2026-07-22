@@ -6,6 +6,7 @@ import {
   getAllDriverIncidentsApi,
   getIncidentAvailableSlotsApi,
   getIncidentLatestReservationApi,
+  getIncidentsBySessionApi,
   getMyDriverIncidentsApi,
   updateIncidentStatusApi,
   validateIncidentReassignApi,
@@ -27,6 +28,9 @@ import {
   getIncidentLatestReservationFail,
   getIncidentLatestReservationRequest,
   getIncidentLatestReservationSuccess,
+  getIncidentsBySessionFail,
+  getIncidentsBySessionRequest,
+  getIncidentsBySessionSuccess,
   getMyDriverIncidentsFail,
   getMyDriverIncidentsRequest,
   getMyDriverIncidentsSuccess,
@@ -140,6 +144,19 @@ function* handleGetIncidentAvailableSlots(action) {
   }
 }
 
+function* handleGetIncidentsBySession(action) {
+  try {
+    const response = yield call(getIncidentsBySessionApi, action.payload);
+    yield put(getIncidentsBySessionSuccess(getResponseList(response)));
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Failed to load related incidents",
+    );
+    yield put(getIncidentsBySessionFail(message));
+  }
+}
+
 function* handleVerifyIncidentVehicle(action) {
   try {
     const response = yield call(verifyIncidentVehicleApi, action.payload);
@@ -195,6 +212,10 @@ export function* watchIncident() {
   yield takeLatest(
     getIncidentAvailableSlotsRequest.type,
     handleGetIncidentAvailableSlots,
+  );
+  yield takeLatest(
+    getIncidentsBySessionRequest.type,
+    handleGetIncidentsBySession,
   );
   yield takeLatest(
     verifyIncidentVehicleRequest.type,

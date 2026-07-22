@@ -39,14 +39,6 @@ const PaymentHistory = () => {
 
   const columns = [
     {
-      title: "Payment ID",
-      dataIndex: "paymentId",
-      key: "paymentId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-600">{id}</code>
-      ),
-    },
-    {
       title: "Reservation",
       dataIndex: "reservationCode",
       key: "reservationCode",
@@ -75,23 +67,6 @@ const PaymentHistory = () => {
       render: (status) => (
         <Tag color={PAYMENT_STATUS_COLORS[status] || "default"}>{status}</Tag>
       ),
-    },
-    {
-      title: "Paid Status",
-      dataIndex: "paidStatus",
-      key: "paidStatus",
-      render: (status) =>
-        status ? (
-          <Tag color={PAYMENT_STATUS_COLORS[status] || "default"}>{status}</Tag>
-        ) : (
-          "—"
-        ),
-    },
-    {
-      title: "Transaction",
-      dataIndex: "transactionCode",
-      key: "transactionCode",
-      render: (code) => code || "—",
     },
     {
       title: "Time",
@@ -144,7 +119,7 @@ const PaymentHistory = () => {
             columns={columns}
             dataSource={payments}
             pagination={{ pageSize: 10 }}
-            scroll={{ x: 1000 }}
+            scroll={{ x: 650 }}
           />
         )}
       </div>
