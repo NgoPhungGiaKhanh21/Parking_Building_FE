@@ -8,12 +8,14 @@ import {
   InputNumber,
   Modal,
   Select,
+  Spin,
   Table,
   Tag,
 } from "antd";
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardCheck,
   Clock3,
   Eye,
   FileWarning,
@@ -21,14 +23,20 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  SquareParking,
 } from "lucide-react";
 import dayjs from "dayjs";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import {
   checkoutDriverAfterIncidentRequest,
   getAllDriverIncidentsRequest,
+  getIncidentAvailableSlotsRequest,
+  getIncidentLatestReservationRequest,
   resetIncidentMutationStatus,
+  resetIncidentEnhancement,
   updateIncidentStatusRequest,
+  validateIncidentReassignRequest,
+  verifyIncidentVehicleRequest,
 } from "../../../redux/incident/incidentSlice";
 
 const { TextArea } = Input;
@@ -62,6 +70,19 @@ const STATUS_OPTIONS = [
   { value: "CLOSED", label: "Closed" },
   { value: "CANCELLED", label: "Cancelled" },
 ];
+
+const getAllowedStatusOptions = (currentStatus) => {
+  const transitions = {
+    OPEN: ["OPEN", "IN_PROGRESS", "CANCELLED"],
+    IN_PROGRESS: ["IN_PROGRESS", "PENDING", "RESOLVED", "CANCELLED"],
+    PENDING: ["PENDING", "IN_PROGRESS", "RESOLVED", "CANCELLED"],
+    RESOLVED: ["RESOLVED", "CLOSED"],
+    CLOSED: ["CLOSED"],
+    CANCELLED: ["CANCELLED"],
+  };
+  const allowed = transitions[currentStatus] || [currentStatus];
+  return STATUS_OPTIONS.filter((option) => allowed.includes(option.value));
+};
 
 const ACTION_OPTIONS_BY_TYPE = {
   DRIVER_LOST_TICKET: [
@@ -99,21 +120,39 @@ const IncidentManagement = () => {
     updateSuccess,
     checkoutSuccess,
     error,
+    loadingEvidence,
+    loadingAvailableSlots,
+    verifyingVehicle,
+    validatingReassign,
+    latestReservation,
+    availableSlots,
+    vehicleVerification,
+    reassignValidation,
+    enhancementError,
   } = useSelector((state) => state.incident);
 
   const selectedStatus = Form.useWatch("status", form);
   const selectedAction = Form.useWatch("resolutionAction", form);
+  const selectedNewSlotId = Form.useWatch("newSlotId", form);
 
   useEffect(() => {
     dispatch(getAllDriverIncidentsRequest());
-    return () => dispatch(resetIncidentMutationStatus());
+    return () => {
+      dispatch(resetIncidentEnhancement());
+      dispatch(resetIncidentMutationStatus());
+    };
   }, [dispatch]);
 
   useEffect(() => {
     if (!updateSuccess) return;
-    setSelectedIncident(null);
-    form.resetFields();
-    dispatch(resetIncidentMutationStatus());
+    const timer = setTimeout(() => {
+      setSelectedIncident(null);
+      form.resetFields();
+      dispatch(resetIncidentEnhancement());
+      dispatch(resetIncidentMutationStatus());
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [dispatch, form, updateSuccess]);
 
   useEffect(() => {
@@ -171,6 +210,7 @@ const IncidentManagement = () => {
   );
 
   const openIncident = (incident) => {
+    dispatch(resetIncidentEnhancement());
     setSelectedIncident(incident);
     form.setFieldsValue({
       status: incident.status || "OPEN",
@@ -178,13 +218,45 @@ const IncidentManagement = () => {
       resolutionAction: incident.resolutionAction || undefined,
       adjustedAmount: incident.adjustedAmount,
       newSlotId: incident.newSlotId,
+      plateNumber: incident.verifiedPlateNumber || incident.vehiclePlate,
+      ticketCode: incident.verifiedTicketCode || incident.ticketCode,
     });
+    dispatch(getIncidentLatestReservationRequest(incident.incidentId));
+    if (incident.incidentType === "DRIVER_SLOT_OCCUPIED") {
+      dispatch(getIncidentAvailableSlotsRequest(incident.incidentId));
+    }
   };
 
   const closeIncident = () => {
     setSelectedIncident(null);
     form.resetFields();
+    dispatch(resetIncidentEnhancement());
     dispatch(resetIncidentMutationStatus());
+  };
+
+  const handleVerifyVehicle = async () => {
+    const values = await form.validateFields(["plateNumber"]);
+    dispatch(
+      verifyIncidentVehicleRequest({
+        incidentId: selectedIncident.incidentId,
+        data: {
+          plateNumber: values.plateNumber.trim(),
+          ...(form.getFieldValue("ticketCode")?.trim()
+            ? { ticketCode: form.getFieldValue("ticketCode").trim() }
+            : {}),
+        },
+      }),
+    );
+  };
+
+  const handleSlotChange = (newSlotId) => {
+    form.setFieldValue("newSlotId", newSlotId);
+    dispatch(
+      validateIncidentReassignRequest({
+        incidentId: selectedIncident.incidentId,
+        newSlotId,
+      }),
+    );
   };
 
   const handleUpdate = (values) => {
@@ -249,16 +321,7 @@ const IncidentManagement = () => {
         </div>
       ),
     },
-    {
-      title: "Session",
-      key: "session",
-      render: (_, record) => (
-        <div className="font-mono text-xs text-slate-500">
-          <p>{record.ticketCode || "No ticket"}</p>
-          <p>{record.sessionId || "—"}</p>
-        </div>
-      ),
-    },
+
     {
       title: "Source",
       dataIndex: "reportSource",
@@ -283,7 +346,8 @@ const IncidentManagement = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      sorter: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
+      sorter: (a, b) =>
+        dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       defaultSortOrder: "descend",
       render: (value) =>
         value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—",
@@ -308,6 +372,25 @@ const IncidentManagement = () => {
   const actionOptions =
     ACTION_OPTIONS_BY_TYPE[selectedIncident?.incidentType] || [];
   const needsResolution = selectedStatus === "RESOLVED";
+  const allowedStatusOptions = getAllowedStatusOptions(
+    selectedIncident?.status,
+  );
+  const isTerminalIncident = ["CLOSED", "CANCELLED"].includes(
+    selectedIncident?.status,
+  );
+  const verificationMatches =
+    vehicleVerification?.verificationResult === "MATCH" ||
+    selectedIncident?.verificationResult === "MATCH";
+  const requiresVehicleVerification =
+    selectedIncident?.incidentType === "DRIVER_LOST_TICKET" &&
+    selectedStatus === "RESOLVED" &&
+    selectedAction === "AUTHORIZE_CHECKOUT";
+  const reassignIsValid =
+    reassignValidation?.slotId === selectedNewSlotId &&
+    reassignValidation?.isAvailable === true &&
+    reassignValidation?.isInSameBuilding !== false;
+  const requiresValidReassign =
+    selectedStatus === "RESOLVED" && selectedAction === "REASSIGN_SLOT";
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -323,7 +406,8 @@ const IncidentManagement = () => {
                 Incident Management
               </h1>
               <p className="text-slate-500">
-                Review driver reports, record resolutions, and authorize actions.
+                Review driver reports, record resolutions, and authorize
+                actions.
               </p>
             </div>
           </div>
@@ -439,8 +523,24 @@ const IncidentManagement = () => {
         open={Boolean(selectedIncident)}
         onCancel={closeIncident}
         footer={null}
-        width={680}
-        title="Review Incident"
+        width={760}
+        centered
+        classNames={{
+          body: "max-h-[78vh] overflow-y-auto pr-2",
+        }}
+        title={
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <ClipboardCheck size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">Review Incident</p>
+              <p className="text-xs font-normal text-slate-500">
+                Verify evidence and record the appropriate resolution.
+              </p>
+            </div>
+          </div>
+        }
       >
         {selectedIncident && (
           <>
@@ -488,13 +588,172 @@ const IncidentManagement = () => {
               </div>
             </div>
 
+            <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <SquareParking size={17} className="text-blue-600" />
+                <p className="font-bold text-slate-800">
+                  Latest Reservation Evidence
+                </p>
+              </div>
+
+              {loadingEvidence ? (
+                <div className="flex justify-center py-5">
+                  <Spin size="small" />
+                </div>
+              ) : latestReservation ? (
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Reservation
+                    </p>
+                    <p className="font-semibold text-slate-700">
+                      {latestReservation.reservationCode || "—"} ·{" "}
+                      {latestReservation.reservationStatus || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Driver
+                    </p>
+                    <p className="font-semibold text-slate-700">
+                      {latestReservation.driverFullName ||
+                        latestReservation.driverEmail ||
+                        "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Vehicle
+                    </p>
+                    <p className="font-semibold text-slate-700">
+                      {latestReservation.vehiclePlate || "—"}
+                      {latestReservation.vehicleType
+                        ? ` · ${latestReservation.vehicleType}`
+                        : ""}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Reserved location
+                    </p>
+                    <p className="font-semibold text-slate-700">
+                      {[
+                        latestReservation.buildingName,
+                        latestReservation.floorName,
+                        latestReservation.zoneName,
+                        latestReservation.slotName,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  No latest reservation evidence was found.
+                </p>
+              )}
+            </div>
+
+            {enhancementError && (
+              <Alert
+                type="error"
+                showIcon
+                className="mb-5"
+                message={enhancementError}
+              />
+            )}
+
             <Form form={form} layout="vertical" onFinish={handleUpdate}>
+              {selectedIncident.incidentType === "DRIVER_LOST_TICKET" && (
+                <div className="mb-5 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
+                  <p className="mb-1 font-bold text-slate-800">
+                    Verify Vehicle Ownership
+                  </p>
+                  <p className="mb-4 text-xs text-slate-500">
+                    Cross-check the plate and optional ticket against the
+                    parking session before authorizing checkout.
+                  </p>
+
+                  {!["IN_PROGRESS", "PENDING", "RESOLVED"].includes(
+                    selectedIncident.status,
+                  ) && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      className="mb-4"
+                      message="Save the incident as IN PROGRESS before verifying."
+                    />
+                  )}
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Form.Item
+                      name="plateNumber"
+                      label="Verified plate number"
+                      className="mb-3"
+                      rules={[
+                        { required: true, message: "Enter the plate number." },
+                      ]}
+                    >
+                      <Input placeholder="Example: 30A-123456" />
+                    </Form.Item>
+                    <Form.Item
+                      name="ticketCode"
+                      label="Ticket code (optional)"
+                      className="mb-3"
+                    >
+                      <Input placeholder="Example: TKT-789456" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="primary"
+                      ghost
+                      className="min-w-40"
+                      icon={<ShieldCheck size={15} />}
+                      loading={verifyingVehicle}
+                      disabled={
+                        !["IN_PROGRESS", "PENDING", "RESOLVED"].includes(
+                          selectedIncident.status,
+                        )
+                      }
+                      onClick={handleVerifyVehicle}
+                    >
+                      Verify Ownership
+                    </Button>
+                  </div>
+
+                  {(vehicleVerification ||
+                    selectedIncident.verificationResult) && (
+                    <Alert
+                      className="mt-3"
+                      showIcon
+                      type={verificationMatches ? "success" : "error"}
+                      message={`Verification: ${
+                        vehicleVerification?.verificationResult ||
+                        selectedIncident.verificationResult
+                      }`}
+                      description={
+                        vehicleVerification?.message ||
+                        (verificationMatches
+                          ? "Vehicle ownership was verified."
+                          : "Vehicle ownership has not been verified.")
+                      }
+                    />
+                  )}
+                </div>
+              )}
+
               <Form.Item
                 name="status"
                 label="Status"
                 rules={[{ required: true, message: "Select a status." }]}
               >
-                <Select options={STATUS_OPTIONS} />
+                <Select
+                  options={allowedStatusOptions}
+                  disabled={isTerminalIncident}
+                />
               </Form.Item>
 
               {needsResolution && actionOptions.length > 0 && (
@@ -525,21 +784,76 @@ const IncidentManagement = () => {
               )}
 
               {selectedAction === "REASSIGN_SLOT" && (
-                <Form.Item
-                  name="newSlotId"
-                  label="New slot ID"
-                  rules={[{ required: true, message: "Enter the new slot ID." }]}
-                >
-                  <Input placeholder="Example: SLOT-C-102" />
-                </Form.Item>
+                <>
+                  <Form.Item
+                    name="newSlotId"
+                    label="Available slot in the reserved floor"
+                    rules={[
+                      { required: true, message: "Select a replacement slot." },
+                    ]}
+                    extra={
+                      latestReservation?.floorName
+                        ? `Only slots in ${latestReservation.floorName} are returned by the API.`
+                        : "The replacement must be in the same floor as the latest reservation."
+                    }
+                  >
+                    <Select
+                      showSearch
+                      loading={loadingAvailableSlots}
+                      placeholder="Select an available replacement slot"
+                      optionFilterProp="label"
+                      onChange={handleSlotChange}
+                      options={(Array.isArray(availableSlots)
+                        ? availableSlots
+                        : []
+                      ).map((slot) => ({
+                        value: slot.slotId,
+                        label: [
+                          slot.slotName,
+                          slot.zoneName,
+                          slot.floorName,
+                          slot.buildingName,
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                      }))}
+                      notFoundContent={
+                        loadingAvailableSlots ? (
+                          <Spin size="small" />
+                        ) : (
+                          "No available slot in the reserved floor"
+                        )
+                      }
+                    />
+                  </Form.Item>
+
+                  {validatingReassign && (
+                    <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+                      <Spin size="small" />
+                      Validating replacement slot...
+                    </div>
+                  )}
+
+                  {reassignValidation && (
+                    <Alert
+                      className="mb-4"
+                      showIcon
+                      type={reassignIsValid ? "success" : "error"}
+                      message={
+                        reassignValidation.message ||
+                        (reassignIsValid
+                          ? "Slot is available for reassignment"
+                          : "Slot cannot be reassigned")
+                      }
+                    />
+                  )}
+                </>
               )}
 
               {(needsResolution || selectedStatus === "PENDING") && (
                 <Form.Item
                   name="resolution"
-                  label={
-                    needsResolution ? "Resolution note" : "Pending reason"
-                  }
+                  label={needsResolution ? "Resolution note" : "Pending reason"}
                   rules={[
                     { required: true, message: "Enter a resolution note." },
                     { min: 5, message: "Enter at least 5 characters." },
@@ -554,24 +868,51 @@ const IncidentManagement = () => {
                 </Form.Item>
               )}
 
-              <div className="flex flex-wrap justify-end gap-3">
-                {selectedIncident.status === "RESOLVED" &&
-                  selectedIncident.resolutionAction ===
-                    "AUTHORIZE_CHECKOUT" && (
-                    <Button
-                      type="primary"
-                      ghost
-                      loading={checkingOut}
-                      icon={<LogOut size={15} />}
-                      onClick={handleAuthorizedCheckout}
-                    >
-                      Checkout by Session ID
-                    </Button>
-                  )}
-                <Button onClick={closeIncident}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={updating}>
-                  Save Incident
-                </Button>
+              {requiresVehicleVerification && !verificationMatches && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  className="mb-4"
+                  message="A MATCH vehicle verification is required before AUTHORIZE CHECKOUT."
+                />
+              )}
+
+              <div className="sticky bottom-0 z-10 -mx-1 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white px-1 pt-4">
+                <div>
+                  {selectedIncident.status === "RESOLVED" &&
+                    selectedIncident.resolutionAction ===
+                      "AUTHORIZE_CHECKOUT" && (
+                      <Button
+                        type="primary"
+                        ghost
+                        className="min-w-36"
+                        loading={checkingOut}
+                        icon={<LogOut size={15} />}
+                        onClick={handleAuthorizedCheckout}
+                      >
+                        Checkout Driver
+                      </Button>
+                    )}
+                </div>
+                <div className="flex gap-2">
+                  <Button className="min-w-24" onClick={closeIncident}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="min-w-32"
+                    loading={updating}
+                    disabled={
+                      isTerminalIncident ||
+                      (requiresVehicleVerification && !verificationMatches) ||
+                      (requiresValidReassign && !reassignIsValid) ||
+                      validatingReassign
+                    }
+                  >
+                    Save Incident
+                  </Button>
+                </div>
               </div>
             </Form>
           </>

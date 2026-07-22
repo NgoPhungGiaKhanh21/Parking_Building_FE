@@ -1,25 +1,22 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Alert,
   Button,
-  Empty,
   Form,
   Input,
+  Modal,
   Select,
-  Spin,
   Table,
   Tag,
 } from "antd";
 import {
   AlertTriangle,
-  Car,
   CheckCircle2,
   Clock3,
   FileWarning,
   PlusCircle,
   RefreshCw,
-  Ticket,
 } from "lucide-react";
 import dayjs from "dayjs";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -34,17 +31,16 @@ const { TextArea } = Input;
 
 const INCIDENT_TYPE_OPTIONS = [
   { value: "DRIVER_LOST_TICKET", label: "Lost parking ticket" },
-  {
-    value: "DRIVER_CANNOT_FIND_VEHICLE",
-    label: "Cannot find my vehicle",
-  },
   { value: "DRIVER_INCORRECT_FEE", label: "Incorrect parking fee" },
   { value: "DRIVER_SLOT_OCCUPIED", label: "Assigned slot is occupied" },
 ];
 
-const INCIDENT_TYPE_LABELS = Object.fromEntries(
-  INCIDENT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
-);
+const INCIDENT_TYPE_LABELS = {
+  ...Object.fromEntries(
+    INCIDENT_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+  ),
+  DRIVER_CANNOT_FIND_VEHICLE: "Cannot find my vehicle",
+};
 
 const STATUS_COLORS = {
   OPEN: "red",
@@ -65,6 +61,7 @@ const getSessions = (currentSession) => {
 const DriverIncidentReports = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { currentSession, loading: sessionLoading } = useSelector(
     (state) => state.getCurrentSession,
   );
@@ -84,9 +81,20 @@ const DriverIncidentReports = () => {
 
   useEffect(() => {
     if (!createSuccess) return;
+    const timer = setTimeout(() => {
+      setIsCreateModalOpen(false);
+      form.resetFields();
+      dispatch(resetIncidentMutationStatus());
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [createSuccess, dispatch, form]);
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
     form.resetFields();
     dispatch(resetIncidentMutationStatus());
-  }, [createSuccess, dispatch, form]);
+  };
 
   const sessions = useMemo(() => getSessions(currentSession), [currentSession]);
   const reports = useMemo(
@@ -95,13 +103,10 @@ const DriverIncidentReports = () => {
   );
 
   const sessionOptions = useMemo(
-    () =>
-      sessions.map((session) => ({
-        value: session.sessionId,
-        label: `${session.vehiclePlate || "Vehicle"} · ${session.ticketCode || session.sessionId}`,
-      })),
+    () => sessions.filter((session) => session.sessionId),
     [sessions],
   );
+  const activeSession = sessionOptions[0] || null;
 
   const summary = useMemo(
     () => ({
@@ -119,7 +124,7 @@ const DriverIncidentReports = () => {
   const handleSubmit = (values) => {
     dispatch(
       createDriverIncidentRequest({
-        sessionId: values.sessionId,
+        sessionId: activeSession.sessionId,
         incidentType: values.incidentType,
         description: values.description.trim(),
       }),
@@ -135,22 +140,19 @@ const DriverIncidentReports = () => {
           <p className="font-semibold text-slate-800">
             {INCIDENT_TYPE_LABELS[record.incidentType] || record.incidentType}
           </p>
-          <p className="mt-0.5 max-w-[300px] truncate text-xs text-slate-500">
+          <p className="mt-0.5 max-w-75 truncate text-xs text-slate-500">
             {record.description || "—"}
           </p>
         </div>
       ),
     },
     {
-      title: "Vehicle / Ticket",
+      title: "Vehicle",
       key: "vehicle",
       render: (_, record) => (
         <div className="text-sm">
           <p className="font-semibold text-slate-700">
             {record.vehiclePlate || "—"}
-          </p>
-          <p className="font-mono text-xs text-slate-400">
-            {record.ticketCode || record.sessionId || "—"}
           </p>
         </div>
       ),
@@ -179,7 +181,7 @@ const DriverIncidentReports = () => {
       key: "resolution",
       render: (_, record) =>
         record.resolution ? (
-          <div className="max-w-[280px]">
+          <div className="max-w-70">
             <p className="text-sm text-slate-700">{record.resolution}</p>
             {record.resolutionAction && (
               <Tag color="cyan" className="mt-1">
@@ -211,13 +213,24 @@ const DriverIncidentReports = () => {
               </p>
             </div>
           </div>
-          <Button
-            icon={<RefreshCw size={15} />}
-            loading={loadingMyReports}
-            onClick={() => dispatch(getMyDriverIncidentsRequest())}
-          >
-            Refresh
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              icon={<RefreshCw size={15} />}
+              loading={loadingMyReports}
+              onClick={() => dispatch(getMyDriverIncidentsRequest())}
+            >
+              Refresh
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusCircle size={15} />}
+              loading={sessionLoading}
+              disabled={!sessionLoading && !activeSession}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Create Report
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -275,82 +288,7 @@ const DriverIncidentReports = () => {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <PlusCircle size={20} />
-            </div>
-            <div>
-              <h2 className="font-bold text-slate-800">Create report</h2>
-              <p className="text-xs text-slate-500">
-                Select the affected parking session.
-              </p>
-            </div>
-          </div>
-
-          {sessionLoading ? (
-            <div className="flex justify-center py-16">
-              <Spin />
-            </div>
-          ) : sessionOptions.length === 0 ? (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="No active parking session available"
-            />
-          ) : (
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
-              <Form.Item
-                name="sessionId"
-                label="Parking session"
-                rules={[{ required: true, message: "Select a session." }]}
-              >
-                <Select
-                  placeholder="Vehicle plate · ticket"
-                  options={sessionOptions}
-                  suffixIcon={<Car size={15} />}
-                />
-              </Form.Item>
-              <Form.Item
-                name="incidentType"
-                label="Problem type"
-                rules={[{ required: true, message: "Select a problem type." }]}
-              >
-                <Select
-                  placeholder="Select incident type"
-                  options={INCIDENT_TYPE_OPTIONS}
-                  suffixIcon={<Ticket size={15} />}
-                />
-              </Form.Item>
-              <Form.Item
-                name="description"
-                label="Description"
-                rules={[
-                  { required: true, message: "Describe the problem." },
-                  { min: 10, message: "Enter at least 10 characters." },
-                ]}
-              >
-                <TextArea
-                  rows={5}
-                  maxLength={500}
-                  showCount
-                  placeholder="Describe what happened and any useful details..."
-                />
-              </Form.Item>
-              <Button
-                block
-                type="primary"
-                htmlType="submit"
-                loading={creating}
-                className="h-11"
-                icon={<FileWarning size={16} />}
-              >
-                Submit Report
-              </Button>
-            </Form>
-          )}
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold text-slate-800">
             My report history
@@ -361,11 +299,85 @@ const DriverIncidentReports = () => {
             dataSource={reports}
             loading={loadingMyReports}
             pagination={{ pageSize: 8 }}
-            scroll={{ x: 1000 }}
+            scroll={{ x: 760 }}
             locale={{ emptyText: "You have not submitted any reports." }}
           />
         </div>
       </div>
+
+      <Modal
+        open={isCreateModalOpen}
+        onCancel={closeCreateModal}
+        footer={null}
+        width={560}
+        centered
+        title={
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <FileWarning size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">Create Incident Report</p>
+              <p className="text-xs font-normal text-slate-500">
+                Report a problem from your current parking session.
+              </p>
+            </div>
+          </div>
+        }
+      >
+        {activeSession?.vehiclePlate && (
+          <div className="mb-5 mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+              Current vehicle
+            </p>
+            <p className="mt-1 font-bold text-blue-800">
+              {activeSession.vehiclePlate}
+            </p>
+          </div>
+        )}
+
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="incidentType"
+            label="Problem type"
+            rules={[{ required: true, message: "Select a problem type." }]}
+          >
+            <Select
+              size="large"
+              placeholder="Select incident type"
+              options={INCIDENT_TYPE_OPTIONS}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[
+              { required: true, message: "Describe the problem." },
+              { min: 10, message: "Enter at least 10 characters." },
+            ]}
+          >
+            <TextArea
+              rows={5}
+              maxLength={500}
+              showCount
+              placeholder="Describe what happened and any useful details..."
+            />
+          </Form.Item>
+
+          <div className="flex justify-end gap-3">
+            <Button onClick={closeCreateModal}>Cancel</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={creating}
+              icon={<FileWarning size={16} />}
+            >
+              Submit Report
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

@@ -8,6 +8,15 @@ const initialState = {
   creating: false,
   updating: false,
   checkingOut: false,
+  loadingEvidence: false,
+  loadingAvailableSlots: false,
+  verifyingVehicle: false,
+  validatingReassign: false,
+  latestReservation: null,
+  availableSlots: [],
+  vehicleVerification: null,
+  reassignValidation: null,
+  enhancementError: null,
   createSuccess: false,
   updateSuccess: false,
   checkoutSuccess: false,
@@ -86,6 +95,75 @@ const incidentSlice = createSlice({
       state.error = action.payload;
     },
 
+    getIncidentLatestReservationRequest: (state) => {
+      state.loadingEvidence = true;
+      state.latestReservation = null;
+      state.enhancementError = null;
+    },
+    getIncidentLatestReservationSuccess: (state, action) => {
+      state.loadingEvidence = false;
+      state.latestReservation = action.payload;
+    },
+    getIncidentLatestReservationFail: (state, action) => {
+      state.loadingEvidence = false;
+      state.enhancementError = action.payload;
+    },
+
+    getIncidentAvailableSlotsRequest: (state) => {
+      state.loadingAvailableSlots = true;
+      state.availableSlots = [];
+      state.reassignValidation = null;
+      state.enhancementError = null;
+    },
+    getIncidentAvailableSlotsSuccess: (state, action) => {
+      state.loadingAvailableSlots = false;
+      state.availableSlots = action.payload;
+    },
+    getIncidentAvailableSlotsFail: (state, action) => {
+      state.loadingAvailableSlots = false;
+      state.enhancementError = action.payload;
+    },
+
+    verifyIncidentVehicleRequest: (state) => {
+      state.verifyingVehicle = true;
+      state.vehicleVerification = null;
+      state.enhancementError = null;
+    },
+    verifyIncidentVehicleSuccess: (state, action) => {
+      state.verifyingVehicle = false;
+      state.vehicleVerification = action.payload;
+    },
+    verifyIncidentVehicleFail: (state, action) => {
+      state.verifyingVehicle = false;
+      state.enhancementError = action.payload;
+    },
+
+    validateIncidentReassignRequest: (state) => {
+      state.validatingReassign = true;
+      state.reassignValidation = null;
+      state.enhancementError = null;
+    },
+    validateIncidentReassignSuccess: (state, action) => {
+      state.validatingReassign = false;
+      state.reassignValidation = action.payload;
+    },
+    validateIncidentReassignFail: (state, action) => {
+      state.validatingReassign = false;
+      state.enhancementError = action.payload;
+    },
+
+    resetIncidentEnhancement: (state) => {
+      state.loadingEvidence = false;
+      state.loadingAvailableSlots = false;
+      state.verifyingVehicle = false;
+      state.validatingReassign = false;
+      state.latestReservation = null;
+      state.availableSlots = [];
+      state.vehicleVerification = null;
+      state.reassignValidation = null;
+      state.enhancementError = null;
+    },
+
     resetIncidentMutationStatus: (state) => {
       state.createSuccess = false;
       state.updateSuccess = false;
@@ -111,6 +189,19 @@ export const {
   checkoutDriverAfterIncidentRequest,
   checkoutDriverAfterIncidentSuccess,
   checkoutDriverAfterIncidentFail,
+  getIncidentLatestReservationRequest,
+  getIncidentLatestReservationSuccess,
+  getIncidentLatestReservationFail,
+  getIncidentAvailableSlotsRequest,
+  getIncidentAvailableSlotsSuccess,
+  getIncidentAvailableSlotsFail,
+  verifyIncidentVehicleRequest,
+  verifyIncidentVehicleSuccess,
+  verifyIncidentVehicleFail,
+  validateIncidentReassignRequest,
+  validateIncidentReassignSuccess,
+  validateIncidentReassignFail,
+  resetIncidentEnhancement,
   resetIncidentMutationStatus,
 } = incidentSlice.actions;
 
