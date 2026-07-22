@@ -724,7 +724,10 @@ const IncidentManagement = () => {
             )}
 
             <Form form={form} layout="vertical" onFinish={handleUpdate}>
-              {selectedIncident.incidentType === "DRIVER_LOST_TICKET" && (
+              {selectedIncident.incidentType === "DRIVER_LOST_TICKET" &&
+                ["IN_PROGRESS", "PENDING"].includes(
+                  selectedIncident.status,
+                ) && (
                 <div className="mb-5 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
                   <p className="mb-1 font-bold text-slate-800">
                     Verify Vehicle Ownership
@@ -733,17 +736,6 @@ const IncidentManagement = () => {
                     Cross-check the plate and optional ticket against the
                     parking session before authorizing checkout.
                   </p>
-
-                  {!["IN_PROGRESS", "PENDING", "RESOLVED"].includes(
-                    selectedIncident.status,
-                  ) && (
-                    <Alert
-                      type="warning"
-                      showIcon
-                      className="mb-4"
-                      message="Save the incident as IN PROGRESS before verifying."
-                    />
-                  )}
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Form.Item
@@ -772,11 +764,6 @@ const IncidentManagement = () => {
                       className="min-w-40"
                       icon={<ShieldCheck size={15} />}
                       loading={verifyingVehicle}
-                      disabled={
-                        !["IN_PROGRESS", "PENDING", "RESOLVED"].includes(
-                          selectedIncident.status,
-                        )
-                      }
                       onClick={handleVerifyVehicle}
                     ></Button>
                   </div>
