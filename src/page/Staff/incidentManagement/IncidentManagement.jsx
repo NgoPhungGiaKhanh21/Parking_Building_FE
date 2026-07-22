@@ -41,6 +41,15 @@ import {
 
 const { TextArea } = Input;
 
+const formatCurrency = (value) => {
+  if (value == null || Number.isNaN(Number(value))) return "—";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(Number(value));
+};
+
 const TYPE_LABELS = {
   DRIVER_LOST_TICKET: "Lost parking ticket",
   DRIVER_CANNOT_FIND_VEHICLE: "Cannot find vehicle",
@@ -182,7 +191,6 @@ const IncidentManagement = () => {
       const searchable = [
         item.vehiclePlate,
         item.ticketCode,
-        item.sessionId,
         item.reporterId,
         item.description,
       ]
@@ -218,6 +226,7 @@ const IncidentManagement = () => {
       resolutionAction: incident.resolutionAction || undefined,
       adjustedAmount: incident.adjustedAmount,
       newSlotId: incident.newSlotId,
+      cancelReason: incident.cancelReason || "",
       plateNumber: incident.verifiedPlateNumber || incident.vehiclePlate,
       ticketCode: incident.verifiedTicketCode || incident.ticketCode,
     });
@@ -273,6 +282,9 @@ const IncidentManagement = () => {
     }
     if (values.resolutionAction === "REASSIGN_SLOT" && values.newSlotId) {
       data.newSlotId = values.newSlotId.trim();
+    }
+    if (values.status === "CANCELLED" && values.cancelReason?.trim()) {
+      data.cancelReason = values.cancelReason.trim();
     }
 
     dispatch(
@@ -481,7 +493,7 @@ const IncidentManagement = () => {
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             prefix={<Search size={15} className="text-slate-400" />}
-            placeholder="Search plate, ticket, session, reporter..."
+            placeholder="Search plate, ticket, reporter..."
           />
           <Select
             allowClear
@@ -564,18 +576,22 @@ const IncidentManagement = () => {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase text-slate-400">
-                  Session
-                </p>
-                <p className="break-all font-mono text-xs text-slate-700">
-                  {selectedIncident.sessionId || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-400">
                   Reporter
                 </p>
                 <p className="text-slate-700">
                   {selectedIncident.reporterId || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Created
+                </p>
+                <p className="text-slate-700">
+                  {selectedIncident.createdAt
+                    ? dayjs(selectedIncident.createdAt).format(
+                        "DD/MM/YYYY HH:mm",
+                      )
+                    : "—"}
                 </p>
               </div>
               <div className="sm:col-span-2">
@@ -645,6 +661,22 @@ const IncidentManagement = () => {
                       ]
                         .filter(Boolean)
                         .join(" · ") || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Ticket code
+                    </p>
+                    <p className="font-mono text-sm font-semibold text-slate-700">
+                      {latestReservation.ticketCode || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Estimated fee
+                    </p>
+                    <p className="font-semibold text-slate-700">
+                      {formatCurrency(latestReservation.estimatedFee)}
                     </p>
                   </div>
                 </div>
@@ -719,9 +751,7 @@ const IncidentManagement = () => {
                         )
                       }
                       onClick={handleVerifyVehicle}
-                    >
-                      Verify Ownership
-                    </Button>
+                    ></Button>
                   </div>
 
                   {(vehicleVerification ||
@@ -755,6 +785,27 @@ const IncidentManagement = () => {
                   disabled={isTerminalIncident}
                 />
               </Form.Item>
+
+              {selectedStatus === "CANCELLED" && (
+                <Form.Item
+                  name="cancelReason"
+                  label="Cancellation reason"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Enter the cancellation reason.",
+                    },
+                    { min: 5, message: "Enter at least 5 characters." },
+                  ]}
+                >
+                  <TextArea
+                    rows={3}
+                    maxLength={500}
+                    showCount
+                    placeholder="Explain why this incident is being cancelled..."
+                  />
+                </Form.Item>
+              )}
 
               {needsResolution && actionOptions.length > 0 && (
                 <Form.Item

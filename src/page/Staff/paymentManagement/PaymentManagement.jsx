@@ -74,14 +74,6 @@ const PaymentManagement = () => {
 
   const columns = [
     {
-      title: "Session ID",
-      dataIndex: "sessionId",
-      key: "sessionId",
-      render: (id) => (
-        <code className="text-xs font-mono text-slate-500">{id || "—"}</code>
-      ),
-    },
-    {
       title: "Driver Name",
       dataIndex: "driverName",
       key: "driverName",
@@ -112,12 +104,6 @@ const PaymentManagement = () => {
       dataIndex: "paymentStatus",
       key: "paymentStatus",
       render: (_, record) => renderPaymentStatusTag(record),
-    },
-    {
-      title: "Transaction",
-      dataIndex: "transactionCode",
-      key: "transactionCode",
-      render: (code) => code || "—",
     },
     {
       title: "Time",
@@ -200,7 +186,7 @@ const PaymentManagement = () => {
             columns={columns}
             dataSource={filteredPayments}
             pagination={{ pageSize: 10 }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 650 }}
           />
         )}
       </div>
