@@ -4,8 +4,12 @@ import {
   checkoutDriverAfterIncidentApi,
   createDriverIncidentApi,
   getAllDriverIncidentsApi,
+  getIncidentAvailableSlotsApi,
+  getIncidentLatestReservationApi,
   getMyDriverIncidentsApi,
   updateIncidentStatusApi,
+  validateIncidentReassignApi,
+  verifyIncidentVehicleApi,
 } from "../../service/incidentApi";
 import {
   checkoutDriverAfterIncidentFail,
@@ -17,12 +21,24 @@ import {
   getAllDriverIncidentsFail,
   getAllDriverIncidentsRequest,
   getAllDriverIncidentsSuccess,
+  getIncidentAvailableSlotsFail,
+  getIncidentAvailableSlotsRequest,
+  getIncidentAvailableSlotsSuccess,
+  getIncidentLatestReservationFail,
+  getIncidentLatestReservationRequest,
+  getIncidentLatestReservationSuccess,
   getMyDriverIncidentsFail,
   getMyDriverIncidentsRequest,
   getMyDriverIncidentsSuccess,
   updateIncidentStatusFail,
   updateIncidentStatusRequest,
   updateIncidentStatusSuccess,
+  validateIncidentReassignFail,
+  validateIncidentReassignRequest,
+  validateIncidentReassignSuccess,
+  verifyIncidentVehicleFail,
+  verifyIncidentVehicleRequest,
+  verifyIncidentVehicleSuccess,
 } from "./incidentSlice";
 
 const getErrorMessage = (error, fallback) =>
@@ -98,6 +114,59 @@ function* handleCheckoutDriverAfterIncident(action) {
   }
 }
 
+function* handleGetIncidentLatestReservation(action) {
+  try {
+    const response = yield call(getIncidentLatestReservationApi, action.payload);
+    yield put(getIncidentLatestReservationSuccess(getResponseData(response)));
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Failed to load latest reservation evidence",
+    );
+    yield put(getIncidentLatestReservationFail(message));
+  }
+}
+
+function* handleGetIncidentAvailableSlots(action) {
+  try {
+    const response = yield call(getIncidentAvailableSlotsApi, action.payload);
+    yield put(getIncidentAvailableSlotsSuccess(getResponseList(response)));
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Failed to load available replacement slots",
+    );
+    yield put(getIncidentAvailableSlotsFail(message));
+  }
+}
+
+function* handleVerifyIncidentVehicle(action) {
+  try {
+    const response = yield call(verifyIncidentVehicleApi, action.payload);
+    const result = getResponseData(response);
+    yield put(verifyIncidentVehicleSuccess(result));
+    toast.success(result?.message || "Vehicle verification completed");
+  } catch (error) {
+    const message = getErrorMessage(error, "Vehicle verification failed");
+    yield put(verifyIncidentVehicleFail(message));
+    toast.error(message);
+  }
+}
+
+function* handleValidateIncidentReassign(action) {
+  try {
+    const response = yield call(validateIncidentReassignApi, action.payload);
+    yield put(validateIncidentReassignSuccess(getResponseData(response)));
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Failed to validate replacement slot",
+    );
+    yield put(validateIncidentReassignFail(message));
+    toast.error(message);
+  }
+}
+
 export function* watchIncident() {
   yield takeLatest(
     getMyDriverIncidentsRequest.type,
@@ -118,5 +187,21 @@ export function* watchIncident() {
   yield takeLatest(
     checkoutDriverAfterIncidentRequest.type,
     handleCheckoutDriverAfterIncident,
+  );
+  yield takeLatest(
+    getIncidentLatestReservationRequest.type,
+    handleGetIncidentLatestReservation,
+  );
+  yield takeLatest(
+    getIncidentAvailableSlotsRequest.type,
+    handleGetIncidentAvailableSlots,
+  );
+  yield takeLatest(
+    verifyIncidentVehicleRequest.type,
+    handleVerifyIncidentVehicle,
+  );
+  yield takeLatest(
+    validateIncidentReassignRequest.type,
+    handleValidateIncidentReassign,
   );
 }
