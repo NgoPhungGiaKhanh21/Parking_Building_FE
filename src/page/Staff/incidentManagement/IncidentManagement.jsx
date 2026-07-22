@@ -32,6 +32,7 @@ import {
   getAllDriverIncidentsRequest,
   getIncidentAvailableSlotsRequest,
   getIncidentLatestReservationRequest,
+  getIncidentsBySessionRequest,
   resetIncidentMutationStatus,
   resetIncidentEnhancement,
   updateIncidentStatusRequest,
@@ -131,10 +132,12 @@ const IncidentManagement = () => {
     error,
     loadingEvidence,
     loadingAvailableSlots,
+    loadingRelatedIncidents,
     verifyingVehicle,
     validatingReassign,
     latestReservation,
     availableSlots,
+    relatedIncidents,
     vehicleVerification,
     reassignValidation,
     enhancementError,
@@ -231,6 +234,9 @@ const IncidentManagement = () => {
       ticketCode: incident.verifiedTicketCode || incident.ticketCode,
     });
     dispatch(getIncidentLatestReservationRequest(incident.incidentId));
+    if (incident.sessionId) {
+      dispatch(getIncidentsBySessionRequest(incident.sessionId));
+    }
     if (incident.incidentType === "DRIVER_SLOT_OCCUPIED") {
       dispatch(getIncidentAvailableSlotsRequest(incident.incidentId));
     }
@@ -397,10 +403,15 @@ const IncidentManagement = () => {
     selectedIncident?.incidentType === "DRIVER_LOST_TICKET" &&
     selectedStatus === "RESOLVED" &&
     selectedAction === "AUTHORIZE_CHECKOUT";
+  const validatedSlotAvailable =
+    reassignValidation?.isAvailable ?? reassignValidation?.available;
+  const validatedSlotInSameBuilding =
+    reassignValidation?.isInSameBuilding ??
+    reassignValidation?.inSameBuilding;
   const reassignIsValid =
     reassignValidation?.slotId === selectedNewSlotId &&
-    reassignValidation?.isAvailable === true &&
-    reassignValidation?.isInSameBuilding !== false;
+    validatedSlotAvailable === true &&
+    validatedSlotInSameBuilding !== false;
   const requiresValidReassign =
     selectedStatus === "RESOLVED" && selectedAction === "REASSIGN_SLOT";
 
@@ -602,6 +613,19 @@ const IncidentManagement = () => {
                   {selectedIncident.description || "—"}
                 </p>
               </div>
+              <div className="flex items-center justify-between border-t border-slate-200 pt-3 sm:col-span-2">
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  Reports in the same parking stay
+                </p>
+                {loadingRelatedIncidents ? (
+                  <Spin size="small" />
+                ) : (
+                  <Tag color={relatedIncidents.length > 1 ? "orange" : "blue"}>
+                    {relatedIncidents.length} report
+                    {relatedIncidents.length === 1 ? "" : "s"}
+                  </Tag>
+                )}
+              </div>
             </div>
 
             <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
@@ -676,7 +700,10 @@ const IncidentManagement = () => {
                       Estimated fee
                     </p>
                     <p className="font-semibold text-slate-700">
-                      {formatCurrency(latestReservation.estimatedFee)}
+                      {formatCurrency(
+                        latestReservation.estimatedFee ??
+                          latestReservation.sessionEstimatedFee,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -857,17 +884,24 @@ const IncidentManagement = () => {
                       options={(Array.isArray(availableSlots)
                         ? availableSlots
                         : []
-                      ).map((slot) => ({
-                        value: slot.slotId,
-                        label: [
-                          slot.slotName,
-                          slot.zoneName,
-                          slot.floorName,
-                          slot.buildingName,
-                        ]
-                          .filter(Boolean)
-                          .join(" · "),
-                      }))}
+                      )
+                        .filter(
+                          (slot) =>
+                            slot.available !== false &&
+                            slot.inSameBuilding !== false &&
+                            slot.hasActiveReservation !== true,
+                        )
+                        .map((slot) => ({
+                          value: slot.slotId,
+                          label: [
+                            slot.slotName,
+                            slot.zoneName,
+                            slot.floorName,
+                            slot.buildingName,
+                          ]
+                            .filter(Boolean)
+                            .join(" · "),
+                        }))}
                       notFoundContent={
                         loadingAvailableSlots ? (
                           <Spin size="small" />
