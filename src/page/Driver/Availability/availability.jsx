@@ -12,11 +12,13 @@ import {
   ChevronUp,
   Layers,
   ScrollText,
+  TrendingUp,
 } from 'lucide-react';
 import { getAvailableBuildingsRequest } from '../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice';
 import { getBuildingFloorsApi } from '../../../service/driver/revervationApi';
 import CommonBreadcrumb from '../../../components/Commandbreadcrumb/Commandbreadcrumb';
 import BuildingFloorsModal from './BuildingFloorsModal';
+import PeakHoursModal from './PeakHoursModal';
 import { getBuildingRulesRequest } from '../../../redux/manager/Building/buildingRules/buildingRulesSlice';
 
 const formatCurrency = (amount) => {
@@ -33,6 +35,7 @@ const BuildingRow = ({ building, formatCurrency }) => {
 
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
+  const [peakHoursOpen, setPeakHoursOpen] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState(null);
   const {
     rulesByBuilding,
@@ -179,6 +182,15 @@ const BuildingRow = ({ building, formatCurrency }) => {
               )}
 
               <button
+                type="button"
+                onClick={() => setPeakHoursOpen(true)}
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-all cursor-pointer active:scale-95"
+              >
+                <TrendingUp size={16} />
+                Peak Hours
+              </button>
+
+              <button
                 onClick={handleToggleExpanded}
                 className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-200 cursor-pointer active:scale-95 ${
                   expanded
@@ -318,6 +330,13 @@ const BuildingRow = ({ building, formatCurrency }) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         floor={selectedFloor}
+        buildingName={building.name}
+      />
+
+      <PeakHoursModal
+        open={peakHoursOpen}
+        onClose={() => setPeakHoursOpen(false)}
+        buildingId={building.id}
         buildingName={building.name}
       />
     </>
