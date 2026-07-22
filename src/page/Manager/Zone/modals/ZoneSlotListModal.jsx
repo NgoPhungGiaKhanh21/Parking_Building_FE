@@ -30,17 +30,17 @@ const ZoneSlotListModal = ({ open, onCancel, zoneName, loading, zoneId, slots, f
   const dispatch = useDispatch();
   const { updatingSlotId } = useSelector((state) => state.updateSlotStatus);
 
-  // Only display AVAILABLE and MAINTENANCE slots in this modal
+  // Zone management: only show slots manager can toggle (hide pending exit / occupied / reserved)
   const filteredSlots = Array.isArray(slots)
     ? slots.filter((slot) => {
-        const status = normalizeSlotStatus(slot.status);
+        const status = normalizeSlotStatus(slot.status ?? slot.slotStatus);
         return status === "AVAILABLE" || status === "MAINTENANCE";
       })
     : [];
   const slotList = sortSlotsNatural(filteredSlots);
 
   const handleSlotStatusToggle = (slot) => {
-    const currentStatus = normalizeSlotStatus(slot.status);
+    const currentStatus = normalizeSlotStatus(slot.status ?? slot.slotStatus);
     // Only toggle between AVAILABLE and MAINTENANCE
     if (currentStatus !== "AVAILABLE" && currentStatus !== "MAINTENANCE") return;
     const newStatus = currentStatus === "AVAILABLE" ? "MAINTENANCE" : "AVAILABLE";
@@ -100,7 +100,7 @@ const ZoneSlotListModal = ({ open, onCancel, zoneName, loading, zoneId, slots, f
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {slotList.map((slot) => {
-              const status = normalizeSlotStatus(slot.status);
+              const status = normalizeSlotStatus(slot.status ?? slot.slotStatus);
               const style = getSlotStyle(status);
               const canToggle = true; // All slots here are toggleable
               const isUpdating = updatingSlotId === slot.id;

@@ -131,6 +131,15 @@ const ZoneByFloorManagement = () => {
   }, [dispatch, floorContext?.floorId]);
 
   useEffect(() => {
+    if (floorContext?.floorId && floorContext?.buildingId) {
+      sessionStorage.setItem(
+        `${FLOOR_CONTEXT_STORAGE_PREFIX}${floorContext.floorId}`,
+        JSON.stringify(floorContext),
+      );
+    }
+  }, [floorContext]);
+
+  useEffect(() => {
     if (createZoneSuccess) {
       zoneForm.resetFields();
       dispatch(resetCreateZoneStatus());
@@ -265,6 +274,17 @@ const ZoneByFloorManagement = () => {
               floorContext?.buildingId
                 ? `/manager/building/floors/${floorContext.buildingId}`
                 : "/manager/building"
+            }
+            state={
+              floorContext?.buildingId
+                ? {
+                    building: {
+                      id: floorContext.buildingId,
+                      name: floorContext.buildingName,
+                      status: floorContext.buildingStatus,
+                    },
+                  }
+                : undefined
             }
           >
             <Button icon={<ArrowLeft size={16} />}>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Tabs, Modal, Input } from "antd";
 import {
     Clock,
@@ -6,8 +6,11 @@ import {
     XCircle,
     ShieldCheck,
 } from "lucide-react";
-import { useDispatch } from "react-redux";
-import { cancelReservations } from "../../../redux/driver/reservationManagement/cancelReservations/cancelReservationsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    cancelReservations,
+    cancelReservationsReset,
+} from "../../../redux/driver/reservationManagement/cancelReservations/cancelReservationsSlice";
 
 import { renderReservationCards } from "./ReservationCard";
 
@@ -19,23 +22,46 @@ const MyReservationsTab = ({
     onOpenVehicleModal,
 }) => {
     const dispatch = useDispatch();
+    const { loading: cancelLoading, error: cancelError, cancelReservation } =
+        useSelector((state) => state.cancelReservations);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedCancelReservationId, setSelectedCancelReservationId] = useState(null);
     const [cancelReasonInput, setCancelReasonInput] = useState("");
 
     const handleCancelReservation = (reservationId) => {
+        dispatch(cancelReservationsReset());
         setSelectedCancelReservationId(reservationId);
-        setCancelReasonInput(""); // reset input
+        setCancelReasonInput("");
         setCancelModalOpen(true);
     };
 
-    const handleConfirmCancel = () => {
-        dispatch(cancelReservations({ 
-            reservationCode: selectedCancelReservationId, 
-            reason: cancelReasonInput.trim() || "Cancelled by driver"
-        }));
+    const handleCloseCancelModal = () => {
+        if (cancelLoading) return;
         setCancelModalOpen(false);
+        setSelectedCancelReservationId(null);
+        setCancelReasonInput("");
+        dispatch(cancelReservationsReset());
     };
+
+    const handleConfirmCancel = () => {
+        if (cancelLoading || !selectedCancelReservationId) return;
+        dispatch(
+            cancelReservations({
+                reservationCode: selectedCancelReservationId,
+                reason: cancelReasonInput.trim() || "Cancelled by driver",
+            }),
+        );
+    };
+
+    useEffect(() => {
+        if (!cancelModalOpen || cancelLoading || cancelError) return;
+        if (!cancelReservation) return;
+
+        setCancelModalOpen(false);
+        setSelectedCancelReservationId(null);
+        setCancelReasonInput("");
+        dispatch(cancelReservationsReset());
+    }, [cancelModalOpen, cancelLoading, cancelError, cancelReservation, dispatch]);
 
     const pendingReservations = useMemo(
         () => myReservationList.filter((r) => r.reservationStatus === "PENDING"),
@@ -175,18 +201,27 @@ const MyReservationsTab = ({
             title="Cancel Reservation"
             open={cancelModalOpen}
             onOk={handleConfirmCancel}
-            onCancel={() => setCancelModalOpen(false)}
+            onCancel={handleCloseCancelModal}
             okText="Confirm Cancel"
-            okButtonProps={{ danger: true }}
+            okButtonProps={{ danger: true, loading: cancelLoading }}
             cancelText="Close"
+            confirmLoading={cancelLoading}
+            closable={!cancelLoading}
+            maskClosable={!cancelLoading}
             centered
         >
             <p className="mb-3 text-slate-600">Are you sure you want to cancel this reservation? You can provide a reason below.</p>
-            <Input.TextArea 
-                placeholder="Reason for cancellation (optional)..." 
+            {cancelError && (
+                <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {typeof cancelError === "string" ? cancelError : cancelError?.message}
+                </div>
+            )}
+            <Input.TextArea
+                placeholder="Reason for cancellation (optional)..."
                 value={cancelReasonInput}
                 onChange={(e) => setCancelReasonInput(e.target.value)}
                 rows={3}
+                disabled={cancelLoading}
                 className="rounded-lg"
             />
         </Modal>

@@ -288,6 +288,7 @@ const FloorManagement = () => {
     const floorContext = {
       floorId: floor.id,
       floorName,
+      buildingId,
       buildingName,
       buildingStatus: building?.status,
       floorStatus: floor.status,

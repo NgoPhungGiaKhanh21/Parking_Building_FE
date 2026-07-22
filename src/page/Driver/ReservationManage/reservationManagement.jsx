@@ -15,13 +15,17 @@ import {
     ChevronRight,
     ParkingCircle,
     ClipboardList,
+    LogOut,
 } from "lucide-react";
 
 import { getAllVehicleRequest } from "../../../redux/driver/vehicleManagement/getAllVehicle/getAllVehicleSlice";
 import { getAvailableBuildingsRequest } from "../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice";
 import { getBuildingFloorsRequest, getBuildingFloorsReset } from "../../../redux/driver/reservationManagement/getBuildingFloors/getBuildingFloorsSlice";
 import { getZoneSlotsRequest, getZoneSlotsReset } from "../../../redux/driver/reservationManagement/getZoneSlots/getZoneSlotsSlice";
-import { createReservationsRequest } from "../../../redux/driver/reservationManagement/createReservations/createReservationsSlice";
+import {
+    createReservationsRequest,
+    createReservationsReset,
+} from "../../../redux/driver/reservationManagement/createReservations/createReservationsSlice";
 import { getMyReservationsRequest } from "../../../redux/driver/reservationManagement/getMyReservations/getMyReservationsSlice";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import VehicleDetailModal from "./VehicleDetailModal";
@@ -34,29 +38,45 @@ const STATUS_CONFIG = {
         label: "Available",
         bg: "bg-emerald-50 border-2 border-dashed border-emerald-400 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-500 cursor-pointer",
         badge: "bg-emerald-100 text-emerald-700",
+        legendBox: "border-dashed border-emerald-400 bg-emerald-50",
     },
     RESERVED: {
         label: "Reserved",
         bg: "bg-violet-600 text-white border-2 border-violet-700 cursor-not-allowed opacity-80",
         badge: "bg-violet-100 text-violet-700",
+        legendBox: "border-violet-700 bg-violet-600",
     },
     OCCUPIED: {
         label: "Occupied",
         bg: "bg-red-500 text-white border-2 border-red-600 cursor-not-allowed opacity-80",
         badge: "bg-red-100 text-red-700",
+        legendBox: "border-red-600 bg-red-500",
+    },
+    PENDING_EXIT: {
+        label: "Pending Exit",
+        bg: "bg-sky-500 text-white border-2 border-sky-600 cursor-not-allowed opacity-90",
+        badge: "bg-sky-100 text-sky-700",
+        legendBox: "border-sky-600 bg-sky-500",
     },
     MAINTENANCE: {
         label: "Maintenance",
         bg: "bg-orange-400 text-white border-2 border-orange-500 cursor-not-allowed opacity-80",
         badge: "bg-orange-100 text-orange-700",
+        legendBox: "border-orange-500 bg-orange-400",
     },
 };
 
-const LEGEND = ["AVAILABLE", "RESERVED", "OCCUPIED", "MAINTENANCE"];
+const LEGEND = ["AVAILABLE", "RESERVED", "OCCUPIED", "PENDING_EXIT", "MAINTENANCE"];
+
+const normalizeSlotStatus = (value) =>
+    String(value || "AVAILABLE")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "_");
 
 // ─── Single slot cell ──────────────────────────────────────────────────────────
 const SlotCell = ({ slot, isSelected, onSelect }) => {
-    const status = slot.slotStatus || "AVAILABLE";
+    const status = normalizeSlotStatus(slot.slotStatus);
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.AVAILABLE;
     const canSelect = status === "AVAILABLE";
 
@@ -84,7 +104,16 @@ const SlotCell = ({ slot, isSelected, onSelect }) => {
                     <span className="text-[10px]">{slot.slotName}</span>
                 </>
             )}
+            {status === "PENDING_EXIT" && (
+                <>
+                    <LogOut size={18} className="mb-1" />
+                    <span className="text-[10px]">{slot.slotName}</span>
+                </>
+            )}
             {status === "MAINTENANCE" && (
+                <span className="text-[10px] text-center px-1">{slot.slotName}</span>
+            )}
+            {!STATUS_CONFIG[status] && (
                 <span className="text-[10px] text-center px-1">{slot.slotName}</span>
             )}
             {isSelected && (
@@ -109,11 +138,10 @@ const VehicleCard = ({ vehicle, isSelected, onClick }) => {
             {isSelected && (
                 <span className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-xs">✓</span>
             )}
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                isSelected
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSelected
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600"
-            }`}>
+                }`}>
                 <Car size={20} />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -121,9 +149,8 @@ const VehicleCard = ({ vehicle, isSelected, onClick }) => {
                     {vehicle.brand}
                 </span>
                 <span className="text-sm font-extrabold text-gray-800">{vehicle.model}</span>
-                <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${
-                    isSelected ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                }`}>
+                <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${isSelected ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                    }`}>
                     {vehicle.plateNumber}
                 </span>
             </div>
@@ -184,7 +211,6 @@ const ReservationManagement = () => {
     const {
         createReservation,
         loading: createLoading,
-        error: createError,
     } = useSelector((state) => state.createReservation);
 
     const { myReservations, loading: reservationsLoading } = useSelector(
@@ -200,19 +226,18 @@ const ReservationManagement = () => {
 
     // ── Close modal + refresh after successful creation
     useEffect(() => {
-        if (createReservation && !createLoading && !createError) {
-            setIsModalOpen(false);
-            setSelectedSlot(null);
-            setSelectedVehicle(null);
-            form.resetFields();
-            dispatch(getAvailableBuildingsRequest());
-            dispatch(getMyReservationsRequest());
-            // Re-fetch zone slots if a zone is still selected
-            if (selectedZoneId) {
-                dispatch(getZoneSlotsRequest(selectedZoneId));
-            }
+        if (!createReservation || createLoading) return;
+
+        setIsModalOpen(false);
+        setSelectedSlot(null);
+        form.resetFields();
+        dispatch(createReservationsReset());
+        dispatch(getAvailableBuildingsRequest());
+        dispatch(getMyReservationsRequest());
+        if (selectedZoneId) {
+            dispatch(getZoneSlotsRequest(selectedZoneId));
         }
-    }, [createReservation, createLoading, createError, dispatch, form, selectedZoneId]);
+    }, [createReservation, createLoading, dispatch, form, selectedZoneId]);
 
     // ── Derived data
     const vehicleList = useMemo(
@@ -349,6 +374,7 @@ const ReservationManagement = () => {
         setIsModalOpen(false);
         setSelectedSlot(null);
         form.resetFields();
+        dispatch(createReservationsReset());
     };
 
     // ── Render
@@ -514,14 +540,7 @@ const ReservationManagement = () => {
                                                 return (
                                                     <div key={key} className="flex items-center gap-2 text-xs text-slate-600">
                                                         <span
-                                                            className={`h-4 w-8 rounded-md border-2 ${key === "AVAILABLE"
-                                                                    ? "border-dashed border-emerald-400 bg-emerald-50"
-                                                                    : key === "RESERVED"
-                                                                        ? "border-violet-700 bg-violet-600"
-                                                                        : key === "OCCUPIED"
-                                                                            ? "border-red-600 bg-red-500"
-                                                                            : "border-orange-500 bg-orange-400"
-                                                                }`}
+                                                            className={`h-4 w-8 rounded-md border-2 ${cfg.legendBox}`}
                                                         />
                                                         <span>{cfg.label}</span>
                                                     </div>
