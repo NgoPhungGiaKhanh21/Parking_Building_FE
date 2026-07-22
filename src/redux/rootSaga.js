@@ -63,6 +63,9 @@ import { watchGetDriverPayments } from "./driver/payment/getDriverPayments/getDr
 import { watchGetAllVehicleManager } from "./manager/Vehicle/getAllVehicle/getAllVehicleSaga";
 import { watchGetOccupiedSlot } from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSaga";
 import { watchGetRevenue } from "./manager/Revenue/getRevenueSaga";
+import { watchGetManagerDashboardStats } from "./manager/Dashboard/getManagerDashboardStatsSaga";
+import { watchGetManagerPeakHours } from "./manager/Dashboard/getManagerPeakHoursSaga";
+import { watchGetBuildingPeakHours } from "./driver/availability/getBuildingPeakHours/getBuildingPeakHoursSaga";
 import { watchGetSessionByPlateNumber } from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSaga";
 import { watchCheckInGuest } from "./staff/guest_parking/checkin_guest/checkInGuestSaga";
 import {watchForgotPassword} from "./admin/resetPassword/forgotPassword/forgotPasswordSaga";
@@ -130,6 +133,8 @@ export default function* rootSaga() {
     watchDeletePricingPolicy(),
     watchUpdateZone(),
     watchGetRevenue(),
+    watchGetManagerDashboardStats(),
+    watchGetManagerPeakHours(),
     watchBuildingRules(),
     watchUpdateSlotStatus(),
 
@@ -161,6 +166,7 @@ export default function* rootSaga() {
     watchGetZoneSlots(),
     watchCreateReservations(),
     watchGetMyReservations(),
+    watchGetBuildingPeakHours(),
     watchGetCurrentSession(),
     watchInitiatePayment(),
     watchGetDriverPayments(),

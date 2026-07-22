@@ -207,11 +207,17 @@ export const splitSlotsIntoTwoRows = (slots) => {
 };
 
 export const normalizeSlotStatus = (status) => {
-  const value = String(status || "AVAILABLE").toUpperCase();
-  if (value === "OCCUPIED") return "OCCUPIED";
-  if (value === "RESERVED" || value === "REVERSE") return "RESERVED";
-  if (value === "MAINTENANCE") return "MAINTENANCE";
-  return "AVAILABLE";
+  const raw = String(status || "AVAILABLE")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (raw === "PENDINGEXIT" || raw === "PENDING_EXIT") return "PENDING_EXIT";
+  if (raw === "OCCUPIED") return "OCCUPIED";
+  if (raw === "RESERVED" || raw === "REVERSE") return "RESERVED";
+  if (raw === "MAINTENANCE") return "MAINTENANCE";
+  if (raw === "AVAILABLE") return "AVAILABLE";
+  return raw;
 };
 
 export const getRemainingFloorCapacity = (floorMaxCapacity, zones) => {

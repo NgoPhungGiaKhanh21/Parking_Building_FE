@@ -29,3 +29,10 @@ export const getMyReservationsApi = () => {
 export const cancelReservationApi = (reservationCode, reason) => {
     return api.post(`/reservations/${reservationCode}/cancel`, { reason: reason });
 };
+
+export const getBuildingPeakHoursApi = ({ buildingId, fromDay, toDay } = {}) => {
+    const params = {};
+    if (fromDay) params.fromDay = fromDay;
+    if (toDay) params.toDay = toDay;
+    return api.get(`/buildings/${buildingId}/peak-hours`, { params });
+};

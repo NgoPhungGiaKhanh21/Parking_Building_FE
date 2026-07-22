@@ -303,8 +303,8 @@ const VehicleManagement = () => {
     },
     {
       title: "Check-in Image",
-      dataIndex: "checkinImageUrl",
-      key: "checkinImageUrl",
+      dataIndex: "checkinVehicleImage",
+      key: "checkinVehicleImage",
       render: (url) =>
         url ? (
           <Image
@@ -319,8 +319,8 @@ const VehicleManagement = () => {
     },
     {
       title: "Check-out Image",
-      dataIndex: "checkoutImageUrl",
-      key: "checkoutImageUrl",
+      dataIndex: "checkoutVehicleImage",
+      key: "checkoutVehicleImage",
       render: (url) =>
         url ? (
           <Image

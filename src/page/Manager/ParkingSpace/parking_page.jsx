@@ -1,4 +1,4 @@
-import { CarFront, Car, Lock, Wrench } from "lucide-react";
+import { CarFront, Car, Lock, Wrench, LogOut } from "lucide-react";
 import { Select, Spin } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,8 +29,12 @@ const mapSelectOptions = (items, labelKey = "name") =>
       label: item[labelKey] || item.zoneName || item.floorName || item.name || "N/A",
     }));
 
+const resolveSlotStatus = (slot) =>
+  normalizeSlotStatus(slot?.status ?? slot?.slotStatus);
+
 const ParkingSlot = ({ slot, isSelected, onSelect }) => {
-  const status = normalizeSlotStatus(slot?.status);
+  const status = resolveSlotStatus(slot);
+  const slotName = slot?.name || slot?.slotName || "—";
   const showName = status === "AVAILABLE" || status === "RESERVED";
 
   return (
@@ -39,10 +43,16 @@ const ParkingSlot = ({ slot, isSelected, onSelect }) => {
       onClick={() => onSelect(slot)}
       className={getSlotCardClass(status, isSelected)}
     >
-      {showName && <span>{slot?.name || "—"}</span>}
+      {showName && <span>{slotName}</span>}
       {status === "OCCUPIED" && <Car size={28} strokeWidth={1.75} />}
       {status === "RESERVED" && (
         <Lock size={16} className="absolute bottom-2 right-2 opacity-90" />
+      )}
+      {status === "PENDING_EXIT" && (
+        <>
+          <LogOut size={22} strokeWidth={1.75} className="mb-1" />
+          <span className="text-[10px]">{slotName}</span>
+        </>
       )}
       {status === "MAINTENANCE" && <Wrench size={26} strokeWidth={1.75} />}
       {isSelected && (
@@ -151,7 +161,7 @@ const ParkingSpacePage = () => {
   const handleSlotSelect = (item) => {
     setSelectedSlotId(item.id);
     setSelectedSlotName(item.name);
-    const status = normalizeSlotStatus(item.status);
+    const status = resolveSlotStatus(item);
     if (status === "OCCUPIED" || status === "RESERVED" || status === "PENDING_EXIT") {
       dispatch(clearGetOccupiedSlot());
       dispatch(getOccupiedSlotRequest({ slotId: item.id }));

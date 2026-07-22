@@ -63,6 +63,9 @@ import getDriverPaymentsReducer from "./driver/payment/getDriverPayments/getDriv
 import getAllVehicleManagerReducer from "./manager/Vehicle/getAllVehicle/getAllVehicleSlice";
 import getOccupiedSlotReducer from "./manager/Building/zone/getOccupiedSlot/getOccupiedSlotSlice";
 import getRevenueReducer from "./manager/Revenue/getRevenueSlice";
+import getManagerDashboardStatsReducer from "./manager/Dashboard/getManagerDashboardStatsSlice";
+import getManagerPeakHoursReducer from "./manager/Dashboard/getManagerPeakHoursSlice";
+import getBuildingPeakHoursReducer from "./driver/availability/getBuildingPeakHours/getBuildingPeakHoursSlice";
 import getSessionByPlateNumberReducer from "./staff/guest_parking/getSessionByPlateNumber/getSessionByPlateNumberSlice";
 import checkInGuestReducer from "./staff/guest_parking/checkin_guest/checkInGuestSlice";
 import forgotPasswordReducer from "./admin/resetPassword/forgotPassword/forgotPasswordSlice";
@@ -130,6 +133,8 @@ const rootReducer = combineReducers({
   deletePricingPolicy: deletePricingPolicyReducer,
   updateZone: updateZoneReducer,
   getRevenue: getRevenueReducer,
+  getManagerDashboardStats: getManagerDashboardStatsReducer,
+  getManagerPeakHours: getManagerPeakHoursReducer,
   buildingRules: buildingRulesReducer,
   updateSlotStatus: updateSlotStatusReducer,
 
@@ -162,6 +167,7 @@ const rootReducer = combineReducers({
   getZoneSlots: getZoneSlotsReducer,
   createReservation: createReservationReducer,
   getMyReservations: getMyReservationsReducer,
+  getBuildingPeakHours: getBuildingPeakHoursReducer,
   getCurrentSession: getCurrentSessionReducer,
   initiatePayment: initiatePaymentReducer,
   getDriverPayments: getDriverPaymentsReducer,
