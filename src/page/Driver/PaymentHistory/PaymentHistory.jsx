@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Empty, Spin, Table, Tag } from "antd";
-import { Receipt } from "lucide-react";
+import { Button, Empty, Input, Select, Spin, Table, Tag } from "antd";
+import { Receipt, Search } from "lucide-react";
 import dayjs from "dayjs";
 
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -18,6 +18,9 @@ const PAYMENT_STATUS_COLORS = {
 
 const PaymentHistory = () => {
   const dispatch = useDispatch();
+  const [reservationFilter, setReservationFilter] = useState("");
+  const [methodFilter, setMethodFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
   const { getProfileUser, loading: profileLoading } = useSelector(
     (state) => state.getProfileUser
   );
@@ -36,6 +39,33 @@ const PaymentHistory = () => {
       dispatch(getDriverPaymentsRequest({ driverId, limit: 20 }));
     }
   }, [dispatch, driverId]);
+
+  const paymentList = useMemo(
+    () => (Array.isArray(payments) ? payments : []),
+    [payments],
+  );
+
+  const methodOptions = useMemo(
+    () =>
+      [...new Set(paymentList.map((item) => item.paymentMethod))]
+        .filter(Boolean)
+        .map((value) => ({ value, label: value })),
+    [paymentList],
+  );
+
+  const filteredPayments = useMemo(() => {
+    const keyword = reservationFilter.trim().toLowerCase();
+    return paymentList.filter((payment) => {
+      const reservationCode = String(
+        payment.reservationCode || "",
+      ).toLowerCase();
+      return (
+        (!keyword || reservationCode.includes(keyword)) &&
+        (!methodFilter || payment.paymentMethod === methodFilter) &&
+        (!statusFilter || payment.paymentStatus === statusFilter)
+      );
+    });
+  }, [methodFilter, paymentList, reservationFilter, statusFilter]);
 
   const columns = [
     {
@@ -72,6 +102,11 @@ const PaymentHistory = () => {
       title: "Time",
       dataIndex: "paymentTime",
       key: "paymentTime",
+      sorter: (a, b) =>
+        dayjs(a.paymentTime || 0).valueOf() -
+        dayjs(b.paymentTime || 0).valueOf(),
+      defaultSortOrder: "descend",
+      sortDirections: ["descend", "ascend"],
       render: (time) => (time ? dayjs(time).format("DD/MM/YYYY HH:mm") : "—"),
     },
     {
@@ -103,6 +138,44 @@ const PaymentHistory = () => {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
+        <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px_200px_auto]">
+          <Input
+            allowClear
+            value={reservationFilter}
+            onChange={(event) => setReservationFilter(event.target.value)}
+            prefix={<Search size={15} className="text-slate-400" />}
+            placeholder="Filter by reservation code"
+          />
+          <Select
+            allowClear
+            value={methodFilter}
+            onChange={(value) => setMethodFilter(value ?? null)}
+            placeholder="Payment method"
+            options={methodOptions}
+          />
+          <Select
+            allowClear
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value ?? null)}
+            placeholder="Payment status"
+            options={[
+              { value: "PAID", label: "Paid" },
+              { value: "PENDING", label: "Pending" },
+              { value: "UNPAID", label: "Unpaid" },
+              { value: "FAILED", label: "Failed" },
+            ]}
+          />
+          <Button
+            onClick={() => {
+              setReservationFilter("");
+              setMethodFilter(null);
+              setStatusFilter(null);
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Spin size="large" />
@@ -111,13 +184,15 @@ const PaymentHistory = () => {
           <Empty description="Driver ID not found" />
         ) : error ? (
           <Empty description={error} />
-        ) : payments.length === 0 ? (
+        ) : paymentList.length === 0 ? (
           <Empty description="No payment history" />
+        ) : filteredPayments.length === 0 ? (
+          <Empty description="No payments match the selected filters" />
         ) : (
           <Table
             rowKey="paymentId"
             columns={columns}
-            dataSource={payments}
+            dataSource={filteredPayments}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 650 }}
           />

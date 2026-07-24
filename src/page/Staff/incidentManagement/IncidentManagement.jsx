@@ -4,13 +4,16 @@ import {
   Alert,
   Button,
   Form,
+  Image,
   Input,
   InputNumber,
+  message,
   Modal,
   Select,
   Spin,
   Table,
   Tag,
+  Upload,
 } from "antd";
 import {
   AlertTriangle,
@@ -19,6 +22,7 @@ import {
   Clock3,
   Eye,
   FileWarning,
+  ImagePlus,
   LogOut,
   RefreshCw,
   Search,
@@ -27,11 +31,13 @@ import {
 } from "lucide-react";
 import dayjs from "dayjs";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
+import { getStaffBuildingRequest } from "../../../redux/staff/guest_parking/getStaffBuilding/getStaffBuildingSlice";
 import {
   checkoutDriverAfterIncidentRequest,
   getAllDriverIncidentsRequest,
   getIncidentAvailableSlotsRequest,
   getIncidentLatestReservationRequest,
+  getIncidentSessionEvidenceRequest,
   getIncidentsBySessionRequest,
   resetIncidentMutationStatus,
   resetIncidentEnhancement,
@@ -120,7 +126,13 @@ const IncidentManagement = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter] = useState(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState(null);
   const [selectedIncident, setSelectedIncident] = useState(null);
+  const [checkoutImageFile, setCheckoutImageFile] = useState(null);
+  const {
+    getStaffBuilding: staffBuilding,
+    loading: loadingStaffBuilding,
+  } = useSelector((state) => state.getStaffBuilding);
 
   const {
     allReports,
@@ -130,16 +142,20 @@ const IncidentManagement = () => {
     updateSuccess,
     checkoutSuccess,
     error,
+    loadingSessionEvidence,
     loadingEvidence,
     loadingAvailableSlots,
     loadingRelatedIncidents,
     verifyingVehicle,
     validatingReassign,
+    sessionEvidence,
     latestReservation,
     availableSlots,
     relatedIncidents,
     vehicleVerification,
     reassignValidation,
+    sessionEvidenceError,
+    latestReservationError,
     enhancementError,
   } = useSelector((state) => state.incident);
 
@@ -147,13 +163,35 @@ const IncidentManagement = () => {
   const selectedAction = Form.useWatch("resolutionAction", form);
   const selectedNewSlotId = Form.useWatch("newSlotId", form);
 
+  const buildingOptions = useMemo(() => {
+    const buildings = Array.isArray(staffBuilding)
+      ? staffBuilding
+      : staffBuilding
+        ? [staffBuilding]
+        : [];
+    return buildings
+      .map((building) => ({
+        value: building.buildingId || building.id,
+        label: building.buildingName || building.name || "Building",
+      }))
+      .filter((building) => building.value);
+  }, [staffBuilding]);
+  const resolvedBuildingId =
+    selectedBuildingId || buildingOptions[0]?.value || null;
+
   useEffect(() => {
-    dispatch(getAllDriverIncidentsRequest());
+    dispatch(getStaffBuildingRequest());
     return () => {
       dispatch(resetIncidentEnhancement());
       dispatch(resetIncidentMutationStatus());
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (resolvedBuildingId) {
+      dispatch(getAllDriverIncidentsRequest(resolvedBuildingId));
+    }
+  }, [dispatch, resolvedBuildingId]);
 
   useEffect(() => {
     if (!updateSuccess) return;
@@ -181,6 +219,7 @@ const IncidentManagement = () => {
     () =>
       [...new Set(reports.map((item) => item.incidentType))]
         .filter(Boolean)
+        .filter((value) => value !== "DRIVER_CANNOT_FIND_VEHICLE")
         .map((value) => ({
           value,
           label: TYPE_LABELS[value] || value.replaceAll("_", " "),
@@ -222,6 +261,7 @@ const IncidentManagement = () => {
 
   const openIncident = (incident) => {
     dispatch(resetIncidentEnhancement());
+    setCheckoutImageFile(null);
     setSelectedIncident(incident);
     form.setFieldsValue({
       status: incident.status || "OPEN",
@@ -230,9 +270,10 @@ const IncidentManagement = () => {
       adjustedAmount: incident.adjustedAmount,
       newSlotId: incident.newSlotId,
       cancelReason: incident.cancelReason || "",
-      plateNumber: incident.verifiedPlateNumber || incident.vehiclePlate,
-      ticketCode: incident.verifiedTicketCode || incident.ticketCode,
+      plateNumber: "",
+      ticketCode: "",
     });
+    dispatch(getIncidentSessionEvidenceRequest(incident.incidentId));
     dispatch(getIncidentLatestReservationRequest(incident.incidentId));
     if (incident.sessionId) {
       dispatch(getIncidentsBySessionRequest(incident.sessionId));
@@ -243,6 +284,7 @@ const IncidentManagement = () => {
   };
 
   const closeIncident = () => {
+    setCheckoutImageFile(null);
     setSelectedIncident(null);
     form.resetFields();
     dispatch(resetIncidentEnhancement());
@@ -305,7 +347,8 @@ const IncidentManagement = () => {
   const handleAuthorizedCheckout = () => {
     dispatch(
       checkoutDriverAfterIncidentRequest({
-        sessionId: selectedIncident.sessionId,
+        sessionId: sessionEvidence?.sessionId || selectedIncident.sessionId,
+        checkoutImage: checkoutImageFile,
       }),
     );
   };
@@ -341,7 +384,7 @@ const IncidentManagement = () => {
     },
 
     {
-      title: "Source",
+      title: "Reported By",
       dataIndex: "reportSource",
       key: "reportSource",
       render: (source) => (
@@ -408,12 +451,31 @@ const IncidentManagement = () => {
   const validatedSlotInSameBuilding =
     reassignValidation?.isInSameBuilding ??
     reassignValidation?.inSameBuilding;
+  const validatedSlotSameVehicleType =
+    reassignValidation?.isSameVehicleType;
   const reassignIsValid =
     reassignValidation?.slotId === selectedNewSlotId &&
     validatedSlotAvailable === true &&
-    validatedSlotInSameBuilding !== false;
+    validatedSlotInSameBuilding !== false &&
+    validatedSlotSameVehicleType !== false;
   const requiresValidReassign =
     selectedStatus === "RESOLVED" && selectedAction === "REASSIGN_SLOT";
+  const sessionEvidenceValid =
+    Boolean(sessionEvidence) &&
+    sessionEvidence?.sessionActive !== false &&
+    sessionEvidence?.driverMatchesReporter !== false;
+  const sessionFeeIsEstimated =
+    sessionEvidence?.sessionPaymentStatus !== "PAID" &&
+    sessionEvidence?.sessionTotalFee != null &&
+    Number(sessionEvidence.sessionTotalFee) ===
+      Number(sessionEvidence.sessionEstimatedFee);
+  const canCheckout =
+    selectedIncident?.status === "RESOLVED" &&
+    selectedIncident?.resolutionAction === "AUTHORIZE_CHECKOUT" &&
+    (selectedIncident?.incidentType !== "DRIVER_LOST_TICKET" ||
+      verificationMatches) &&
+    sessionEvidence?.sessionActive === true &&
+    Boolean(checkoutImageFile);
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -436,8 +498,11 @@ const IncidentManagement = () => {
           </div>
           <Button
             icon={<RefreshCw size={15} />}
-            loading={loadingAllReports}
-            onClick={() => dispatch(getAllDriverIncidentsRequest())}
+            loading={loadingAllReports || loadingStaffBuilding}
+            onClick={() =>
+              resolvedBuildingId &&
+              dispatch(getAllDriverIncidentsRequest(resolvedBuildingId))
+            }
           >
             Refresh
           </Button>
@@ -498,7 +563,14 @@ const IncidentManagement = () => {
       )}
 
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px_260px_auto]">
+        <div className="mb-5 grid grid-cols-1 gap-3 xl:grid-cols-[220px_1fr_180px_240px_auto]">
+          <Select
+            value={resolvedBuildingId}
+            onChange={setSelectedBuildingId}
+            loading={loadingStaffBuilding}
+            placeholder="Select assigned building"
+            options={buildingOptions}
+          />
           <Input
             allowClear
             value={searchText}
@@ -535,10 +607,14 @@ const IncidentManagement = () => {
           rowKey={(record) => record.incidentId}
           columns={columns}
           dataSource={filteredReports}
-          loading={loadingAllReports}
+          loading={loadingAllReports || loadingStaffBuilding}
           pagination={{ pageSize: 10, showSizeChanger: true }}
           scroll={{ x: 1150 }}
-          locale={{ emptyText: "No driver reports found." }}
+          locale={{
+            emptyText: resolvedBuildingId
+              ? "No driver reports found for this building."
+              : "No assigned building found.",
+          }}
         />
       </div>
 
@@ -628,18 +704,188 @@ const IncidentManagement = () => {
               </div>
             </div>
 
+            <div className="mb-5 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={17} className="text-indigo-600" />
+                  <p className="font-bold text-slate-800">
+                    Parking Session Evidence
+                  </p>
+                </div>
+                {sessionEvidence && (
+                  <div className="flex gap-2">
+                    <Tag color={sessionEvidence.sessionActive ? "green" : "red"}>
+                      {sessionEvidence.sessionStatus || "UNKNOWN"}
+                    </Tag>
+                    <Tag
+                      color={
+                        sessionEvidence.sessionPaymentStatus === "PAID"
+                          ? "green"
+                          : "gold"
+                      }
+                    >
+                      {sessionEvidence.sessionPaymentStatus || "UNPAID"}
+                    </Tag>
+                  </div>
+                )}
+              </div>
+
+              {loadingSessionEvidence ? (
+                <div className="flex justify-center py-8">
+                  <Spin />
+                </div>
+              ) : sessionEvidenceError ? (
+                <Alert
+                  type="error"
+                  showIcon
+                  message={sessionEvidenceError}
+                />
+              ) : sessionEvidence ? (
+                <>
+                  {sessionEvidence.sessionActive === false && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      className="mb-3"
+                      message="This parking session is no longer active."
+                    />
+                  )}
+                  {sessionEvidence.driverMatchesReporter === false && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      className="mb-3"
+                      message="The incident reporter does not match the session driver."
+                    />
+                  )}
+
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        Driver
+                      </p>
+                      <p className="font-semibold text-slate-700">
+                        {sessionEvidence.driverFullName ||
+                          sessionEvidence.driverEmail ||
+                          "—"}
+                      </p>
+                      {sessionEvidence.driverEmail && (
+                        <p className="text-xs text-slate-500">
+                          {sessionEvidence.driverEmail}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        Vehicle
+                      </p>
+                      <p className="font-semibold text-slate-700">
+                        {sessionEvidence.vehiclePlate || "—"}
+                        {sessionEvidence.vehicleType
+                          ? ` · ${sessionEvidence.vehicleType}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        Current location
+                      </p>
+                      <p className="font-semibold text-slate-700">
+                        {[
+                          sessionEvidence.buildingName,
+                          sessionEvidence.floorName,
+                          sessionEvidence.zoneName,
+                          sessionEvidence.slotName,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        Check-in time
+                      </p>
+                      <p className="font-semibold text-slate-700">
+                        {sessionEvidence.checkinTime
+                          ? dayjs(sessionEvidence.checkinTime).format(
+                              "DD/MM/YYYY HH:mm",
+                            )
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        Ticket code
+                      </p>
+                      <p className="font-mono text-sm font-semibold text-slate-700">
+                        {sessionEvidence.ticketCode || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {sessionFeeIsEstimated ? "Estimated fee" : "Total fee"}
+                      </p>
+                      <p className="font-semibold text-slate-700">
+                        {formatCurrency(sessionEvidence.sessionTotalFee)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(sessionEvidence.checkinVehicleImage ||
+                    sessionEvidence.checkoutVehicleImage) && (
+                    <div className="mt-4 grid grid-cols-1 gap-4 border-t border-indigo-100 pt-4 sm:grid-cols-2">
+                      {sessionEvidence.checkinVehicleImage && (
+                        <div>
+                          <p className="mb-2 text-xs font-semibold uppercase text-slate-400">
+                            Check-in vehicle image
+                          </p>
+                          <Image
+                            width={180}
+                            src={sessionEvidence.checkinVehicleImage}
+                            alt="Check-in vehicle evidence"
+                            className="rounded-lg object-cover"
+                          />
+                        </div>
+                      )}
+                      {sessionEvidence.checkoutVehicleImage && (
+                        <div>
+                          <p className="mb-2 text-xs font-semibold uppercase text-slate-400">
+                            Check-out vehicle image
+                          </p>
+                          <Image
+                            width={180}
+                            src={sessionEvidence.checkoutVehicleImage}
+                            alt="Check-out vehicle evidence"
+                            className="rounded-lg object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+
             <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <SquareParking size={17} className="text-blue-600" />
                 <p className="font-bold text-slate-800">
-                  Latest Reservation Evidence
+                  Reservation Cross-check
                 </p>
+                <Tag>Optional</Tag>
               </div>
 
               {loadingEvidence ? (
                 <div className="flex justify-center py-5">
                   <Spin size="small" />
                 </div>
+              ) : latestReservationError ? (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="No active reservation was found. Session evidence remains available for verification."
+                  description={latestReservationError}
+                />
               ) : latestReservation ? (
                 <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div>
@@ -697,19 +943,16 @@ const IncidentManagement = () => {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase text-slate-400">
-                      Estimated fee
+                      Total fee
                     </p>
                     <p className="font-semibold text-slate-700">
-                      {formatCurrency(
-                        latestReservation.estimatedFee ??
-                          latestReservation.sessionEstimatedFee,
-                      )}
+                      {formatCurrency(latestReservation.sessionTotalFee)}
                     </p>
                   </div>
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No latest reservation evidence was found.
+                  No supplemental reservation evidence was found.
                 </p>
               )}
             </div>
@@ -764,8 +1007,11 @@ const IncidentManagement = () => {
                       className="min-w-40"
                       icon={<ShieldCheck size={15} />}
                       loading={verifyingVehicle}
+                      disabled={!sessionEvidenceValid}
                       onClick={handleVerifyVehicle}
-                    ></Button>
+                    >
+                      Verify Ownership
+                    </Button>
                   </div>
 
                   {(vehicleVerification ||
@@ -852,14 +1098,14 @@ const IncidentManagement = () => {
                 <>
                   <Form.Item
                     name="newSlotId"
-                    label="Available slot in the reserved floor"
+                    label="Available slot on the current floor"
                     rules={[
                       { required: true, message: "Select a replacement slot." },
                     ]}
                     extra={
-                      latestReservation?.floorName
-                        ? `Only slots in ${latestReservation.floorName} are returned by the API.`
-                        : "The replacement must be in the same floor as the latest reservation."
+                      sessionEvidence?.floorName
+                        ? `Only compatible slots on ${sessionEvidence.floorName} are returned by the API.`
+                        : "The replacement must be compatible with the current session."
                     }
                   >
                     <Select
@@ -940,6 +1186,58 @@ const IncidentManagement = () => {
                 </Form.Item>
               )}
 
+              {selectedIncident.status === "RESOLVED" &&
+                selectedIncident.resolutionAction ===
+                  "AUTHORIZE_CHECKOUT" && (
+                  <div className="mb-4 rounded-xl border border-cyan-100 bg-cyan-50/50 p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <ImagePlus size={17} className="text-cyan-600" />
+                      <p className="font-bold text-slate-800">
+                        Check-out vehicle image
+                        <span className="ml-1 text-red-500">*</span>
+                      </p>
+                    </div>
+                    <Upload
+                      accept="image/*"
+                      listType="picture"
+                      maxCount={1}
+                      fileList={
+                        checkoutImageFile
+                          ? [
+                              {
+                                uid: "checkout-image",
+                                name: checkoutImageFile.name,
+                                status: "done",
+                                originFileObj: checkoutImageFile,
+                              },
+                            ]
+                          : []
+                      }
+                      beforeUpload={(file) => {
+                        if (!file.type.startsWith("image/")) {
+                          message.error("Please select an image file.");
+                          return Upload.LIST_IGNORE;
+                        }
+                        setCheckoutImageFile(file);
+                        return false;
+                      }}
+                      onRemove={() => {
+                        setCheckoutImageFile(null);
+                      }}
+                    >
+                      {!checkoutImageFile && (
+                        <Button icon={<ImagePlus size={15} />}>
+                          Select check-out image
+                        </Button>
+                      )}
+                    </Upload>
+                    <p className="mt-2 text-xs text-slate-500">
+                      A current vehicle image is required before completing
+                      checkout.
+                    </p>
+                  </div>
+                )}
+
               {requiresVehicleVerification && !verificationMatches && (
                 <Alert
                   type="warning"
@@ -959,6 +1257,7 @@ const IncidentManagement = () => {
                         ghost
                         className="min-w-36"
                         loading={checkingOut}
+                        disabled={!canCheckout}
                         icon={<LogOut size={15} />}
                         onClick={handleAuthorizedCheckout}
                       >

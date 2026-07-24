@@ -17,6 +17,7 @@ import {
   FileWarning,
   PlusCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import dayjs from "dayjs";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -62,6 +63,9 @@ const DriverIncidentReports = () => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState(null);
   const { currentSession, loading: sessionLoading } = useSelector(
     (state) => state.getCurrentSession,
   );
@@ -107,6 +111,26 @@ const DriverIncidentReports = () => {
     [sessions],
   );
   const activeSession = sessionOptions[0] || null;
+
+  const filteredReports = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    return reports.filter((report) => {
+      const searchable = [
+        INCIDENT_TYPE_LABELS[report.incidentType],
+        report.description,
+        report.vehiclePlate,
+        report.resolution,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return (
+        (!keyword || searchable.includes(keyword)) &&
+        (!statusFilter || report.status === statusFilter) &&
+        (!typeFilter || report.incidentType === typeFilter)
+      );
+    });
+  }, [reports, searchText, statusFilter, typeFilter]);
 
   const summary = useMemo(
     () => ({
@@ -293,14 +317,58 @@ const DriverIncidentReports = () => {
           <h2 className="mb-4 text-lg font-bold text-slate-800">
             My report history
           </h2>
+          <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px_240px_auto]">
+            <Input
+              allowClear
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              prefix={<Search size={15} className="text-slate-400" />}
+              placeholder="Search incident, vehicle, description..."
+            />
+            <Select
+              allowClear
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value ?? null)}
+              placeholder="Filter status"
+              options={[
+                { value: "OPEN", label: "Open" },
+                { value: "IN_PROGRESS", label: "In progress" },
+                { value: "PENDING", label: "Pending" },
+                { value: "RESOLVED", label: "Resolved" },
+                { value: "CLOSED", label: "Closed" },
+                { value: "CANCELLED", label: "Cancelled" },
+              ]}
+            />
+            <Select
+              allowClear
+              value={typeFilter}
+              onChange={(value) => setTypeFilter(value ?? null)}
+              placeholder="Filter incident type"
+              options={INCIDENT_TYPE_OPTIONS}
+            />
+            <Button
+              onClick={() => {
+                setSearchText("");
+                setStatusFilter(null);
+                setTypeFilter(null);
+              }}
+            >
+              Reset
+            </Button>
+          </div>
           <Table
             rowKey={(record) => record.incidentId}
             columns={columns}
-            dataSource={reports}
+            dataSource={filteredReports}
             loading={loadingMyReports}
             pagination={{ pageSize: 8 }}
             scroll={{ x: 760 }}
-            locale={{ emptyText: "You have not submitted any reports." }}
+            locale={{
+              emptyText:
+                reports.length > 0
+                  ? "No reports match the selected filters."
+                  : "You have not submitted any reports.",
+            }}
           />
         </div>
       </div>

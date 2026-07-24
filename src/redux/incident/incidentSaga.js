@@ -1,4 +1,4 @@
-import { call, put, takeLatest } from "redux-saga/effects";
+import { call, put, select, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
 import {
   checkoutDriverAfterIncidentApi,
@@ -6,6 +6,7 @@ import {
   getAllDriverIncidentsApi,
   getIncidentAvailableSlotsApi,
   getIncidentLatestReservationApi,
+  getIncidentSessionEvidenceApi,
   getIncidentsBySessionApi,
   getMyDriverIncidentsApi,
   updateIncidentStatusApi,
@@ -28,6 +29,9 @@ import {
   getIncidentLatestReservationFail,
   getIncidentLatestReservationRequest,
   getIncidentLatestReservationSuccess,
+  getIncidentSessionEvidenceFail,
+  getIncidentSessionEvidenceRequest,
+  getIncidentSessionEvidenceSuccess,
   getIncidentsBySessionFail,
   getIncidentsBySessionRequest,
   getIncidentsBySessionSuccess,
@@ -68,9 +72,9 @@ function* handleGetMyDriverIncidents() {
   }
 }
 
-function* handleGetAllDriverIncidents() {
+function* handleGetAllDriverIncidents(action) {
   try {
-    const response = yield call(getAllDriverIncidentsApi);
+    const response = yield call(getAllDriverIncidentsApi, action.payload);
     yield put(getAllDriverIncidentsSuccess(getResponseList(response)));
   } catch (error) {
     const message = getErrorMessage(error, "Failed to load driver reports");
@@ -96,7 +100,10 @@ function* handleUpdateIncidentStatus(action) {
   try {
     yield call(updateIncidentStatusApi, action.payload);
     yield put(updateIncidentStatusSuccess());
-    yield put(getAllDriverIncidentsRequest());
+    const buildingId = yield select(
+      (state) => state.incident.activeBuildingId,
+    );
+    yield put(getAllDriverIncidentsRequest(buildingId));
     toast.success("Incident updated successfully");
   } catch (error) {
     const message = getErrorMessage(error, "Failed to update incident");
@@ -109,7 +116,10 @@ function* handleCheckoutDriverAfterIncident(action) {
   try {
     yield call(checkoutDriverAfterIncidentApi, action.payload);
     yield put(checkoutDriverAfterIncidentSuccess());
-    yield put(getAllDriverIncidentsRequest());
+    const buildingId = yield select(
+      (state) => state.incident.activeBuildingId,
+    );
+    yield put(getAllDriverIncidentsRequest(buildingId));
     toast.success("Driver checked out successfully");
   } catch (error) {
     const message = getErrorMessage(error, "Failed to check out driver");
@@ -128,6 +138,19 @@ function* handleGetIncidentLatestReservation(action) {
       "Failed to load latest reservation evidence",
     );
     yield put(getIncidentLatestReservationFail(message));
+  }
+}
+
+function* handleGetIncidentSessionEvidence(action) {
+  try {
+    const response = yield call(getIncidentSessionEvidenceApi, action.payload);
+    yield put(getIncidentSessionEvidenceSuccess(getResponseData(response)));
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Failed to load parking session evidence",
+    );
+    yield put(getIncidentSessionEvidenceFail(message));
   }
 }
 
@@ -208,6 +231,10 @@ export function* watchIncident() {
   yield takeLatest(
     getIncidentLatestReservationRequest.type,
     handleGetIncidentLatestReservation,
+  );
+  yield takeLatest(
+    getIncidentSessionEvidenceRequest.type,
+    handleGetIncidentSessionEvidence,
   );
   yield takeLatest(
     getIncidentAvailableSlotsRequest.type,
