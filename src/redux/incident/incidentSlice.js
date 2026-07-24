@@ -3,21 +3,26 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   myReports: [],
   allReports: [],
+  activeBuildingId: null,
   loadingMyReports: false,
   loadingAllReports: false,
   creating: false,
   updating: false,
   checkingOut: false,
+  loadingSessionEvidence: false,
   loadingEvidence: false,
   loadingAvailableSlots: false,
   loadingRelatedIncidents: false,
   verifyingVehicle: false,
   validatingReassign: false,
+  sessionEvidence: null,
   latestReservation: null,
   availableSlots: [],
   relatedIncidents: [],
   vehicleVerification: null,
   reassignValidation: null,
+  sessionEvidenceError: null,
+  latestReservationError: null,
   enhancementError: null,
   createSuccess: false,
   updateSuccess: false,
@@ -42,8 +47,9 @@ const incidentSlice = createSlice({
       state.error = action.payload;
     },
 
-    getAllDriverIncidentsRequest: (state) => {
+    getAllDriverIncidentsRequest: (state, action) => {
       state.loadingAllReports = true;
+      state.activeBuildingId = action.payload || null;
       state.error = null;
     },
     getAllDriverIncidentsSuccess: (state, action) => {
@@ -100,7 +106,7 @@ const incidentSlice = createSlice({
     getIncidentLatestReservationRequest: (state) => {
       state.loadingEvidence = true;
       state.latestReservation = null;
-      state.enhancementError = null;
+      state.latestReservationError = null;
     },
     getIncidentLatestReservationSuccess: (state, action) => {
       state.loadingEvidence = false;
@@ -108,7 +114,21 @@ const incidentSlice = createSlice({
     },
     getIncidentLatestReservationFail: (state, action) => {
       state.loadingEvidence = false;
-      state.enhancementError = action.payload;
+      state.latestReservationError = action.payload;
+    },
+
+    getIncidentSessionEvidenceRequest: (state) => {
+      state.loadingSessionEvidence = true;
+      state.sessionEvidence = null;
+      state.sessionEvidenceError = null;
+    },
+    getIncidentSessionEvidenceSuccess: (state, action) => {
+      state.loadingSessionEvidence = false;
+      state.sessionEvidence = action.payload;
+    },
+    getIncidentSessionEvidenceFail: (state, action) => {
+      state.loadingSessionEvidence = false;
+      state.sessionEvidenceError = action.payload;
     },
 
     getIncidentAvailableSlotsRequest: (state) => {
@@ -170,15 +190,19 @@ const incidentSlice = createSlice({
 
     resetIncidentEnhancement: (state) => {
       state.loadingEvidence = false;
+      state.loadingSessionEvidence = false;
       state.loadingAvailableSlots = false;
       state.loadingRelatedIncidents = false;
       state.verifyingVehicle = false;
       state.validatingReassign = false;
       state.latestReservation = null;
+      state.sessionEvidence = null;
       state.availableSlots = [];
       state.relatedIncidents = [];
       state.vehicleVerification = null;
       state.reassignValidation = null;
+      state.sessionEvidenceError = null;
+      state.latestReservationError = null;
       state.enhancementError = null;
     },
 
@@ -210,6 +234,9 @@ export const {
   getIncidentLatestReservationRequest,
   getIncidentLatestReservationSuccess,
   getIncidentLatestReservationFail,
+  getIncidentSessionEvidenceRequest,
+  getIncidentSessionEvidenceSuccess,
+  getIncidentSessionEvidenceFail,
   getIncidentAvailableSlotsRequest,
   getIncidentAvailableSlotsSuccess,
   getIncidentAvailableSlotsFail,
