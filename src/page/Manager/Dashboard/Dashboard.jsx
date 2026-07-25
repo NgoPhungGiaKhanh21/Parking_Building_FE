@@ -67,6 +67,15 @@ const formatDateDMY = (value) => {
 
 const formatHourLabel = (hour) => `${String(hour).padStart(2, "0")}:00`;
 
+const formatDurationFromMinutes = (totalMinutes) => {
+  const mins = toNumberSafe(totalMinutes);
+  if (mins <= 0) return "0 min";
+  const h = Math.floor(mins / 60);
+  const m = Math.floor(mins % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
+};
+
 const getDefaultLast7DaysRange = () => [dayjs().subtract(6, "day"), dayjs()];
 
 const toDashboardFilters = (range, buildingId) => {
@@ -433,9 +442,9 @@ const Dashboard = () => {
             />
             <MetricTile
               icon={<Clock size={16} className="text-indigo-600" />}
-              label="Avg Duration"
-              value={`${toNumberSafe(sessions.avgDurationMinutes).toFixed(0)} min`}
-              hint={`Avg fee ${formatCurrency(sessions.avgFee)}`}
+              label="Avg Park Time"
+              value={formatDurationFromMinutes(sessions.avgDurationMinutes)}
+              hint={`~ ${formatCurrency(sessions.avgFee)} / session`}
               accent="bg-indigo-50"
             />
             <MetricTile
@@ -565,7 +574,6 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Pending", value: reservations.totalPending, color: "text-amber-700 bg-amber-50" },
-                    { label: "Approved", value: reservations.totalApproved, color: "text-blue-700 bg-blue-50" },
                     { label: "Completed", value: reservations.totalCompleted, color: "text-emerald-700 bg-emerald-50" },
                     { label: "Cancelled", value: reservations.totalCancelled, color: "text-rose-700 bg-rose-50" },
                     { label: "Expired", value: reservations.totalExpired, color: "text-slate-700 bg-slate-100" },
@@ -708,27 +716,6 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Staff / users footer strip */}
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {[
-              { label: "Staff", value: users.totalStaff },
-              { label: "Managers", value: users.totalManagers },
-              { label: "New users (month)", value: users.newUsersThisMonth },
-              { label: "Sessions (month)", value: sessions.sessionsThisMonth },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-center"
-              >
-                <p className="text-[10px] font-semibold uppercase text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-lg font-black text-slate-700">
-                  {formatCount(item.value)}
-                </p>
-              </div>
-            ))}
-          </div>
         </>
       )}
     </div>
