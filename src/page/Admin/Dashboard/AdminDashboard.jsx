@@ -381,7 +381,7 @@ const AdminDashboard = () => {
       }));
   }, [allPayments, dateRange]);
 
-  const payosPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'PAYOS'), [paymentTableData]);
+  const payosPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) !== 'CASH'), [paymentTableData]);
   const cashPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'CASH'), [paymentTableData]);
 
   return (

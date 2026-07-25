@@ -209,6 +209,11 @@ const VehicleEntry = () => {
     dispatch(getAllReservationRequest());
     dispatch(getStaffBuildingRequest());
     dispatch(getVehicleTypeListRequest());
+
+    return () => {
+      dispatch(ocrPlateReset());
+      dispatch(unifiedCheckinReset());
+    };
   }, [dispatch]);
 
   // Derived OCR plate
