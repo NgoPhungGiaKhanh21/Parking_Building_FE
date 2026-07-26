@@ -413,10 +413,12 @@ const IncidentManagement = () => {
       render: (_, record) => (
         <Button
           size="small"
+          type="primary"
+          ghost
           icon={<Eye size={14} />}
           onClick={() => openIncident(record)}
         >
-          Review
+          Detail
         </Button>
       ),
     },
