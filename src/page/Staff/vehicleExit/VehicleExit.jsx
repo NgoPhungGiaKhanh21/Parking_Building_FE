@@ -71,6 +71,7 @@ const isCheckoutEligible = (r) => {
   return (
     status === "CHECKED_IN" ||
     status === "ACTIVE" ||
+    status === "CONFIRMED" ||
     r.sessionStatus === "ACTIVE" ||
     (status === "APPROVED" && r.slotStatus === "OCCUPIED")
   );
@@ -144,13 +145,7 @@ const VehicleExit = () => {
   // Active session can be either Driver (from reservations) or Guest (from API)
   const activeSession = useMemo(() => {
     if (driverReservation) return driverReservation;
-    if (guestSession) {
-      const status = guestSession.reservationStatus || guestSession.status;
-      if (status === "PENDING" || status === "CONFIRMED") {
-        return null;
-      }
-      return guestSession;
-    }
+    if (guestSession) return guestSession;
     return null;
   }, [driverReservation, guestSession]);
 
@@ -195,10 +190,8 @@ const VehicleExit = () => {
 
     return () => {
       dispatch(unifiedCheckoutReset());
-      dispatch(ocrPlateReset());
-      dispatch(getSessionByPlateNumberReset());
     };
-  }, [dispatch, searchParams]);
+  }, [dispatch]);
 
   // ── Handle checkout success
   useEffect(() => {
@@ -597,101 +590,78 @@ const VehicleExit = () => {
 
           {/* Right Column: Summary + Actions */}
           <div className="space-y-5">
-            {normalizedSession ? (
-              <>
-                {/* Summary card */}
-                <div className="rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <LogOut size={16} /> Check-out Summary
-                  </h3>
-                  <div className="space-y-2 text-xs">
-                    {[
-                      { label: "Plate Number", value: plateInput || normalizedSession?.vehiclePlate || "—", mono: true },
-                      { label: "Ticket Code", value: normalizedSession?.ticketCode || "—", mono: true },
-                      { label: "Mode", value: isDriver ? "DRIVER" : isGuest ? "GUEST" : "—", bold: true, color: isDriver ? "text-indigo-600" : isGuest ? "text-orange-600" : "text-slate-800" },
-                      { label: "Fee", value: normalizedSession ? formatCurrency(amount) : "—" },
-                      {
-                        label: "Duration",
-                        value: normalizedSession ? formatParkingDurationLabel(normalizedSession) : "—",
-                      },
-                      {
-                        label: "Payment",
-                        value: isPaid
-                          ? "✓ Paid"
-                          : isCashCheckout
-                            ? "Cash at check-out"
-                            : "✗ Unpaid",
-                        ok: paymentReady,
-                      },
-                      { label: "Plate Image", value: plateImageUrl ? "✓ Uploaded" : "Not uploaded", ok: !!plateImageUrl },
-                    ].map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-500">{item.label}:</span>
-                        <span
-                          className={`font-semibold ${item.mono ? "font-mono" : ""} ${item.bold ? "font-bold" : ""} ${
-                            item.color ? item.color : item.ok === true
-                              ? "text-emerald-600"
-                              : item.ok === false
-                                ? "text-red-500"
-                                : "text-slate-800"
-                          }`}
-                        >
-                          {item.value}
-                        </span>
-                      </div>
-                    ))}
+            {/* Summary card */}
+            <div className="rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <LogOut size={16} /> Check-out Summary
+              </h3>
+              <div className="space-y-2 text-xs">
+                {[
+                  { label: "Plate Number", value: plateInput || normalizedSession?.vehiclePlate || "—", mono: true },
+                  { label: "Ticket Code", value: normalizedSession?.ticketCode || "—", mono: true },
+                  { label: "Mode", value: isDriver ? "DRIVER" : isGuest ? "GUEST" : "—", bold: true, color: isDriver ? "text-indigo-600" : isGuest ? "text-orange-600" : "text-slate-800" },
+                  { label: "Fee", value: normalizedSession ? formatCurrency(amount) : "—" },
+                  {
+                    label: "Duration",
+                    value: normalizedSession ? formatParkingDurationLabel(normalizedSession) : "—",
+                  },
+                  {
+                    label: "Payment",
+                    value: isPaid
+                      ? "✓ Paid"
+                      : isCashCheckout
+                        ? "Cash at check-out"
+                        : "✗ Unpaid",
+                    ok: paymentReady,
+                  },
+                  { label: "Plate Image", value: plateImageUrl ? "✓ Uploaded" : "Not uploaded", ok: !!plateImageUrl },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
+                    <span className="text-slate-500">{item.label}:</span>
+                    <span
+                      className={`font-semibold ${item.mono ? "font-mono" : ""} ${item.bold ? "font-bold" : ""} ${
+                        item.color ? item.color : item.ok === true
+                          ? "text-emerald-600"
+                          : item.ok === false
+                            ? "text-red-500"
+                            : "text-slate-800"
+                      }`}
+                    >
+                      {item.value}
+                    </span>
                   </div>
-                </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Readiness check */}
-                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                  <h3 className="text-xs font-bold uppercase text-slate-500 mb-3 tracking-wide">Readiness Check</h3>
-                  <div className="space-y-2">
-                    {[
-                      { label: "Plate image uploaded", ok: !!plateImageUrl },
-                      { label: "Plate identified", ok: !!plateInput },
-                      { label: "Session found", ok: !!normalizedSession },
-                      {
-                        label: isCashCheckout
-                          ? "Cash payment selected"
-                          : "Payment completed",
-                        ok: paymentReady,
-                      },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <div
-                          className={`h-4 w-4 rounded-full flex items-center justify-center ${
-                            item.ok ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
-                          }`}
-                        >
-                          {item.ok ? <CheckCircle2 size={10} /> : <div className="h-1.5 w-1.5 rounded-full bg-slate-300" />}
-                        </div>
-                        <span className={item.ok ? "text-slate-700 font-medium" : "text-slate-400"}>{item.label}</span>
-                      </div>
-                    ))}
+            {/* Readiness check */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <h3 className="text-xs font-bold uppercase text-slate-500 mb-3 tracking-wide">Readiness Check</h3>
+              <div className="space-y-2">
+                {[
+                  { label: "Plate image uploaded", ok: !!plateImageUrl },
+                  { label: "Plate identified", ok: !!plateInput },
+                  { label: "Session found", ok: !!normalizedSession },
+                  {
+                    label: isCashCheckout
+                      ? "Cash payment selected"
+                      : "Payment completed",
+                    ok: paymentReady,
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <div
+                      className={`h-4 w-4 rounded-full flex items-center justify-center ${
+                        item.ok ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
+                      }`}
+                    >
+                      {item.ok ? <CheckCircle2 size={10} /> : <div className="h-1.5 w-1.5 rounded-full bg-slate-300" />}
+                    </div>
+                    <span className={item.ok ? "text-slate-700 font-medium" : "text-slate-400"}>{item.label}</span>
                   </div>
-                </div>
-              </>
-            ) : plateInput && !sessionLoading && !reservationsLoading ? (
-              <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center shadow-sm h-[320px] flex flex-col justify-center">
-                <AlertCircle size={48} className="mx-auto text-red-500 mb-4" />
-                <h3 className="text-base font-bold text-red-700 mb-2">Check-in Not Found</h3>
-                <p className="text-sm text-red-600 font-medium">
-                  The vehicle with plate <span className="font-mono font-bold bg-red-100 px-1 py-0.5 rounded">{plateInput}</span> has not checked in.
-                </p>
-                <p className="text-xs text-red-500 mt-2">
-                  Cannot proceed to check-out. Please verify the plate or check-in first.
-                </p>
+                ))}
               </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-sm h-[320px] flex flex-col justify-center">
-                <ScanLine size={48} className="mx-auto text-slate-300 mb-4" />
-                <h3 className="text-base font-bold text-slate-500 mb-2">Awaiting Vehicle</h3>
-                <p className="text-sm text-slate-400">
-                  Scan or enter a plate to view the check-out summary.
-                </p>
-              </div>
-            )}
+            </div>
 
             {/* Checkout error */}
             {checkoutError && (
