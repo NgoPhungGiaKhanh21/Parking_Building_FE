@@ -21,7 +21,7 @@ import {
 } from "recharts";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getAdminDashboardStatsRequest } from "../../../redux/admin/dashboardStats/getAdminDashboardStatsSlice";
-import api from "../../../service/api";
+import { getAllPaymentsRequest } from "../../../redux/staff/payment/getAllPayments/getAllPaymentsSlice";
 
 const CHART_COLORS = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#7c3aed"];
 
@@ -134,51 +134,29 @@ const AdminDashboard = () => {
   const { stats, loading, error } = useSelector(
     (state) => state.getAdminDashboardStats,
   );
-  const [payosPaymentsRaw, setPayosPaymentsRaw] = useState([]);
-  const [cashPaymentsRaw, setCashPaymentsRaw] = useState([]);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
-
-  const fetchPayments = async (range) => {
-    try {
-      setPaymentsLoading(true);
-      const [from, to] = Array.isArray(range) ? range : [];
-      const fromStr = from ? from.startOf("day").format("YYYY-MM-DDTHH:mm:ss") : undefined;
-      const toStr = to ? to.endOf("day").format("YYYY-MM-DDTHH:mm:ss") : undefined;
-      
-      const [payosRes, cashRes] = await Promise.all([
-        api.get("/payments", { params: { paymentMethod: "PAYOS", status: "ALL", limit: 200, from: fromStr, to: toStr } }),
-        api.get("/payments", { params: { paymentMethod: "CASH", status: "ALL", limit: 200, from: fromStr, to: toStr } })
-      ]);
-      
-      const getList = (res) => {
-        const d = res.data?.data ?? res.data?.content ?? res.data ?? [];
-        return Array.isArray(d) ? d : [];
-      };
-      setPayosPaymentsRaw(getList(payosRes));
-      setCashPaymentsRaw(getList(cashRes));
-    } catch (err) {
-      console.error("Failed to fetch payments", err);
-    } finally {
-      setPaymentsLoading(false);
-    }
-  };
+  const { payments: allPayments } = useSelector(
+    (state) => state.getAllPayments,
+  );
 
   useEffect(() => {
-    const range = getDefaultLast7DaysRange();
-    dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(range)));
-    fetchPayments(range);
+    dispatch(
+      getAdminDashboardStatsRequest(
+        toDashboardDateFilters(getDefaultLast7DaysRange()),
+      ),
+    );
+    dispatch(getAllPaymentsRequest());
   }, [dispatch]);
 
   const applyDateFilter = () => {
     dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(dateRange)));
-    fetchPayments(dateRange);
   };
 
   const resetDateFilter = () => {
     const defaultRange = getDefaultLast7DaysRange();
     setDateRange(defaultRange);
-    dispatch(getAdminDashboardStatsRequest(toDashboardDateFilters(defaultRange)));
-    fetchPayments(defaultRange);
+    dispatch(
+      getAdminDashboardStatsRequest(toDashboardDateFilters(defaultRange)),
+    );
   };
 
   const occupancy = useMemo(() => stats?.occupancy || {}, [stats?.occupancy]);
@@ -371,22 +349,40 @@ const AdminDashboard = () => {
     ...item,
   }));
 
-  const processPayments = (list) => {
+  const paymentTableData = useMemo(() => {
+    const [from, to] = Array.isArray(dateRange) ? dateRange : [];
+    const fromMs = from ? from.startOf("day").valueOf() : null;
+    const toMs = to ? to.endOf("day").valueOf() : null;
+
+    const list = Array.isArray(allPayments) ? allPayments : [];
     return list
-      .filter((item) => toNumberSafe(item.amount) > 0)
+      .filter((item) => {
+        if (toNumberSafe(item.amount) <= 0) return false;
+        const raw = item.paymentTime || item.createdAt || item.updatedAt;
+        if (!raw || (!fromMs && !toMs)) return true;
+        const value = dayjs(raw).valueOf();
+        if (Number.isNaN(value)) return false;
+        if (fromMs != null && value < fromMs) return false;
+        if (toMs != null && value > toMs) return false;
+        return true;
+      })
       .sort((a, b) => {
-        const aValue = dayjs(a.paymentTime || a.createdAt || a.updatedAt || 0).valueOf();
-        const bValue = dayjs(b.paymentTime || b.createdAt || b.updatedAt || 0).valueOf();
+        const aValue = dayjs(
+          a.paymentTime || a.createdAt || a.updatedAt || 0,
+        ).valueOf();
+        const bValue = dayjs(
+          b.paymentTime || b.createdAt || b.updatedAt || 0,
+        ).valueOf();
         return bValue - aValue;
       })
       .map((item, index) => ({
         key: item.paymentId || index,
         ...item,
       }));
-  };
+  }, [allPayments, dateRange]);
 
-  const payosPayments = useMemo(() => processPayments(payosPaymentsRaw), [payosPaymentsRaw]);
-  const cashPayments = useMemo(() => processPayments(cashPaymentsRaw), [cashPaymentsRaw]);
+  const payosPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'PAYOS'), [paymentTableData]);
+  const cashPayments = useMemo(() => paymentTableData.filter(p => normalizeStatus(p.paymentMethod) === 'CASH'), [paymentTableData]);
 
   return (
     <div className="min-h-screen bg-[#f5f7ff] p-4 md:p-8">
@@ -671,28 +667,26 @@ const AdminDashboard = () => {
                   key: "1",
                   label: "PayOS Transactions",
                   children: (
-                      <Table
-                        columns={payosColumns}
-                        dataSource={payosPayments}
-                        loading={paymentsLoading}
-                        pagination={{ pageSize: 5 }}
-                        rowClassName="hover:!bg-slate-50"
-                        scroll={{ x: 800 }}
-                      />
+                    <Table
+                      columns={payosColumns}
+                      dataSource={payosPayments}
+                      pagination={{ pageSize: 5 }}
+                      rowClassName="hover:!bg-slate-50"
+                      scroll={{ x: 800 }}
+                    />
                   ),
                 },
                 {
                   key: "2",
                   label: "Cash Transactions",
                   children: (
-                      <Table
-                        columns={cashColumns}
-                        dataSource={cashPayments}
-                        loading={paymentsLoading}
-                        pagination={{ pageSize: 5 }}
-                        rowClassName="hover:!bg-slate-50"
-                        scroll={{ x: 800 }}
-                      />
+                    <Table
+                      columns={cashColumns}
+                      dataSource={cashPayments}
+                      pagination={{ pageSize: 5 }}
+                      rowClassName="hover:!bg-slate-50"
+                      scroll={{ x: 800 }}
+                    />
                   ),
                 },
               ]}

@@ -12,9 +12,12 @@ import {
 } from "antd";
 import {
   AlertTriangle,
+  CarFront,
   CheckCircle2,
   Clock3,
   FileWarning,
+  ListChecks,
+  MapPin,
   PlusCircle,
   RefreshCw,
   Search,
@@ -134,6 +137,7 @@ const DriverIncidentReports = () => {
 
   const summary = useMemo(
     () => ({
+      total: reports.length,
       open: reports.filter((item) => item.status === "OPEN").length,
       processing: reports.filter((item) =>
         ["IN_PROGRESS", "PENDING"].includes(item.status),
@@ -159,23 +163,16 @@ const DriverIncidentReports = () => {
     {
       title: "Report",
       key: "report",
+      width: "42%",
       render: (_, record) => (
-        <div>
-          <p className="font-semibold text-slate-800">
+        <div className="min-w-0 pr-2">
+          <p className="m-0 font-semibold text-slate-800">
             {INCIDENT_TYPE_LABELS[record.incidentType] || record.incidentType}
           </p>
-          <p className="mt-0.5 max-w-75 truncate text-xs text-slate-500">
+          <p className="mt-0.5 truncate text-xs text-slate-500">
             {record.description || "—"}
           </p>
-        </div>
-      ),
-    },
-    {
-      title: "Vehicle",
-      key: "vehicle",
-      render: (_, record) => (
-        <div className="text-sm">
-          <p className="font-semibold text-slate-700">
+          <p className="mt-1 text-xs font-medium text-slate-600">
             {record.vehiclePlate || "—"}
           </p>
         </div>
@@ -185,8 +182,9 @@ const DriverIncidentReports = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: "14%",
       render: (status) => (
-        <Tag color={STATUS_COLORS[status] || "default"}>
+        <Tag color={STATUS_COLORS[status] || "default"} className="m-0">
           {String(status || "UNKNOWN").replaceAll("_", " ")}
         </Tag>
       ),
@@ -195,18 +193,25 @@ const DriverIncidentReports = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: "18%",
       sorter: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       defaultSortOrder: "descend",
-      render: (value) =>
-        value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—",
+      render: (value) => (
+        <span className="whitespace-nowrap text-sm text-slate-600">
+          {value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—"}
+        </span>
+      ),
     },
     {
       title: "Resolution",
       key: "resolution",
+      width: "26%",
       render: (_, record) =>
         record.resolution ? (
-          <div className="max-w-70">
-            <p className="text-sm text-slate-700">{record.resolution}</p>
+          <div className="min-w-0">
+            <p className="m-0 truncate text-sm text-slate-700">
+              {record.resolution}
+            </p>
             {record.resolutionAction && (
               <Tag color="cyan" className="mt-1">
                 {record.resolutionAction.replaceAll("_", " ")}
@@ -221,9 +226,12 @@ const DriverIncidentReports = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="mb-6 rounded-2xl border border-amber-100 bg-white p-6 shadow-sm">
+      <div className="mx-auto max-w-screen-2xl">
+      <div className="mb-5 overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm">
+        <div className="h-1 bg-amber-400" />
+        <div className="p-5 md:p-6">
         <CommonBreadcrumb role="Driver" page="reports" />
-        <div className="mt-4 flex items-center justify-between gap-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
               <FileWarning size={28} />
@@ -256,10 +264,62 @@ const DriverIncidentReports = () => {
             </Button>
           </div>
         </div>
+        </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div
+        className={`mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 ${
+          activeSession
+            ? "border-indigo-100 bg-indigo-50/60"
+            : "border-slate-200 bg-white"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+              activeSession
+                ? "bg-indigo-100 text-indigo-600"
+                : "bg-slate-100 text-slate-400"
+            }`}
+          >
+            <CarFront size={21} />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              Current parking session
+            </p>
+            <p className="font-bold text-slate-800">
+              {sessionLoading
+                ? "Checking active session..."
+                : activeSession?.vehiclePlate || "No active session"}
+            </p>
+          </div>
+        </div>
+        {activeSession && (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <MapPin size={15} className="text-indigo-500" />
+            <span>
+              {[
+                activeSession.buildingName,
+                activeSession.floorName,
+                activeSession.slotName,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "Parking location available in session details"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
+          {
+            label: "All reports",
+            value: summary.total,
+            icon: ListChecks,
+            color: "text-slate-600",
+            background: "bg-slate-100",
+          },
           {
             label: "Open",
             value: summary.open,
@@ -284,12 +344,12 @@ const DriverIncidentReports = () => {
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+            className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">{item.label}</p>
-                <p className="mt-1 text-3xl font-black text-slate-800">
+                <p className="mt-1 text-2xl font-black text-slate-800">
                   {item.value}
                 </p>
               </div>
@@ -313,12 +373,21 @@ const DriverIncidentReports = () => {
       )}
 
       <div className="grid grid-cols-1 gap-6">
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-bold text-slate-800">
-            My report history
-          </h2>
-          <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px_240px_auto]">
+        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">
+                My report history
+              </h2>
+              <p className="text-sm text-slate-500">
+                Track progress and review responses from parking staff.
+              </p>
+            </div>
+            <Tag color="blue">{filteredReports.length} shown</Tag>
+          </div>
+          <div className="m-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 md:grid-cols-2 xl:grid-cols-4">
             <Input
+              className="w-full xl:col-span-2"
               allowClear
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
@@ -326,6 +395,7 @@ const DriverIncidentReports = () => {
               placeholder="Search incident, vehicle, description..."
             />
             <Select
+              className="w-full"
               allowClear
               value={statusFilter}
               onChange={(value) => setStatusFilter(value ?? null)}
@@ -339,37 +409,50 @@ const DriverIncidentReports = () => {
                 { value: "CANCELLED", label: "Cancelled" },
               ]}
             />
-            <Select
-              allowClear
-              value={typeFilter}
-              onChange={(value) => setTypeFilter(value ?? null)}
-              placeholder="Filter incident type"
-              options={INCIDENT_TYPE_OPTIONS}
-            />
-            <Button
-              onClick={() => {
-                setSearchText("");
-                setStatusFilter(null);
-                setTypeFilter(null);
-              }}
-            >
-              Reset
-            </Button>
+            <div className="flex gap-2">
+              <Select
+                className="min-w-0 flex-1"
+                allowClear
+                value={typeFilter}
+                onChange={(value) => setTypeFilter(value ?? null)}
+                placeholder="Filter type"
+                options={INCIDENT_TYPE_OPTIONS}
+              />
+              <Button
+                onClick={() => {
+                  setSearchText("");
+                  setStatusFilter(null);
+                  setTypeFilter(null);
+                }}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
-          <Table
-            rowKey={(record) => record.incidentId}
-            columns={columns}
-            dataSource={filteredReports}
-            loading={loadingMyReports}
-            pagination={{ pageSize: 8 }}
-            scroll={{ x: 760 }}
-            locale={{
-              emptyText:
-                reports.length > 0
-                  ? "No reports match the selected filters."
-                  : "You have not submitted any reports.",
-            }}
-          />
+          <div className="overflow-x-hidden px-4 pb-4">
+            <Table
+              rowKey={(record) => record.incidentId}
+              columns={columns}
+              dataSource={filteredReports}
+              loading={loadingMyReports}
+              tableLayout="fixed"
+              pagination={{
+                pageSize: 8,
+                showTotal: (total) => `${total} reports`,
+              }}
+              rowClassName={(record) =>
+                ["OPEN", "IN_PROGRESS", "PENDING"].includes(record.status)
+                  ? "bg-amber-50/20"
+                  : ""
+              }
+              locale={{
+                emptyText:
+                  reports.length > 0
+                    ? "No reports match the selected filters."
+                    : "You have not submitted any reports.",
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -377,7 +460,7 @@ const DriverIncidentReports = () => {
         open={isCreateModalOpen}
         onCancel={closeCreateModal}
         footer={null}
-        width={560}
+        width={620}
         centered
         title={
           <div className="flex items-center gap-3">
@@ -394,15 +477,28 @@ const DriverIncidentReports = () => {
         }
       >
         {activeSession?.vehiclePlate && (
-          <div className="mb-5 mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
-              Current vehicle
-            </p>
-            <p className="mt-1 font-bold text-blue-800">
-              {activeSession.vehiclePlate}
-            </p>
+          <div className="mb-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+            <div className="flex items-center gap-3">
+              <CarFront size={20} className="text-indigo-600" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+                  Reporting for current vehicle
+                </p>
+                <p className="font-bold text-indigo-900">
+                  {activeSession.vehiclePlate}
+                </p>
+              </div>
+            </div>
+            <Tag color="blue">Active session</Tag>
           </div>
         )}
+
+        <Alert
+          className="mb-4"
+          type="info"
+          showIcon
+          message="Give staff enough detail to verify and resolve the problem quickly."
+        />
 
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
@@ -433,7 +529,7 @@ const DriverIncidentReports = () => {
             />
           </Form.Item>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
             <Button onClick={closeCreateModal}>Cancel</Button>
             <Button
               type="primary"
@@ -446,6 +542,7 @@ const DriverIncidentReports = () => {
           </div>
         </Form>
       </Modal>
+      </div>
     </div>
   );
 };
