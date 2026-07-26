@@ -21,6 +21,7 @@ import {
   PlusCircle,
   RefreshCw,
   Search,
+  Eye,
 } from "lucide-react";
 import dayjs from "dayjs";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
@@ -69,6 +70,7 @@ const DriverIncidentReports = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
   const { currentSession, loading: sessionLoading } = useSelector(
     (state) => state.getCurrentSession,
   );
@@ -163,13 +165,13 @@ const DriverIncidentReports = () => {
     {
       title: "Report",
       key: "report",
-      width: "42%",
+      ellipsis: true,
       render: (_, record) => (
-        <div className="min-w-0 pr-2">
+        <div className="min-w-0 break-words pr-2">
           <p className="m-0 font-semibold text-slate-800">
             {INCIDENT_TYPE_LABELS[record.incidentType] || record.incidentType}
           </p>
-          <p className="mt-0.5 truncate text-xs text-slate-500">
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
             {record.description || "—"}
           </p>
           <p className="mt-1 text-xs font-medium text-slate-600">
@@ -182,7 +184,7 @@ const DriverIncidentReports = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: "14%",
+      width: 120,
       render: (status) => (
         <Tag color={STATUS_COLORS[status] || "default"} className="m-0">
           {String(status || "UNKNOWN").replaceAll("_", " ")}
@@ -193,7 +195,7 @@ const DriverIncidentReports = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: "18%",
+      width: 150,
       sorter: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       defaultSortOrder: "descend",
       render: (value) => (
@@ -203,30 +205,27 @@ const DriverIncidentReports = () => {
       ),
     },
     {
-      title: "Resolution",
-      key: "resolution",
-      width: "26%",
-      render: (_, record) =>
-        record.resolution ? (
-          <div className="min-w-0">
-            <p className="m-0 truncate text-sm text-slate-700">
-              {record.resolution}
-            </p>
-            {record.resolutionAction && (
-              <Tag color="cyan" className="mt-1">
-                {record.resolutionAction.replaceAll("_", " ")}
-              </Tag>
-            )}
-          </div>
-        ) : (
-          <span className="text-slate-400">Waiting for staff</span>
-        ),
+      title: "Action",
+      key: "action",
+      width: 100,
+      align: "right",
+      render: (_, record) => (
+        <Button
+          size="small"
+          type="primary"
+          ghost
+          icon={<Eye size={14} />}
+          onClick={() => setSelectedReport(record)}
+        >
+          Detail
+        </Button>
+      ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="mx-auto max-w-screen-2xl">
+    <div className="w-full min-w-0 bg-slate-50 p-4 pb-8 md:p-8">
+      <div className="mx-auto w-full min-w-0 max-w-screen-2xl">
       <div className="mb-5 overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm">
         <div className="h-1 bg-amber-400" />
         <div className="p-5 md:p-6">
@@ -373,7 +372,7 @@ const DriverIncidentReports = () => {
       )}
 
       <div className="grid grid-cols-1 gap-6">
-        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="w-full min-w-0 rounded-2xl border border-slate-100 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="text-lg font-bold text-slate-800">
@@ -429,13 +428,13 @@ const DriverIncidentReports = () => {
               </Button>
             </div>
           </div>
-          <div className="overflow-x-hidden px-4 pb-4">
+          <div className="w-full min-w-0 px-4 pb-4">
             <Table
               rowKey={(record) => record.incidentId}
               columns={columns}
               dataSource={filteredReports}
               loading={loadingMyReports}
-              tableLayout="fixed"
+              size="middle"
               pagination={{
                 pageSize: 8,
                 showTotal: (total) => `${total} reports`,
@@ -455,6 +454,101 @@ const DriverIncidentReports = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={Boolean(selectedReport)}
+        onCancel={() => setSelectedReport(null)}
+        footer={
+          <Button onClick={() => setSelectedReport(null)}>Close</Button>
+        }
+        width={560}
+        centered
+        title={
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <FileWarning size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">Report Detail</p>
+              <p className="text-xs font-normal text-slate-500">
+                Full information about your incident report.
+              </p>
+            </div>
+          </div>
+        }
+      >
+        {selectedReport && (
+          <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Problem type
+              </p>
+              <p className="font-semibold text-slate-800">
+                {INCIDENT_TYPE_LABELS[selectedReport.incidentType] ||
+                  selectedReport.incidentType}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Status
+              </p>
+              <Tag
+                color={STATUS_COLORS[selectedReport.status] || "default"}
+                className="mt-1"
+              >
+                {String(selectedReport.status || "UNKNOWN").replaceAll("_", " ")}
+              </Tag>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Vehicle
+              </p>
+              <p className="font-semibold text-slate-800">
+                {selectedReport.vehiclePlate || "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Created
+              </p>
+              <p className="text-slate-700">
+                {selectedReport.createdAt
+                  ? dayjs(selectedReport.createdAt).format("DD/MM/YYYY HH:mm")
+                  : "—"}
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Your description
+              </p>
+              <p className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                {selectedReport.description || "—"}
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                Staff resolution
+              </p>
+              {selectedReport.resolution ? (
+                <div className="mt-1 rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
+                  <p className="whitespace-pre-wrap text-sm text-slate-700">
+                    {selectedReport.resolution}
+                  </p>
+                  {selectedReport.resolutionAction && (
+                    <Tag color="cyan" className="mt-2">
+                      {selectedReport.resolutionAction.replaceAll("_", " ")}
+                    </Tag>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-slate-400">
+                  Waiting for staff to respond.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={isCreateModalOpen}
