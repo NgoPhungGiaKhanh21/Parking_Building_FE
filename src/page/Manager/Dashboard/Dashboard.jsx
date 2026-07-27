@@ -298,7 +298,11 @@ const Dashboard = () => {
               {toNumberSafe(occupancy.occupancyRate).toFixed(1)}%
             </p>
             <p className="mt-0.5 text-xs text-slate-500">
-              {formatCount(occupancy.occupiedSlots)} / {formatCount(totalSlots)} slots
+              {formatCount(
+                toNumberSafe(occupancy.occupiedSlots) +
+                toNumberSafe(occupancy.reservedSlots) +
+                toNumberSafe(occupancy.pendingExitSlots)
+              )} / {formatCount(totalSlots)} slots
             </p>
           </div>
         </div>
@@ -565,7 +569,6 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Pending", value: reservations.totalPending, color: "text-amber-700 bg-amber-50" },
-                    { label: "Approved", value: reservations.totalApproved, color: "text-blue-700 bg-blue-50" },
                     { label: "Completed", value: reservations.totalCompleted, color: "text-emerald-700 bg-emerald-50" },
                     { label: "Cancelled", value: reservations.totalCancelled, color: "text-rose-700 bg-rose-50" },
                     { label: "Expired", value: reservations.totalExpired, color: "text-slate-700 bg-slate-100" },
