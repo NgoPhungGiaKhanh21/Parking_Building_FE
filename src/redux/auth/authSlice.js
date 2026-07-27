@@ -21,7 +21,6 @@ const authSlice = createSlice({
 
     loginSuccess: (state, action) => {
       state.loading = false;
-
       state.user = action.payload.user;
       state.token = action.payload.token;
     },
@@ -30,6 +29,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+
     registerRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -44,6 +44,11 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+
+    // Thêm reducer này để reset trạng thái đăng ký
+    resetRegisterState: (state) => {
+      state.registerSuccess = false;
+    },
   },
 });
 
@@ -54,6 +59,7 @@ export const {
   registerRequest,
   registerSuccess,
   registerFail,
+  resetRegisterState,
 } = authSlice.actions;
 
 export default authSlice.reducer;

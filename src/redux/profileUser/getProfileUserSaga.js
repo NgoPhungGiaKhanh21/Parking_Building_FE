@@ -1,0 +1,27 @@
+import { call, put, takeLatest } from "redux-saga/effects";
+import { getProfileUserApi } from "../../service/profileUser/getProfileUserApi";
+import {
+  getProfileUserFail,
+  getProfileUserRequest,
+  getProfileUserSuccess,
+} from "./getProfileUserSlice";
+import { toast } from "react-toastify";
+
+function* handleGetProfileUser(action) {
+  try {
+    const response = yield call(getProfileUserApi, action.payload);
+
+    const data = response.data.data;
+    yield put(getProfileUserSuccess(data));
+  } catch (error) {
+    const errorData = error.response?.data;
+    const errorMessage =
+      errorData?.message || error.message || "Failed to fetch user profile";
+    yield put(getProfileUserFail(errorData || errorMessage));
+    toast.error(errorMessage);
+  }
+}
+
+export function* watchGetProfileUser() {
+  yield takeLatest(getProfileUserRequest.type, handleGetProfileUser);
+}

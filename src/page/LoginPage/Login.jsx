@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,108 +6,193 @@ import { loginRequest } from "../../redux/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import Header from "../Home/Header";
 
+import { Form, Input, Button } from "antd";
+
+import pic6 from "../../assets/pic/pic7.jpg";
+import pic8 from "../../assets/pic/pic9.jpg";
+import ResetPasswordFlow from "../Admin/ResetPassword/resetPassword";
+
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { token } = useSelector((state) => state.auth);
-  const handleLogin = (e) => {
-    e.preventDefault();
-    dispatch(loginRequest({ username, password }));
+
+  const [form] = Form.useForm();
+  const [showForgot, setShowForgot] = useState(false);
+
+  const { token, loading } = useSelector((state) => state.auth);
+
+  const handleLogin = (values) => {
+    dispatch(loginRequest(values));
   };
+
   useEffect(() => {
     if (token) {
-      navigate("/");
+      try {
+        const userRole = sessionStorage.getItem("role");
+
+        switch (userRole) {
+          case "ROLE_DRIVER":
+            navigate("/driver");
+            break;
+          case "ROLE_MANAGER":
+            navigate("/manager");
+            break;
+          case "ROLE_STAFF":
+            navigate("/staff");
+            break;
+          case "ROLE_ADMIN":
+            navigate("/admin");
+            break;
+          default:
+            navigate("/");
+            break;
+        }
+      } catch (error) {
+        console.error("Lỗi khi giải mã token:", error);
+        navigate("/");
+      }
     }
   }, [token, navigate]);
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+    <div className="relative flex min-h-screen items-center justify-center p-6">
+      {/* BACKGROUND */}
+      <img
+        src={pic8}
+        alt=""
+        className="fixed inset-0 -z-10 h-full w-full object-cover opacity-80"
+      />
+
       <Header />
+
       {/* CONTAINER */}
-      <div className="w-full max-w-6xl overflow-hidden rounded-3xl bg-slate-900 shadow-2xl md:grid md:grid-cols-2">
-        {/* LEFT SIDE - LOGIN FORM */}
+      <div className="w-full max-w-6xl overflow-hidden rounded-3xl border shadow-2xl md:grid md:grid-cols-2">
+        {/* LEFT SIDE */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col justify-center p-10 md:p-14"
+          className="flex flex-col justify-center bg-white p-10 md:p-14"
         >
-          {/* TITLE */}
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-white">Welcome Back</h1>
+          <AnimatePresence mode="wait">
+            {/* ── FORGOT PASSWORD FLOW ── */}
+            {showForgot ? (
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.35 }}
+              >
+                <ResetPasswordFlow onBack={() => setShowForgot(false)} />
+              </motion.div>
+            ) : (
+              /* ── LOGIN FORM ── */
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.35 }}
+              >
+                {/* TITLE */}
+                <div className="mb-10">
+                  <h1 className="text-center text-4xl font-bold text-slate-900">
+                    Welcome Back
+                  </h1>
 
-            <p className="mt-3 text-slate-400">
-              Login to your Parking Manager account
-            </p>
-          </div>
+                  <p className="mt-3 text-center text-slate-500">
+                    Login to your Parking Manager account
+                  </p>
+                </div>
 
-          {/* FORM */}
-          <form className="space-y-6">
-            {/* EMAIL */}
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">Email</label>
+                {/* FORM */}
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleLogin}
+                  requiredMark={false}
+                >
+                  {/* EMAIL */}
+                  <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your Email!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      prefix={<Mail size={18} className="text-slate-400" />}
+                      placeholder="Enter your Gmail"
+                      className="rounded-xl py-2"
+                    />
+                  </Form.Item>
 
-              <div className="flex items-center rounded-xl border border-slate-700 bg-slate-800 px-4">
-                <Mail className="text-slate-400" size={18} />
+                  {/* PASSWORD */}
+                  <Form.Item
+                    label="Password"
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your password!",
+                      },
+                      {
+                        min: 6,
+                        message: "Password must be at least 6 characters!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      size="large"
+                      prefix={<Lock size={18} className="text-slate-400" />}
+                      placeholder="Enter your password"
+                      className="rounded-xl py-2"
+                    />
+                  </Form.Item>
 
-                <input
-                  placeholder="Enter your username"
-                  className="w-full bg-transparent px-3 py-4 text-white outline-none"
-                  onChange={(e) => setUsername(e.target.value)}
-                  value={username}
-                />
-              </div>
-            </div>
+                  {/* FORGOT PASSWORD LINK */}
+                  <div className="mb-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgot(true)}
+                      className="text-sm text-blue-600 hover:text-blue-500 hover:underline transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
 
-            {/* PASSWORD */}
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Password
-              </label>
+                  {/* BUTTON */}
+                  <Form.Item className="mb-0 mt-4">
+                    <Button
+                      htmlType="submit"
+                      loading={loading}
+                      type="primary"
+                      size="large"
+                      className="h-14 w-full rounded-xl !bg-blue-600 text-base font-semibold hover:!bg-blue-500"
+                    >
+                      Sign In
+                    </Button>
+                  </Form.Item>
+                </Form>
 
-              <div className="flex items-center rounded-xl border border-slate-700 bg-slate-800 px-4">
-                <Lock className="text-slate-400" size={18} />
-
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent px-3 py-4 text-white outline-none"
-                />
-              </div>
-            </div>
-
-            {/* REMEMBER */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-slate-400">
-                <input type="checkbox" />
-                Remember me
-              </label>
-
-              <a href="#" className="text-blue-400 hover:text-blue-300">
-                Forgot password?
-              </a>
-            </div>
-
-            {/* BUTTON */}
-            <button
-              onClick={handleLogin}
-              type="submit"
-              className="w-full rounded-xl bg-blue-600 py-4 font-semibold text-white transition hover:bg-blue-500"
-            >
-              Sign In
-            </button>
-          </form>
-
-          {/* FOOTER */}
-          <p className="mt-8 text-center text-slate-400">
-            Don’t have an account?{" "}
-            <Link to="/register" className="text-blue-400 hover:text-blue-300">
-              Sign Up
-            </Link>
-          </p>
+                {/* FOOTER */}
+                <p className="mt-8 text-center text-slate-500">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign Up
+                  </Link>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* RIGHT SIDE - IMAGE */}
@@ -118,7 +203,7 @@ const Login = () => {
           className="hidden md:block"
         >
           <img
-            src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=2070&auto=format&fit=crop"
+            src={pic6}
             alt="Parking"
             className="h-full w-full object-cover"
           />
