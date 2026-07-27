@@ -186,6 +186,16 @@ const VehicleExit = () => {
       if (storedPlate) {
         setPlateInput(storedPlate);
       }
+      const storedImage = sessionStorage.getItem("GUEST_EXIT_IMAGE_DATA_URL");
+      if (storedImage) {
+        setPlateImageUrl(storedImage);
+        fetch(storedImage)
+          .then(res => res.blob())
+          .then(blob => {
+            plateImageFileRef.current = new File([blob], "checkout-image.jpg", { type: "image/jpeg" });
+          })
+          .catch(err => console.error("Failed to restore image", err));
+      }
     }
 
     return () => {
@@ -204,6 +214,7 @@ const VehicleExit = () => {
     sessionStorage.removeItem(GUEST_EXIT_CHECKOUT_DONE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PLATE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
+    sessionStorage.removeItem("GUEST_EXIT_IMAGE_DATA_URL");
     
     // Auto-reset form for next vehicle
     setCheckoutDone(false);
@@ -230,6 +241,7 @@ const VehicleExit = () => {
         dispatch(unifiedCheckoutReset());
         sessionStorage.removeItem(GUEST_EXIT_CHECKOUT_DONE_KEY);
         sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
+        sessionStorage.removeItem("GUEST_EXIT_IMAGE_DATA_URL");
         setCheckoutDone(false);
         setPaymentMethod("PAYOS");
       }
@@ -264,6 +276,7 @@ const VehicleExit = () => {
     setPlateImageUrl("");
     plateImageFileRef.current = null;
     setPlateInput("");
+    sessionStorage.removeItem("GUEST_EXIT_IMAGE_DATA_URL");
     if (!(isPaid && showCheckout)) {
       dispatch(ocrPlateReset());
       dispatch(getSessionByPlateNumberReset());
@@ -277,9 +290,12 @@ const VehicleExit = () => {
   const handleGoPayment = useCallback(() => {
     if (!activeSession) return;
     sessionStorage.setItem(GUEST_EXIT_PLATE_KEY, activeSession.vehiclePlate || plateInput || "");
+    if (plateImageUrl) {
+      sessionStorage.setItem("GUEST_EXIT_IMAGE_DATA_URL", plateImageUrl);
+    }
     // Use the guest checkout payment page even for drivers if they need to pay
     navigate("/staff/vehicle-exit/payment");
-  }, [navigate, activeSession, plateInput]);
+  }, [navigate, activeSession, plateInput, plateImageUrl]);
 
   // Confirm checkout using the unified API
   const handleConfirmCheckout = useCallback(() => {
@@ -305,6 +321,7 @@ const VehicleExit = () => {
     sessionStorage.removeItem(GUEST_EXIT_CHECKOUT_DONE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PLATE_KEY);
     sessionStorage.removeItem(GUEST_EXIT_PAID_KEY);
+    sessionStorage.removeItem("GUEST_EXIT_IMAGE_DATA_URL");
     setCheckoutDone(false);
     setPlateImageUrl("");
     setPlateInput("");
@@ -351,7 +368,7 @@ const VehicleExit = () => {
                 <div className="h-8 w-8 rounded-lg bg-cyan-50 text-cyan-500 flex items-center justify-center">
                   <ImageIcon size={16} />
                 </div>
-                {isPaid && showCheckout ? "Upload Check-out Image" : "Upload Plate Image"}
+                {isPaid && showCheckout && !plateImageUrl ? "Upload Check-out Image" : "Upload Plate Image"}
                 <span className="text-red-500">*</span>
               </h2>
 
@@ -396,7 +413,9 @@ const VehicleExit = () => {
                     <div className="p-5 rounded-xl border border-emerald-200 bg-emerald-50 text-center">
                       <CheckCircle2 size={24} className="mx-auto text-emerald-500 mb-2" />
                       <p className="text-sm text-emerald-700 font-medium">Session & Payment Confirmed</p>
-                      <p className="text-xs text-emerald-600 mt-1">Please upload the check-out image.</p>
+                      <p className="text-xs text-emerald-600 mt-1">
+                        {plateImageUrl ? "Check-out image ready." : "Please upload the check-out image."}
+                      </p>
                     </div>
                   ) : ocrLoading ? (
                     <div className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-blue-200 bg-blue-50">
