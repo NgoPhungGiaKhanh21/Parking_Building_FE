@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { deleteVehicleApi } from "../../../../service/driver/vehicleApi";
+import { deleteVehicleApi } from "../../../../service/Driver/vehicleApi";
 import { getAllVehicleRequest } from "../getAllVehicle/getAllVehicleSlice";
 import {
   deleteVehicleFail,

@@ -1,6 +1,6 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
-import { initiatePaymentApi } from "../../../../service/driver/paymentApi";
+import { initiatePaymentApi } from "../../../../service/Driver/paymentApi";
 import {
     initiatePaymentRequest,
     initiatePaymentSuccess,

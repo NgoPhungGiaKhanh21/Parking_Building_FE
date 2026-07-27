@@ -1,5 +1,5 @@
 import {call, put, takeLatest} from "redux-saga/effects"
-import {getCurrentSessionApi} from "../../../../service/driver/sessionApi"
+import {getCurrentSessionApi} from "../../../../service/Driver/sessionApi"
 import {getCurrentSessionRequest, getCurrentSessionSuccess, getCurrentSessionFail} from "./currentSessionSlice"
 
 export function* getCurrentSessionSaga(action){

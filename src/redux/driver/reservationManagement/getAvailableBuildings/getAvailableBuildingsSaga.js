@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { getAvailableBuildingsApi } from "../../../../service/driver/revervationApi";
+import { getAvailableBuildingsApi } from "../../../../service/Driver/revervationApi";
 import {
     getAvailableBuildingsRequest,
     getAvailableBuildingsSuccess,

@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { getAllVehicleTypesApi } from "../../../../service/driver/vehicleApi";
+import { getAllVehicleTypesApi } from "../../../../service/Driver/vehicleApi";
 import {
   getAllVehicleTypeFail,
   getAllVehicleTypeRequest,

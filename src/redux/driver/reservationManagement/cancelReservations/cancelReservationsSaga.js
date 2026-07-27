@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects"
-import { cancelReservationApi } from "../../../../service/driver/revervationApi"
+import { cancelReservationApi } from "../../../../service/Driver/revervationApi"
 import { cancelReservationsFail, cancelReservationsSuccess, cancelReservations } from "./cancelReservationsSlice"
 import { getMyReservationsRequest } from "../getMyReservations/getMyReservationsSlice"
 import {toast} from "react-toastify";
