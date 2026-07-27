@@ -2,7 +2,7 @@ import { combineReducers } from "@reduxjs/toolkit";
 
 import authReducer from "./auth/authSlice";
 import getAllUserReducer from "./admin/GetAllUser/getAllUserSlice";
-import changeStatusUserReducer from "./admin/ChangeStatusUser/ChangeStatusUserSlice";
+import changeStatusUserReducer from "./admin/ChangeStatusUser/changeStatusUserSlice";
 import changeRoleUserReducer from "./admin/changeRoleUser/changeRoleUserSlice";
 import getAdminDashboardStatsReducer from "./admin/dashboardStats/getAdminDashboardStatsSlice";
 import getProfileUserReducer from "./profileUser/getProfileUserSlice";

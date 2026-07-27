@@ -1,7 +1,7 @@
 import { all } from "redux-saga/effects";
 import authSaga from "./auth/authSaga";
-import { watchGetAllUser } from "./admin/GetAllUser/GetAllUserSaga";
-import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUserSaga";
+import { watchGetAllUser } from "./admin/GetAllUser/getAllUserSaga";
+import { watchChangeStatusUser } from "./admin/ChangeStatusUser/changeStatusUserSaga";
 import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
 import { watchGetAdminDashboardStats } from "./admin/dashboardStats/getAdminDashboardStatsSaga";
 import { watchGetProfileUser } from "./profileUser/getProfileUserSaga";
