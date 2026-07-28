@@ -9,8 +9,9 @@ export const formatCurrency = (value) =>
 export const formatDateTime = (value) =>
   value ? dayjs(value).format("DD/MM/YYYY HH:mm") : "—";
 
+// Gửi giờ local (wall clock) — không dùng toISOString() để tránh lệch timezone UTC+7
 export const toApiDateTime = (value) =>
-  value ? dayjs(value).toISOString() : null;
+  value ? dayjs(value).format("YYYY-MM-DDTHH:mm:ss") : null;
 
 export const toDayjs = (value) => (value ? dayjs(value) : null);
 
