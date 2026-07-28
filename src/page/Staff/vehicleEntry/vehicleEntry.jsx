@@ -15,10 +15,15 @@ import {
 import { getStaffBuildingRequest } from "../../../redux/staff/guest_parking/getStaffBuilding/getStaffBuildingSlice";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 import {
-  getSessionByPlateNumberApi,
-  resolvePlateLookupForCheckinApi,
-} from "../../../service/staff/parking_sessionApi";
-import { normalizePlate, platesMatch } from "../../../utils/plateUtils";
+  plateLookupRequest,
+  plateLookupReset,
+} from "../../../redux/staff/parking_session/plateLookup/plateLookupSlice";
+import { normalizePlate } from "../../../utils/plateUtils";
+import {
+  isActiveGuestSessionLookup,
+  isPendingReservationLookup,
+  isWalkInDriverLookup,
+} from "../../../utils/plateLookupUtils";
 import { saveWalkInDriverCache } from "../../../utils/walkInSessionUtils";
 import { setStaffEntryMounted } from "../../../utils/staffVehiclePageGuard";
 import { resolveEntryCheckMode } from "../shared/checkModeTheme";
@@ -42,9 +47,6 @@ const VehicleEntry = () => {
   const [checkinImageUrl, setCheckinImageUrl] = useState("");
   const [isUploadingCheckin, setIsUploadingCheckin] = useState(false);
   const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState(null);
-  const [registeredVehicle, setRegisteredVehicle] = useState(null);
-  const [plateLookup, setPlateLookup] = useState(null);
-  const [lookupLoading, setLookupLoading] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [reservationSubTab, setReservationSubTab] = useState("CHECKED_IN");
 
@@ -55,6 +57,18 @@ const VehicleEntry = () => {
   const { unifiedCheckin, loading: checkinLoading, error: checkinError } = useSelector(
     (s) => s.unifiedCheckin || {},
   );
+  const { result: plateLookup, loading: lookupLoading } = useSelector((s) => s.plateLookup);
+
+  const clearEntryForm = useCallback(() => {
+    setPlateImageUrl("");
+    plateImageFileRef.current = null;
+    setPlateInput("");
+    setCheckinImageUrl("");
+    checkinImageFileRef.current = null;
+    setSelectedVehicleTypeId(null);
+    dispatch(ocrPlateReset());
+    dispatch(plateLookupReset());
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     return () => {
@@ -62,6 +76,7 @@ const VehicleEntry = () => {
       setStaffEntryMounted(false);
       dispatch(ocrPlateReset());
       dispatch(unifiedCheckinReset());
+      dispatch(plateLookupReset());
     };
   }, [dispatch]);
 
@@ -70,6 +85,7 @@ const VehicleEntry = () => {
     setStaffEntryMounted(true);
     dispatch(ocrPlateReset());
     dispatch(unifiedCheckinReset());
+    dispatch(plateLookupReset());
     dispatch(getAllReservationRequest());
     dispatch(getStaffBuildingRequest());
     dispatch(getVehicleTypeListRequest());
@@ -104,17 +120,8 @@ const VehicleEntry = () => {
     message.success("Vehicle checked in successfully");
     dispatch(unifiedCheckinReset());
     dispatch(getAllReservationRequest());
-
-    setPlateImageUrl("");
-    plateImageFileRef.current = null;
-    setPlateInput("");
-    dispatch(ocrPlateReset());
-    setCheckinImageUrl("");
-    checkinImageFileRef.current = null;
-    setSelectedVehicleTypeId(null);
-    setRegisteredVehicle(null);
-    setPlateLookup(null);
-  }, [unifiedCheckin, dispatch, plateInput]);
+    clearEntryForm();
+  }, [unifiedCheckin, dispatch, plateInput, clearEntryForm]);
 
   useEffect(() => {
     if (!isActiveRef.current || !checkinError) return;
@@ -130,10 +137,6 @@ const VehicleEntry = () => {
     () => (Array.isArray(getAllReservation) ? getAllReservation : []),
     [getAllReservation],
   );
-  const pendingList = useMemo(
-    () => reservationList.filter((r) => r.reservationStatus === "PENDING"),
-    [reservationList],
-  );
   const checkedInList = useMemo(
     () => reservationList.filter((r) => r.reservationStatus === "CHECKED_IN"),
     [reservationList],
@@ -142,16 +145,6 @@ const VehicleEntry = () => {
     () => reservationList.filter((r) => r.reservationStatus === "CANCELLED"),
     [reservationList],
   );
-
-  const driverReservation = useMemo(() => {
-    if (!plateInput) return null;
-    return pendingList.find((r) => platesMatch(r.vehiclePlate, plateInput));
-  }, [plateInput, pendingList]);
-
-  const alreadyCheckedInReservation = useMemo(() => {
-    if (!plateInput) return null;
-    return checkedInList.find((r) => platesMatch(r.vehiclePlate, plateInput));
-  }, [plateInput, checkedInList]);
 
   const buildingName = useMemo(() => {
     if (!staffBuilding) return null;
@@ -169,9 +162,14 @@ const VehicleEntry = () => {
     return staffBuilding?.buildingId || staffBuilding?.id || null;
   }, [staffBuilding]);
 
-  const isDriverWalkIn = !driverReservation && plateLookup?.lookupType === "DRIVER_WALK_IN";
-  const isAlreadyParked = !driverReservation && plateLookup?.lookupType === "GUEST_SESSION";
-  const walkInVehicle = registeredVehicle || plateLookup?.registeredVehicle || null;
+  const driverReservation = useMemo(() => {
+    if (!isPendingReservationLookup(plateLookup)) return null;
+    return plateLookup.reservation;
+  }, [plateLookup]);
+
+  const isDriverWalkIn = isWalkInDriverLookup(plateLookup);
+  const isAlreadyParked = isActiveGuestSessionLookup(plateLookup);
+  const walkInVehicle = plateLookup?.vehicle || null;
 
   const walkInVehicleTypeId = useMemo(() => {
     if (!walkInVehicle) return null;
@@ -190,116 +188,59 @@ const VehicleEntry = () => {
   const checkMode = resolveEntryCheckMode({ driverReservation, isDriverWalkIn });
 
   useEffect(() => {
-    if (!plateInput || driverReservation) {
-      setPlateLookup(null);
-      setRegisteredVehicle(null);
+    if (!plateInput) {
+      dispatch(plateLookupReset());
       return;
     }
 
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setLookupLoading(true);
-      try {
-        const data = await resolvePlateLookupForCheckinApi({
-          plateNumber: plateInput,
+    const handler = setTimeout(() => {
+      if (!isActiveRef.current) return;
+      dispatch(
+        plateLookupRequest({
+          plateNumber: normalizePlate(plateInput),
           buildingId,
-          reservations: reservationList,
-        });
-        if (cancelled) return;
-        setPlateLookup(data);
-
-        if (data?.lookupType === "DRIVER_WALK_IN" && data?.registeredVehicle) {
-          setRegisteredVehicle(data.registeredVehicle);
-          saveWalkInDriverCache(plateInput, data.registeredVehicle);
-          const vtId =
-            data.registeredVehicle.vehicleTypeId ?? data.registeredVehicle.floorVehicleTypeId;
-          if (vtId) setSelectedVehicleTypeId(vtId);
-        } else {
-          setRegisteredVehicle(null);
-          if (data?.lookupType === "NOT_FOUND") setSelectedVehicleTypeId(null);
-        }
-
-        if (data?.lookupType === "GUEST_SESSION") {
-          if (cancelled) return;
-          message.error(
-            `Vehicle plate ${data?.guestSession?.vehiclePlate || plateInput} is already in the parking lot!`,
-          );
-          setPlateInput("");
-          setPlateImageUrl("");
-          plateImageFileRef.current = null;
-          setCheckinImageUrl("");
-          checkinImageFileRef.current = null;
-          setPlateLookup(null);
-          setRegisteredVehicle(null);
-          dispatch(ocrPlateReset());
-        }
-      } catch {
-        if (!cancelled) {
-          setPlateLookup(null);
-          setRegisteredVehicle(null);
-        }
-      } finally {
-        if (!cancelled) setLookupLoading(false);
-      }
+        }),
+      );
     }, 600);
 
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [plateInput, driverReservation, buildingId, reservationList, dispatch]);
+    return () => clearTimeout(handler);
+  }, [plateInput, buildingId, dispatch]);
+
+  useEffect(() => {
+    if (!isActiveRef.current || !plateLookup) return;
+
+    if (isWalkInDriverLookup(plateLookup) && plateLookup.vehicle) {
+      saveWalkInDriverCache(plateInput, plateLookup.vehicle);
+      const vtId = plateLookup.vehicle.vehicleTypeId ?? plateLookup.vehicle.floorVehicleTypeId;
+      if (vtId) setSelectedVehicleTypeId(vtId);
+      return;
+    }
+
+    if (plateLookup.lookupType === "NOT_FOUND") {
+      setSelectedVehicleTypeId(null);
+    }
+  }, [plateLookup, plateInput]);
+
+  useEffect(() => {
+    if (!isActiveRef.current || !isAlreadyParked) return;
+
+    message.error(
+      `Vehicle plate ${plateLookup?.guestSession?.vehiclePlate || plateInput} is already in the parking lot!`,
+    );
+    clearEntryForm();
+  }, [isAlreadyParked, plateLookup, plateInput, clearEntryForm]);
+
+  useEffect(() => {
+    if (!isActiveRef.current || !plateLookup?.reservation) return;
+    if (plateLookup.reservation.reservationStatus !== "CHECKED_IN") return;
+
+    message.error(`Vehicle plate ${plateLookup.reservation.vehiclePlate} is already checked in!`);
+    clearEntryForm();
+  }, [plateLookup, clearEntryForm]);
 
   useEffect(() => {
     if (isDriverWalkIn && walkInVehicleTypeId) setSelectedVehicleTypeId(walkInVehicleTypeId);
   }, [isDriverWalkIn, walkInVehicleTypeId]);
-
-  useEffect(() => {
-    if (!isActiveRef.current || !alreadyCheckedInReservation) return;
-    message.error(`Vehicle plate ${alreadyCheckedInReservation.vehiclePlate} is already checked in!`);
-    setPlateInput("");
-    setPlateImageUrl("");
-    plateImageFileRef.current = null;
-    setCheckinImageUrl("");
-    checkinImageFileRef.current = null;
-    dispatch(ocrPlateReset());
-  }, [alreadyCheckedInReservation, dispatch]);
-
-  useEffect(() => {
-    if (!plateInput || alreadyCheckedInReservation || plateLookup || lookupLoading) return;
-
-    let cancelled = false;
-    const checkGuestSession = async () => {
-      try {
-        const response = await getSessionByPlateNumberApi({ plateNumber: plateInput });
-        if (cancelled) return;
-        const sessionData = response?.data?.data || response?.data;
-        if (
-          sessionData &&
-          (sessionData.status === "PENDING_PAYMENT" ||
-            sessionData.status === "ACTIVE" ||
-            sessionData.reservationStatus === "CHECKED_IN")
-        ) {
-          message.error(
-            `Guest vehicle plate ${sessionData.vehiclePlate || plateInput} is already in the parking lot!`,
-          );
-          setPlateInput("");
-          setPlateImageUrl("");
-          plateImageFileRef.current = null;
-          setCheckinImageUrl("");
-          checkinImageFileRef.current = null;
-          dispatch(ocrPlateReset());
-        }
-      } catch {
-        // 404 — no active session
-      }
-    };
-
-    const timer = setTimeout(checkGuestSession, 600);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [plateInput, alreadyCheckedInReservation, plateLookup, lookupLoading, dispatch]);
 
   const handlePlateUpload = useCallback(
     async (options) => {
@@ -351,9 +292,8 @@ const VehicleEntry = () => {
     setPlateImageUrl("");
     plateImageFileRef.current = null;
     setPlateInput("");
-    setRegisteredVehicle(null);
-    setPlateLookup(null);
     dispatch(ocrPlateReset());
+    dispatch(plateLookupReset());
   }, [dispatch]);
 
   const handleRemoveCheckinImage = useCallback(() => {
