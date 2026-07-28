@@ -95,7 +95,19 @@ export const normalizeReservation = (record) => {
     parkingHours: pick(record.parkingHours, session.parkingHours),
     parkingMinutes: pick(record.parkingMinutes, session.parkingMinutes),
     paymentStatus: pick(record.paymentStatus, session.paymentStatus),
-    sessionStatus: pick(record.sessionStatus, session.sessionStatus),
+    sessionStatus: pick(
+      record.sessionStatus,
+      session.sessionStatus,
+      record.status,
+      session.status,
+    ),
+    checkinType: pick(record.checkinType, session.checkinType),
+    driverUsername: pick(
+      record.driverUsername,
+      session.driverUsername,
+      record.username,
+    ),
+    driverFullName: pick(record.driverFullName, session.driverFullName),
   };
 };
 
