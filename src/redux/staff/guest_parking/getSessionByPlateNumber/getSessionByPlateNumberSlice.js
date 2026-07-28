@@ -4,6 +4,7 @@ const initialState = {
   getSessionByPlateNumber: null,
   loading: false,
   error: null,
+  epoch: 0,
 };
 
 const getSessionByPlateNumberSlice = createSlice({
@@ -15,19 +16,26 @@ const getSessionByPlateNumberSlice = createSlice({
     getSessionByPlateNumberRequest: (state) => {
       state.loading = true;
       state.error = null;
+      state.epoch += 1;
     },
     getSessionByPlateNumberSuccess: (state, action) => {
+      const { epoch, data } = action.payload;
       state.loading = false;
-      state.getSessionByPlateNumber = action.payload;
+      if (epoch !== state.epoch) return;
+      state.getSessionByPlateNumber = data;
+      state.error = null;
     },
     getSessionByPlateNumberError: (state, action) => {
+      const { epoch, error } = action.payload;
       state.loading = false;
-      state.error = action.payload;
+      if (epoch !== state.epoch) return;
+      state.error = error;
     },
     getSessionByPlateNumberReset: (state) => {
       state.getSessionByPlateNumber = null;
       state.loading = false;
       state.error = null;
+      state.epoch += 1;
     },
   },
 });

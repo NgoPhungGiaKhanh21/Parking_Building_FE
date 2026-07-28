@@ -56,7 +56,19 @@ const confirmationStatusConfig = {
   FAILED: { color: "red", label: "Failed" },
 };
 
-const canPaySession = (status) => status === "UNPAID" || status === "FAILED";
+const canPaySession = (session) => {
+  const paymentStatus = String(session?.paymentStatus || "").toUpperCase();
+  if (paymentStatus === "UNPAID" || paymentStatus === "FAILED") return true;
+  const sessionStatus = String(session?.sessionStatus || "").toUpperCase();
+  return sessionStatus === "PENDING_PAYMENT" || sessionStatus === "ACTIVE";
+};
+
+const resolvePaymentStatus = (session) => {
+  if (session?.paymentStatus) return session.paymentStatus;
+  const sessionStatus = String(session?.sessionStatus || "").toUpperCase();
+  if (sessionStatus === "PENDING_PAYMENT" || sessionStatus === "ACTIVE") return "UNPAID";
+  return session?.paymentStatus;
+};
 
 const findLatestPaymentForSession = (payments, sessionId) => {
   if (!sessionId || !payments?.length) return null;
@@ -100,9 +112,9 @@ const formatDuration = (checkinTime, now) => {
 const SessionCard = ({ session, now, latestPayment }) => {
   const navigate = useNavigate();
   const timer = formatDuration(session.checkinTime, now);
-  const paymentCfg = paymentStatusConfig[session.paymentStatus] || {
+  const paymentCfg = paymentStatusConfig[resolvePaymentStatus(session)] || {
     color: "default",
-    label: session.paymentStatus,
+    label: resolvePaymentStatus(session) || "Unknown",
   };
   // const sessionCfg = sessionStatusConfig[session.sessionStatus] || {
   //   color: "default",
@@ -317,7 +329,7 @@ const SessionCard = ({ session, now, latestPayment }) => {
         </div>
 
         {/* ── Pay Button (if unpaid) ── */}
-        {canPaySession(session.paymentStatus) && (
+        {canPaySession(session) && (
           <div className="border-t border-slate-100 pt-3">
             <Button
               type="primary"

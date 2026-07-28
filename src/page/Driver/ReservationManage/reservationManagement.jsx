@@ -217,6 +217,10 @@ const ReservationManagement = () => {
         (state) => state.getMyReservations
     );
 
+    // ── Tab state
+    const [activeTab, setActiveTab] = useState("book");
+    const [reservationSubTab, setReservationSubTab] = useState("PENDING");
+
     // ── Fetch on mount
     useEffect(() => {
         dispatch(getAllVehicleRequest());
@@ -377,9 +381,21 @@ const ReservationManagement = () => {
         dispatch(createReservationsReset());
     };
 
-    // ── Render
-    const [activeTab, setActiveTab] = useState("book");
-    const [reservationSubTab, setReservationSubTab] = useState("PENDING");
+    const refreshMyReservations = useCallback(() => {
+        dispatch(getMyReservationsRequest());
+    }, [dispatch]);
+
+    const handleMainTabChange = useCallback((key) => {
+        setActiveTab(key);
+        if (key === "reservations") {
+            refreshMyReservations();
+        }
+    }, [refreshMyReservations]);
+
+    const handleReservationSubTabChange = useCallback((key) => {
+        setReservationSubTab(key);
+        refreshMyReservations();
+    }, [refreshMyReservations]);
 
     return (
         <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-8">
@@ -406,7 +422,7 @@ const ReservationManagement = () => {
             {/* ── Tabs ── */}
             <Tabs
                 activeKey={activeTab}
-                onChange={(key) => { setActiveTab(key); }}
+                onChange={handleMainTabChange}
                 size="large"
                 className="reservation-tabs"
                 items={[
@@ -649,7 +665,7 @@ const ReservationManagement = () => {
                                 myReservationList={myReservationList}
                                 reservationsLoading={reservationsLoading}
                                 reservationSubTab={reservationSubTab}
-                                setReservationSubTab={setReservationSubTab}
+                                setReservationSubTab={handleReservationSubTabChange}
                                 onOpenVehicleModal={handleOpenVehicleModal}
                             />
                         ),

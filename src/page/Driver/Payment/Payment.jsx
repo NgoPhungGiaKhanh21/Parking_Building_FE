@@ -82,7 +82,12 @@ const Payment = () => {
   const activeSession = useMemo(() => {
     return (
       sessions.find(
-        (s) => s.paymentStatus === "UNPAID" || s.paymentStatus === "FAILED",
+        (s) =>
+          s.paymentStatus === "UNPAID" ||
+          s.paymentStatus === "FAILED" ||
+          s.sessionStatus === "PENDING_PAYMENT" ||
+          (!s.paymentStatus &&
+            (s.sessionStatus === "ACTIVE" || s.sessionStatus === "PENDING_PAYMENT")),
       ) ??
       sessions[0] ??
       null
