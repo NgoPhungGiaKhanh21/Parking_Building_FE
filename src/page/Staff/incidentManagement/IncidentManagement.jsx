@@ -166,8 +166,8 @@ const IncidentManagement = () => {
     const buildings = Array.isArray(staffBuilding)
       ? staffBuilding
       : staffBuilding
-        ? [staffBuilding]
-        : [];
+      ? [staffBuilding]
+      : [];
     return buildings
       .map((building) => ({
         value: building.buildingId || building.id,
@@ -211,7 +211,7 @@ const IncidentManagement = () => {
 
   const reports = useMemo(
     () => (Array.isArray(allReports) ? allReports : []),
-    [allReports],
+    [allReports]
   );
 
   const typeOptions = useMemo(
@@ -223,7 +223,7 @@ const IncidentManagement = () => {
           value,
           label: TYPE_LABELS[value] || value.replaceAll("_", " "),
         })),
-    [reports],
+    [reports]
   );
 
   const filteredReports = useMemo(() => {
@@ -250,12 +250,12 @@ const IncidentManagement = () => {
     () => ({
       open: reports.filter((item) => item.status === "OPEN").length,
       processing: reports.filter((item) =>
-        ["IN_PROGRESS", "PENDING"].includes(item.status),
+        ["IN_PROGRESS", "PENDING"].includes(item.status)
       ).length,
       resolved: reports.filter((item) => item.status === "RESOLVED").length,
       closed: reports.filter((item) => item.status === "CLOSED").length,
     }),
-    [reports],
+    [reports]
   );
 
   const openIncident = (incident) => {
@@ -301,7 +301,7 @@ const IncidentManagement = () => {
             ? { ticketCode: form.getFieldValue("ticketCode").trim() }
             : {}),
         },
-      }),
+      })
     );
   };
 
@@ -311,7 +311,7 @@ const IncidentManagement = () => {
       validateIncidentReassignRequest({
         incidentId: selectedIncident.incidentId,
         newSlotId,
-      }),
+      })
     );
   };
 
@@ -339,7 +339,7 @@ const IncidentManagement = () => {
         incidentId: selectedIncident.incidentId,
         status: values.status,
         data,
-      }),
+      })
     );
   };
 
@@ -348,7 +348,7 @@ const IncidentManagement = () => {
       checkoutDriverAfterIncidentRequest({
         sessionId: sessionEvidence?.sessionId || selectedIncident.sessionId,
         checkoutImage: checkoutImageFile,
-      }),
+      })
     );
   };
 
@@ -428,10 +428,10 @@ const IncidentManagement = () => {
     ACTION_OPTIONS_BY_TYPE[selectedIncident?.incidentType] || [];
   const needsResolution = selectedStatus === "RESOLVED";
   const allowedStatusOptions = getAllowedStatusOptions(
-    selectedIncident?.status,
+    selectedIncident?.status
   );
   const isTerminalIncident = ["CLOSED", "CANCELLED"].includes(
-    selectedIncident?.status,
+    selectedIncident?.status
   );
   const verificationMatches =
     vehicleVerification?.verificationResult === "MATCH" ||
@@ -735,7 +735,7 @@ const IncidentManagement = () => {
                   <p className="text-slate-700">
                     {selectedIncident.createdAt
                       ? dayjs(selectedIncident.createdAt).format(
-                          "DD/MM/YYYY HH:mm",
+                          "DD/MM/YYYY HH:mm"
                         )
                       : "—"}
                   </p>
@@ -870,7 +870,7 @@ const IncidentManagement = () => {
                         <p className="font-semibold text-slate-700">
                           {sessionEvidence.checkinTime
                             ? dayjs(sessionEvidence.checkinTime).format(
-                                "DD/MM/YYYY HH:mm",
+                                "DD/MM/YYYY HH:mm"
                               )
                             : "—"}
                         </p>
@@ -1058,7 +1058,7 @@ const IncidentManagement = () => {
                 <Form form={form} layout="vertical" onFinish={handleUpdate}>
                   {selectedIncident.incidentType === "DRIVER_LOST_TICKET" &&
                     ["IN_PROGRESS", "PENDING"].includes(
-                      selectedIncident.status,
+                      selectedIncident.status
                     ) && (
                       <div className="mb-5 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
                         <p className="mb-1 font-bold text-slate-800">
@@ -1223,7 +1223,7 @@ const IncidentManagement = () => {
                               (slot) =>
                                 slot.available !== false &&
                                 slot.inSameBuilding !== false &&
-                                slot.hasActiveReservation !== true,
+                                slot.hasActiveReservation !== true
                             )
                             .map((slot) => ({
                               value: slot.slotId,
