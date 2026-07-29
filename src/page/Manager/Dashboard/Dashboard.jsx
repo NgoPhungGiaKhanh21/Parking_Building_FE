@@ -295,7 +295,7 @@ const Dashboard = () => {
               Occupancy Rate
             </p>
             <p className="text-3xl font-black text-teal-700">
-              {toNumberSafe(occupancy.occupancyRate).toFixed(1)}%
+              {totalSlots > 0 ? ((toNumberSafe(occupancy.occupiedSlots) / totalSlots) * 100).toFixed(1) : "0.0"}%
             </p>
             <p className="mt-0.5 text-xs text-slate-500">
               {formatCount(occupancy.occupiedSlots)} / {formatCount(totalSlots)} slots
@@ -565,7 +565,6 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Pending", value: reservations.totalPending, color: "text-amber-700 bg-amber-50" },
-                    { label: "Approved", value: reservations.totalApproved, color: "text-blue-700 bg-blue-50" },
                     { label: "Completed", value: reservations.totalCompleted, color: "text-emerald-700 bg-emerald-50" },
                     { label: "Cancelled", value: reservations.totalCancelled, color: "text-rose-700 bg-rose-50" },
                     { label: "Expired", value: reservations.totalExpired, color: "text-slate-700 bg-slate-100" },
@@ -672,7 +671,8 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-4">
                 {displayBuildings.map((building) => {
-                  const rate = toNumberSafe(building.occupancyRate);
+                  const buildingTotal = toNumberSafe(building.totalSlots);
+                  const rate = buildingTotal > 0 ? (toNumberSafe(building.occupiedSlots) / buildingTotal) * 100 : 0;
                   return (
                     <div
                       key={building.buildingId}

@@ -4,8 +4,8 @@ import {
   changeStatusUserFail,
   changeStatusUserRequest,
   changeStatusUserSuccess,
-} from "./ChangeStatusUserSlice";
-import { getAllUserRequest } from "../getAllUser/getAllUserSlice";
+} from "./changeStatusUserSlice";
+import { getAllUserRequest } from "../GetAllUser/getAllUserSlice";
 import { toast } from "react-toastify";
 
 function* handleChangeStatusUser(action) {

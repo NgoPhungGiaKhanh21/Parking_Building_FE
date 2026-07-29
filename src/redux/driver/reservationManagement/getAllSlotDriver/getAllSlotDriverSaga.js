@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects"
-import { getAllSlotsApi } from "../../../../service/driver/revervationApi"
+import { getAllSlotsApi } from "../../../../service/Driver/revervationApi"
 import {
     getAllSlotDriverFail,
     getAllSlotDriverRequest,

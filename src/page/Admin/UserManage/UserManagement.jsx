@@ -10,8 +10,8 @@ import {
   Tag,
   Tooltip,
 } from "antd";
-import { getAllUserRequest } from "../../../redux/admin/getAllUser/getAllUserSlice";
-import { changeStatusUserRequest } from "../../../redux/admin/changeStatusUser/ChangeStatusUserSlice";
+import { getAllUserRequest } from "../../../redux/admin/GetAllUser/getAllUserSlice";
+import { changeStatusUserRequest } from "../../../redux/admin/ChangeStatusUser/changeStatusUserSlice";
 import { changeRoleUserRequest } from "../../../redux/admin/changeRoleUser/changeRoleUserSlice";
 import {
   Users,

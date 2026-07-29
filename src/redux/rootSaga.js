@@ -1,7 +1,7 @@
 import { all } from "redux-saga/effects";
 import authSaga from "./auth/authSaga";
-import { watchGetAllUser } from "./admin/GetAllUser/GetAllUserSaga";
-import { watchChangeStatusUser } from "./admin/ChangeStatusUser/ChangeStatusUserSaga";
+import { watchGetAllUser } from "./admin/GetAllUser/getAllUserSaga";
+import { watchChangeStatusUser } from "./admin/ChangeStatusUser/changeStatusUserSaga";
 import { watchChangeRoleUser } from "./admin/changeRoleUser/changeRoleUserSaga";
 import { watchGetAdminDashboardStats } from "./admin/dashboardStats/getAdminDashboardStatsSaga";
 import { watchGetProfileUser } from "./profileUser/getProfileUserSaga";
@@ -76,6 +76,7 @@ import {watchGetStaffBuilding} from "./staff/guest_parking/getStaffBuilding/getS
 import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSaga";
 import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
 import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
+import { watchPlateLookup } from "./staff/parking_session/plateLookup/plateLookupSaga";
 import {watchCancelReservations} from "./driver/reservationManagement/cancelReservations/cancelReservationsSaga";
 import { watchIncident } from "./incident/incidentSaga";
 import { watchBuildingRules } from "./manager/Building/buildingRules/buildingRulesSaga";
@@ -152,6 +153,7 @@ export default function* rootSaga() {
     watchGuestCheckoutOcr(),
     watchUnifiedCheckin(),
     watchUnifiedCheckout(),
+    watchPlateLookup(),
     watchCancelReservations(),
     //driver
     watchGetAllVehicle(),

@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects"
-import { createReservationApi } from "../../../../service/driver/revervationApi"
+import { createReservationApi } from "../../../../service/Driver/revervationApi"
 import {
     createReservationsFail,
     createReservationsRequest,

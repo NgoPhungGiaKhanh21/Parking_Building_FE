@@ -5,7 +5,7 @@ import {
   changeRoleUserRequest,
   changeRoleUserSuccess,
 } from "./changeRoleUserSlice";
-import { getAllUserRequest } from "../getAllUser/getAllUserSlice";
+import { getAllUserRequest } from "../GetAllUser/getAllUserSlice";
 import { toast } from "react-toastify";
 
 function* handleChangeRoleUser(action) {

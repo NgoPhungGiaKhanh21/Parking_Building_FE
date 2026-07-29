@@ -1,6 +1,6 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 import { toast } from "react-toastify";
-import { getBuildingPeakHoursApi } from "../../../../service/driver/revervationApi";
+import { getBuildingPeakHoursApi } from "../../../../service/Driver/revervationApi";
 import {
   getBuildingPeakHoursRequest,
   getBuildingPeakHoursSuccess,

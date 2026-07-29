@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { getAvailableBuildingsRequest } from '../../../redux/driver/reservationManagement/getAvailableBuildings/getAvailableBuildingsSlice';
-import { getBuildingFloorsApi } from '../../../service/driver/revervationApi';
+import { getBuildingFloorsApi } from '../../../service/Driver/revervationApi';
 import CommonBreadcrumb from '../../../components/Commandbreadcrumb/Commandbreadcrumb';
 import BuildingFloorsModal from './BuildingFloorsModal';
 import PeakHoursModal from './PeakHoursModal';

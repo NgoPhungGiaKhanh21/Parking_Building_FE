@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { getZoneSlotsApi } from "../../../../service/driver/revervationApi";
+import { getZoneSlotsApi } from "../../../../service/Driver/revervationApi";
 import {
     getZoneSlotsRequest,
     getZoneSlotsSuccess,
