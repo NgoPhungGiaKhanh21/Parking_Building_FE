@@ -60,8 +60,7 @@ const ZONE_FIELD_LABELS = {
 export const isActiveStatus = (status) =>
   String(status || "").toUpperCase() === "ACTIVE";
 
-export const normalizeStatus = (status) =>
-  String(status || "").toUpperCase();
+export const normalizeStatus = (status) => String(status || "").toUpperCase();
 
 /**
  * Returns Ant Design Tag color + Tailwind border/bg classes for each entity status.
@@ -145,7 +144,7 @@ export const pickZoneDisplayFields = (zone) => {
         !ZONE_DISPLAY_EXCLUDED_KEYS.has(key) &&
         value !== null &&
         value !== undefined &&
-        value !== "",
+        value !== ""
     )
     .map(([key, value]) => ({
       key,
@@ -179,10 +178,15 @@ const compareSlotNamesNatural = (a, b) => {
     const partB = partsB[i] ?? "";
     const numA = Number(partA);
     const numB = Number(partB);
-    const bothNumeric = partA !== "" && partB !== "" && !Number.isNaN(numA) && !Number.isNaN(numB);
+    const bothNumeric =
+      partA !== "" &&
+      partB !== "" &&
+      !Number.isNaN(numA) &&
+      !Number.isNaN(numB);
 
     if (bothNumeric && numA !== numB) return numA - numB;
-    if (partA !== partB) return partA.localeCompare(partB, undefined, { sensitivity: "base" });
+    if (partA !== partB)
+      return partA.localeCompare(partB, undefined, { sensitivity: "base" });
   }
 
   return 0;

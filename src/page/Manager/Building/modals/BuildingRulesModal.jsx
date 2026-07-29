@@ -6,11 +6,13 @@ import {
   Empty,
   Form,
   Input,
+  InputNumber,
   Modal,
   Popconfirm,
   Select,
   Spin,
   Tag,
+  TimePicker,
 } from "antd";
 import {
   CheckCircle2,
@@ -25,6 +27,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import dayjs from "dayjs";
 import {
   createBuildingRuleRequest,
   deleteBuildingRuleRequest,
@@ -32,8 +35,13 @@ import {
   resetBuildingRuleMutation,
   updateBuildingRuleRequest,
 } from "../../../../redux/manager/Building/buildingRules/buildingRulesSlice";
+import { getVehicleTypeListRequest } from "../../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
+import { mapVehicleTypeOptions } from "../utils/buildingUtils";
 
 const { TextArea } = Input;
+
+const TIME_FORMAT = "HH:mm";
+const TIME_RANGE_RULES = new Set(["NO_OVERNIGHT", "OPERATING_HOURS"]);
 
 const RULE_CODE_OPTIONS = [
   { value: "NO_OVERNIGHT", label: "No overnight parking" },
@@ -47,10 +55,74 @@ const RULE_CODE_LABELS = Object.fromEntries(
 );
 
 const RULE_VALUE_HELP = {
-  NO_OVERNIGHT: "Example: 22:00-06:00",
-  MAX_PARKING_HOURS: "Enter the maximum number of hours, for example: 24",
-  OPERATING_HOURS: "Example: 06:00-23:00",
-  VEHICLE_TYPE_CURFEW: "Format: TypeName:HH:mm, for example: Truck:22:00",
+  NO_OVERNIGHT: "Select the overnight restricted time window.",
+  MAX_PARKING_HOURS: "Maximum parking duration in hours (1–168).",
+  OPERATING_HOURS: "Select daily operating hours for this building.",
+  VEHICLE_TYPE_CURFEW: "Select vehicle type and curfew time.",
+};
+
+const parseTime = (value) => {
+  if (!value || typeof value !== "string") return null;
+  const parsed = dayjs(value.trim(), TIME_FORMAT, true);
+  return parsed.isValid() ? parsed : null;
+};
+
+const formatTime = (value) =>
+  value ? dayjs(value).format(TIME_FORMAT) : null;
+
+/** API ruleValue string → form fields for editors */
+const parseRuleValueToForm = (ruleCode, ruleValue) => {
+  const raw = String(ruleValue || "").trim();
+  if (!raw) return {};
+
+  if (TIME_RANGE_RULES.has(ruleCode)) {
+    const [from, to] = raw.split("-").map((part) => part?.trim());
+    return {
+      timeFrom: parseTime(from),
+      timeTo: parseTime(to),
+    };
+  }
+
+  if (ruleCode === "MAX_PARKING_HOURS") {
+    const hours = Number(raw);
+    return Number.isFinite(hours) ? { maxHours: hours } : {};
+  }
+
+  if (ruleCode === "VEHICLE_TYPE_CURFEW") {
+    const match = raw.match(/^(.+):(\d{2}:\d{2})$/);
+    if (match) {
+      return {
+        vehicleTypeName: match[1].trim(),
+        curfewTime: parseTime(match[2]),
+      };
+    }
+  }
+
+  return {};
+};
+
+/** Form fields → API ruleValue string */
+const buildRuleValue = (ruleCode, values) => {
+  if (TIME_RANGE_RULES.has(ruleCode)) {
+    const from = formatTime(values.timeFrom);
+    const to = formatTime(values.timeTo);
+    if (!from || !to) return null;
+    return `${from}-${to}`;
+  }
+
+  if (ruleCode === "MAX_PARKING_HOURS") {
+    if (values.maxHours == null || values.maxHours === "") return null;
+    return String(Number(values.maxHours));
+  }
+
+  if (ruleCode === "VEHICLE_TYPE_CURFEW") {
+    const typeName = values.vehicleTypeName?.trim();
+    const time = formatTime(values.curfewTime);
+    if (!typeName || !time) return null;
+    return `${typeName}:${time}`;
+  }
+
+  return null;
 };
 
 const BuildingRulesModal = ({ open, building, onCancel }) => {
@@ -69,8 +141,25 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
     mutationSuccess,
     error,
   } = useSelector((state) => state.buildingRules);
+  const { vehicleTypes, loading: vehicleTypesLoading } = useSelector(
+    (state) => state.getVehicleTypeList,
+  );
 
   const buildingId = building?.id || building?.buildingId;
+  const vehicleTypeOptions = useMemo(
+    () => mapVehicleTypeOptions(vehicleTypes),
+    [vehicleTypes],
+  );
+  // Select needs label string as value because API stores "Truck:22:00"
+  const vehicleTypeNameOptions = useMemo(
+    () =>
+      vehicleTypeOptions.map((option) => ({
+        value: option.label,
+        label: option.label,
+      })),
+    [vehicleTypeOptions],
+  );
+
   const rules = useMemo(
     () =>
       buildingId && Array.isArray(rulesByBuilding[buildingId])
@@ -144,23 +233,40 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
 
   const openCreate = () => {
     setEditingRule(null);
+    form.resetFields();
     form.setFieldsValue({ status: "ACTIVE" });
+    dispatch(getVehicleTypeListRequest());
     setIsFormOpen(true);
   };
 
   const openUpdate = (rule) => {
     setEditingRule(rule);
+    dispatch(getVehicleTypeListRequest());
     form.setFieldsValue({
       ruleCode: rule.ruleCode,
       title: rule.title,
       description: rule.description,
-      ruleValue: rule.ruleValue,
       status: rule.status || "ACTIVE",
+      ...parseRuleValueToForm(rule.ruleCode, rule.ruleValue),
     });
     setIsFormOpen(true);
   };
 
+  const handleRuleCodeChange = (ruleCode) => {
+    form.setFieldsValue({
+      ruleCode,
+      timeFrom: undefined,
+      timeTo: undefined,
+      maxHours: undefined,
+      vehicleTypeName: undefined,
+      curfewTime: undefined,
+    });
+  };
+
   const handleSubmit = (values) => {
+    const ruleValue = buildRuleValue(values.ruleCode, values);
+    if (!ruleValue) return;
+
     if (editingRule) {
       dispatch(
         updateBuildingRuleRequest({
@@ -169,7 +275,7 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
           data: {
             title: values.title.trim(),
             description: values.description?.trim() || "",
-            ruleValue: values.ruleValue.trim(),
+            ruleValue,
             status: values.status,
           },
         }),
@@ -184,7 +290,7 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
           ruleCode: values.ruleCode,
           title: values.title.trim(),
           description: values.description?.trim() || "",
-          ruleValue: values.ruleValue.trim(),
+          ruleValue,
           status: values.status,
         },
       }),
@@ -198,6 +304,125 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
 
   const refreshRules = () => {
     if (buildingId) dispatch(getBuildingRulesRequest(buildingId));
+  };
+
+  const renderRuleValueFields = () => {
+    if (!selectedRuleCode) {
+      return (
+        <Alert
+          type="info"
+          showIcon
+          className="mb-4"
+          message="Select a rule type to configure its value."
+        />
+      );
+    }
+
+    if (TIME_RANGE_RULES.has(selectedRuleCode)) {
+      return (
+        <div className="mb-1 grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+          <Form.Item
+            name="timeFrom"
+            label="From"
+            rules={[{ required: true, message: "Select start time." }]}
+            extra={RULE_VALUE_HELP[selectedRuleCode]}
+          >
+            <TimePicker
+              size="large"
+              className="w-full"
+              format={TIME_FORMAT}
+              minuteStep={5}
+              needConfirm={false}
+              placeholder="HH:mm"
+            />
+          </Form.Item>
+          <Form.Item
+            name="timeTo"
+            label="To"
+            rules={[{ required: true, message: "Select end time." }]}
+          >
+            <TimePicker
+              size="large"
+              className="w-full"
+              format={TIME_FORMAT}
+              minuteStep={5}
+              needConfirm={false}
+              placeholder="HH:mm"
+            />
+          </Form.Item>
+        </div>
+      );
+    }
+
+    if (selectedRuleCode === "MAX_PARKING_HOURS") {
+      return (
+        <Form.Item
+          name="maxHours"
+          label="Maximum hours"
+          extra={RULE_VALUE_HELP.MAX_PARKING_HOURS}
+          rules={[
+            { required: true, message: "Enter maximum hours." },
+            {
+              type: "number",
+              min: 1,
+              max: 168,
+              message: "Hours must be between 1 and 168.",
+            },
+          ]}
+        >
+          <InputNumber
+            size="large"
+            className="w-full"
+            min={1}
+            max={168}
+            precision={0}
+            addonAfter="hours"
+            placeholder="e.g. 24"
+          />
+        </Form.Item>
+      );
+    }
+
+    if (selectedRuleCode === "VEHICLE_TYPE_CURFEW") {
+      return (
+        <div className="mb-1 grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+          <Form.Item
+            name="vehicleTypeName"
+            label="Vehicle type"
+            extra={RULE_VALUE_HELP.VEHICLE_TYPE_CURFEW}
+            rules={[{ required: true, message: "Select a vehicle type." }]}
+          >
+            <Select
+              size="large"
+              showSearch
+              optionFilterProp="label"
+              placeholder="Select vehicle type"
+              loading={vehicleTypesLoading}
+              options={vehicleTypeNameOptions}
+              notFoundContent={
+                vehicleTypesLoading ? <Spin size="small" /> : "No vehicle types"
+              }
+            />
+          </Form.Item>
+          <Form.Item
+            name="curfewTime"
+            label="Curfew time"
+            rules={[{ required: true, message: "Select curfew time." }]}
+          >
+            <TimePicker
+              size="large"
+              className="w-full"
+              format={TIME_FORMAT}
+              minuteStep={5}
+              needConfirm={false}
+              placeholder="HH:mm"
+            />
+          </Form.Item>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -478,6 +703,7 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
               disabled={Boolean(editingRule)}
               placeholder="Select rule type"
               options={RULE_CODE_OPTIONS}
+              onChange={handleRuleCodeChange}
             />
           </Form.Item>
 
@@ -502,17 +728,12 @@ const BuildingRulesModal = ({ open, building, onCancel }) => {
             />
           </Form.Item>
 
-          <Form.Item
-            name="ruleValue"
-            label="Rule value"
-            extra={RULE_VALUE_HELP[selectedRuleCode]}
-            rules={[{ required: true, message: "Enter the rule value." }]}
-          >
-            <Input
-              size="large"
-              placeholder={RULE_VALUE_HELP[selectedRuleCode] || "Enter value"}
-            />
-          </Form.Item>
+          <div className="mb-2">
+            <p className="mb-3 text-sm font-medium text-slate-700">
+              Rule value
+            </p>
+            {renderRuleValueFields()}
+          </div>
 
           <Form.Item
             name="status"
