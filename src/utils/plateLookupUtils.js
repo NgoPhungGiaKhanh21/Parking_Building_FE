@@ -1,15 +1,13 @@
 import { normalizeReservation } from "./reservationSessionUtils";
-import {
-  enrichSessionFromPlateLookup,
-  mapGuestSessionFields,
-  mergeDriverInfo,
-} from "./walkInSessionUtils";
+import { mapGuestSessionFields } from "./walkInSessionUtils";
 
 export const PLATE_LOOKUP_TYPES = {
   RESERVATION: "RESERVATION",
+  DRIVER_SESSION: "DRIVER_SESSION",
   WALK_IN_DRIVER: "WALK_IN_DRIVER",
   NOT_FOUND: "NOT_FOUND",
   GUEST_SESSION: "GUEST_SESSION",
+  ALREADY_CHECKED_IN: "ALREADY_CHECKED_IN",
 };
 
 /** Map BE lookup `vehicle` field to FE registered-driver shape. */
@@ -47,7 +45,7 @@ export const normalizePlateLookupResponse = (raw) => {
       reservation: null,
       vehicle: null,
       guestSession: null,
-      registeredVehicle: null,
+      duplicateActiveSession: null,
     };
   }
 
@@ -56,10 +54,15 @@ export const normalizePlateLookupResponse = (raw) => {
     lookupType = PLATE_LOOKUP_TYPES.GUEST_SESSION;
   }
 
-  const reservation = data.reservation ? normalizeReservation(data.reservation) : null;
-  const vehicle = mapApiVehicleToRegistered(data.vehicle);
+  const reservation = data.reservation
+    ? normalizeReservation(data.reservation)
+    : null;
+  const vehicle = mapApiVehicleToRegistered(data.vehicle ?? data.walkInDriver);
   const guestSession = data.guestSession
     ? mapGuestSessionFields(data.guestSession)
+    : null;
+  const duplicateActiveSession = data.duplicateActiveSession
+    ? mapGuestSessionFields(data.duplicateActiveSession)
     : null;
 
   return {
@@ -67,12 +70,23 @@ export const normalizePlateLookupResponse = (raw) => {
     reservation,
     vehicle,
     guestSession,
-    registeredVehicle: vehicle,
+    duplicateActiveSession,
+    isWalkInDriver: Boolean(data.isWalkInDriver),
+    isGuest: Boolean(data.isGuest),
   };
 };
 
 export const isWalkInDriverLookup = (lookup) =>
   lookup?.lookupType === PLATE_LOOKUP_TYPES.WALK_IN_DRIVER;
+
+export const isGuestSessionLookup = (lookup) =>
+  lookup?.lookupType === PLATE_LOOKUP_TYPES.GUEST_SESSION;
+
+export const isAlreadyCheckedInLookup = (lookup) =>
+  lookup?.lookupType === PLATE_LOOKUP_TYPES.ALREADY_CHECKED_IN;
+
+export const isDriverSessionLookup = (lookup) =>
+  lookup?.lookupType === PLATE_LOOKUP_TYPES.DRIVER_SESSION;
 
 export const isReservationLookup = (lookup) =>
   lookup?.lookupType === PLATE_LOOKUP_TYPES.RESERVATION;
@@ -83,53 +97,107 @@ export const isPendingReservationLookup = (lookup) => {
   return status === "PENDING" || status === "APPROVED";
 };
 
+export const isActiveGuestSessionLookup = (lookup) =>
+  isGuestSessionLookup(lookup) || Boolean(lookup?.guestSession);
+
 export const isCheckedInReservationLookup = (lookup) => {
-  if (!isReservationLookup(lookup) || !lookup.reservation) return false;
-  const { reservation } = lookup;
-  const status = reservation.reservationStatus;
-  return (
-    status === "CHECKED_IN" ||
-    status === "ACTIVE" ||
-    Boolean(reservation.checkinTime) ||
-    reservation.sessionStatus === "ACTIVE"
+  const status = lookup?.reservation?.reservationStatus;
+  return status === "CHECKED_IN" || status === "ACTIVE";
+};
+
+/** Block staff entry when vehicle already has an active session. */
+export const isBlockedEntryLookup = (lookup) => {
+  if (!lookup) return false;
+  if (isAlreadyCheckedInLookup(lookup)) return true;
+  if (isActiveGuestSessionLookup(lookup)) return true;
+  if (isDriverSessionLookup(lookup)) return true;
+  if (isCheckedInReservationLookup(lookup)) return true;
+  return false;
+};
+
+export const resolveBlockedEntryPlate = (lookup, plateInput) =>
+  lookup?.guestSession?.vehiclePlate ||
+  lookup?.duplicateActiveSession?.vehiclePlate ||
+  lookup?.reservation?.vehiclePlate ||
+  plateInput ||
+  "";
+
+export const resolveBlockedEntryTicket = (lookup) =>
+  lookup?.duplicateActiveSession?.ticketCode ||
+  lookup?.guestSession?.ticketCode ||
+  lookup?.reservation?.ticketCode ||
+  null;
+
+/** Session payload for staff checkout (guest). */
+export const enrichCheckoutSession = (lookup) => {
+  if (!lookup?.guestSession) return null;
+  return normalizeReservation(lookup.guestSession);
+};
+
+export const mapWalkInDriverToCheckoutSession = (walkInDriver) => {
+  if (!walkInDriver) return null;
+  return normalizeReservation(
+    mapGuestSessionFields({
+      ...walkInDriver,
+      vehiclePlate: walkInDriver.plateNumber ?? walkInDriver.vehiclePlate,
+      vehicleBrand: walkInDriver.brand ?? walkInDriver.vehicleBrand,
+      vehicleModel: walkInDriver.model ?? walkInDriver.vehicleModel,
+      vehicleColor: walkInDriver.vehicleColor ?? walkInDriver.color,
+      vehicleTypeName: walkInDriver.vehicleTypeName ?? walkInDriver.typeName,
+      floorVehicleTypeId: walkInDriver.vehicleTypeId ?? walkInDriver.floorVehicleTypeId,
+      driverFullName: walkInDriver.driverFullName,
+      driverUsername: walkInDriver.username ?? walkInDriver.driverUsername,
+    }),
   );
 };
 
-export const isActiveGuestSessionLookup = (lookup) =>
-  lookup?.lookupType === PLATE_LOOKUP_TYPES.GUEST_SESSION || Boolean(lookup?.guestSession);
+/** Ticket lookup response for driver walk-in checkout. */
+export const normalizeTicketLookupResponse = (raw) => {
+  const data = raw?.data ?? raw;
+  if (!data || typeof data !== "object") {
+    return {
+      lookupType: PLATE_LOOKUP_TYPES.NOT_FOUND,
+      reservation: null,
+      vehicle: null,
+      guestSession: null,
+      walkInDriver: null,
+      duplicateActiveSession: null,
+      isWalkInDriver: false,
+      isGuest: false,
+    };
+  }
 
-/** Session payload for staff checkout (reservation checked-in or active guest session). */
-export const resolveCheckoutSessionFromLookup = (lookup) => {
-  if (!lookup) return null;
-  if (lookup.guestSession) return lookup.guestSession;
-  if (isCheckedInReservationLookup(lookup)) return lookup.reservation;
+  const lookupType = data.lookupType || PLATE_LOOKUP_TYPES.NOT_FOUND;
+  const walkInDriver = data.walkInDriver
+    ? mapWalkInDriverToCheckoutSession(data.walkInDriver)
+    : null;
+
+  return {
+    lookupType,
+    reservation: data.reservation ? normalizeReservation(data.reservation) : null,
+    vehicle: mapApiVehicleToRegistered(data.vehicle ?? data.walkInDriver),
+    guestSession: data.guestSession ? mapGuestSessionFields(data.guestSession) : null,
+    walkInDriver,
+    duplicateActiveSession: data.duplicateActiveSession
+      ? mapGuestSessionFields(data.duplicateActiveSession)
+      : null,
+    isWalkInDriver: Boolean(data.isWalkInDriver),
+    isGuest: Boolean(data.isGuest),
+  };
+};
+
+export const enrichWalkInDriverCheckoutSession = (lookup) => {
+  if (lookup?.walkInDriver) return lookup.walkInDriver;
+  if (isWalkInDriverLookup(lookup) && lookup?.vehicle) {
+    return mapWalkInDriverToCheckoutSession(lookup.vehicle);
+  }
   return null;
 };
 
-export const enrichCheckoutSession = (lookup) => {
-  if (!lookup) return null;
+export const hasTicketCheckoutSession = (lookup) =>
+  (isGuestSessionLookup(lookup) && Boolean(lookup?.guestSession)) ||
+  (isWalkInDriverLookup(lookup) && Boolean(enrichWalkInDriverCheckoutSession(lookup)));
 
-  if (lookup.guestSession) {
-    return (
-      enrichSessionFromPlateLookup({
-        lookupType: lookup.lookupType,
-        guestSession: lookup.guestSession,
-        registeredVehicle: lookup.vehicle,
-        vehicle: lookup.vehicle,
-      }) || normalizeReservation(lookup.guestSession)
-    );
-  }
-
-  const session = resolveCheckoutSessionFromLookup(lookup);
-  if (!session) return null;
-
-  const normalized = normalizeReservation(session);
-  if (!lookup.vehicle) return normalized;
-
-  return mergeDriverInfo(normalized, {
-    driverFullName: lookup.vehicle.driverFullName,
-    driverUsername: lookup.vehicle.username || lookup.vehicle.driverUsername,
-    driverUserId: lookup.vehicle.userId,
-    checkinType: "DRIVER_WALK_IN",
-  });
-};
+/** Guest or driver walk-in session from ticket lookup. */
+export const resolveTicketCheckoutSession = (lookup) =>
+  enrichCheckoutSession(lookup) || enrichWalkInDriverCheckoutSession(lookup);

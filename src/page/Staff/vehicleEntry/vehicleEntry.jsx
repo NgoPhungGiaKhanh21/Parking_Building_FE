@@ -18,13 +18,14 @@ import {
   plateLookupRequest,
   plateLookupReset,
 } from "../../../redux/staff/parking_session/plateLookup/plateLookupSlice";
-import { normalizePlate } from "../../../utils/plateUtils";
+import { normalizePlate, platesMatch } from "../../../utils/plateUtils";
 import {
-  isActiveGuestSessionLookup,
+  isBlockedEntryLookup,
   isPendingReservationLookup,
   isWalkInDriverLookup,
+  resolveBlockedEntryPlate,
+  resolveBlockedEntryTicket,
 } from "../../../utils/plateLookupUtils";
-import { saveWalkInDriverCache } from "../../../utils/walkInSessionUtils";
 import { setStaffEntryMounted } from "../../../utils/staffVehiclePageGuard";
 import { resolveEntryCheckMode } from "../shared/checkModeTheme";
 
@@ -108,20 +109,11 @@ const VehicleEntry = () => {
   useEffect(() => {
     if (!isActiveRef.current || !unifiedCheckin) return;
 
-    const checkinPlate = unifiedCheckin.plateNumber || plateInput;
-    if (
-      unifiedCheckin.checkinType === "DRIVER_WALK_IN" ||
-      unifiedCheckin.driverFullName ||
-      unifiedCheckin.driverUsername
-    ) {
-      saveWalkInDriverCache(checkinPlate, unifiedCheckin);
-    }
-
     message.success("Vehicle checked in successfully");
     dispatch(unifiedCheckinReset());
     dispatch(getAllReservationRequest());
     clearEntryForm();
-  }, [unifiedCheckin, dispatch, plateInput, clearEntryForm]);
+  }, [unifiedCheckin, dispatch, clearEntryForm]);
 
   useEffect(() => {
     if (!isActiveRef.current || !checkinError) return;
@@ -168,7 +160,20 @@ const VehicleEntry = () => {
   }, [plateLookup]);
 
   const isDriverWalkIn = isWalkInDriverLookup(plateLookup);
-  const isAlreadyParked = isActiveGuestSessionLookup(plateLookup);
+
+  const checkedInDriverByPlate = useMemo(() => {
+    if (!plateInput) return null;
+    return (
+      checkedInList.find((r) => platesMatch(r.vehiclePlate, plateInput)) ?? null
+    );
+  }, [plateInput, checkedInList]);
+
+  const isAlreadyParked =
+    isBlockedEntryLookup(plateLookup) || Boolean(checkedInDriverByPlate);
+
+  const showCheckinForm =
+    Boolean(plateInput) && !lookupLoading && !isAlreadyParked;
+
   const walkInVehicle = plateLookup?.vehicle || null;
 
   const walkInVehicleTypeId = useMemo(() => {
@@ -195,6 +200,7 @@ const VehicleEntry = () => {
 
     const handler = setTimeout(() => {
       if (!isActiveRef.current) return;
+      dispatch(getAllReservationRequest());
       dispatch(
         plateLookupRequest({
           plateNumber: normalizePlate(plateInput),
@@ -210,7 +216,6 @@ const VehicleEntry = () => {
     if (!isActiveRef.current || !plateLookup) return;
 
     if (isWalkInDriverLookup(plateLookup) && plateLookup.vehicle) {
-      saveWalkInDriverCache(plateInput, plateLookup.vehicle);
       const vtId = plateLookup.vehicle.vehicleTypeId ?? plateLookup.vehicle.floorVehicleTypeId;
       if (vtId) setSelectedVehicleTypeId(vtId);
       return;
@@ -222,21 +227,18 @@ const VehicleEntry = () => {
   }, [plateLookup, plateInput]);
 
   useEffect(() => {
-    if (!isActiveRef.current || !isAlreadyParked) return;
+    if (!isActiveRef.current || !isAlreadyParked || !plateInput) return;
 
-    message.error(
-      `Vehicle plate ${plateLookup?.guestSession?.vehiclePlate || plateInput} is already in the parking lot!`,
-    );
+    const parkedPlate =
+      resolveBlockedEntryPlate(plateLookup, plateInput) ||
+      checkedInDriverByPlate?.vehiclePlate;
+    const ticketCode =
+      resolveBlockedEntryTicket(plateLookup) || checkedInDriverByPlate?.ticketCode;
+    const ticketHint = ticketCode ? ` (Ticket: ${ticketCode})` : "";
+
+    message.error(`Vehicle plate ${parkedPlate} is already in the parking lot!${ticketHint}`);
     clearEntryForm();
-  }, [isAlreadyParked, plateLookup, plateInput, clearEntryForm]);
-
-  useEffect(() => {
-    if (!isActiveRef.current || !plateLookup?.reservation) return;
-    if (plateLookup.reservation.reservationStatus !== "CHECKED_IN") return;
-
-    message.error(`Vehicle plate ${plateLookup.reservation.vehiclePlate} is already checked in!`);
-    clearEntryForm();
-  }, [plateLookup, clearEntryForm]);
+  }, [isAlreadyParked, plateLookup, checkedInDriverByPlate, plateInput, clearEntryForm]);
 
   useEffect(() => {
     if (isDriverWalkIn && walkInVehicleTypeId) setSelectedVehicleTypeId(walkInVehicleTypeId);
@@ -307,6 +309,11 @@ const VehicleEntry = () => {
       return;
     }
 
+    if (isAlreadyParked) {
+      message.error("This vehicle is already checked in");
+      return;
+    }
+
     if (driverReservation) {
       const now = dayjs();
       const resStart = dayjs(driverReservation.reservationStart);
@@ -335,10 +342,6 @@ const VehicleEntry = () => {
       return;
     }
 
-    if (isAlreadyParked) {
-      message.error("This vehicle is already checked in");
-      return;
-    }
     if (!buildingId) {
       message.error("Building not found");
       return;
@@ -394,7 +397,7 @@ const VehicleEntry = () => {
             onRemovePlateImage={handleRemovePlateImage}
           />
 
-          {plateInput && (
+          {showCheckinForm && (
             <EntryCheckinFormCard
               checkMode={checkMode}
               driverReservation={driverReservation}
@@ -431,6 +434,7 @@ const VehicleEntry = () => {
           checkinLoading={checkinLoading}
           onSubmit={handleSubmit}
         />
+
       </div>
 
       <ManageReservationsModal

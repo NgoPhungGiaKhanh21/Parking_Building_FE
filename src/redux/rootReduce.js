@@ -76,6 +76,7 @@ import getStaffBuildingReducer from "./staff/guest_parking/getStaffBuilding/getS
 import unifiedCheckinReducer from './staff/parking_session/checkin/unifiedCheckinSlice';
 import unifiedCheckoutReducer from './staff/parking_session/checkout/unifiedCheckoutSlice';
 import plateLookupReducer from "./staff/parking_session/plateLookup/plateLookupSlice";
+import exitLookupReducer from "./staff/parking_session/exitLookup/exitLookupSlice";
 import cancelReservationsReducer from "./driver/reservationManagement/cancelReservations/cancelReservationsSlice";
 import guestCheckoutOcrReducer from "./staff/guest_parking/checkout_guest_ocr/guestCheckoutOcrSlice";
 import incidentReducer from "./incident/incidentSlice";
@@ -153,6 +154,7 @@ const rootReducer = combineReducers({
   unifiedCheckin: unifiedCheckinReducer,
   unifiedCheckout: unifiedCheckoutReducer,
   plateLookup: plateLookupReducer,
+  exitLookup: exitLookupReducer,
   cancelReservations: cancelReservationsReducer,
   guestCheckoutOcr: guestCheckoutOcrReducer,
 

@@ -272,11 +272,10 @@ const SessionCard = ({ session, now, latestPayment }) => {
                 return (
                   <div
                     key={idx}
-                    className={`relative flex flex-col items-center rounded-xl border-2 px-3 py-2 min-w-[80px] transition-all ${
-                      isActive
-                        ? "border-emerald-400 bg-emerald-50 shadow-sm scale-105"
-                        : "border-slate-100 bg-gradient-to-b from-slate-50 to-white"
-                    }`}
+                    className={`relative flex flex-col items-center rounded-xl border-2 px-3 py-2 min-w-[80px] transition-all ${isActive
+                      ? "border-emerald-400 bg-emerald-50 shadow-sm scale-105"
+                      : "border-slate-100 bg-gradient-to-b from-slate-50 to-white"
+                      }`}
                   >
                     {isActive && (
                       <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-2 py-0 text-[8px] font-bold uppercase tracking-wider text-white">
@@ -323,7 +322,7 @@ const SessionCard = ({ session, now, latestPayment }) => {
               Hourly Rate
             </p>
             <p className="text-sm font-bold text-blue-700">
-              {(session.hourlyRate || 0).toLocaleString("vi-VN")}đ/h
+              {(session.hourlyRate || 0).toLocaleString("vi-VN")}đ/3h
             </p>
           </div>
         </div>

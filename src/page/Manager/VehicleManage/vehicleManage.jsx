@@ -34,9 +34,6 @@ import {
   Filter,
 } from "lucide-react";
 
-// --- Import actions cho Vehicle (Tab 1) ---
-import { changeStatusVehicleRequest } from "../../../redux/manager/Vehicle/changeStatusVehicle/changeStatusVehicleSlice";
-
 // --- Import actions cho Vehicle Types (Tab 2) ---
 import { createVehicleTypeRequest } from "../../../redux/manager/Vehicle/createVehicleType/createVehicleTypeSlice";
 
@@ -48,6 +45,10 @@ import UpdateVehicleTypeModal from "./updateVehicleTypeModal";
 import CommonBreadcrumb from "../../../components/Commandbreadcrumb/Commandbreadcrumb";
 import { getVehicleTypeListRequest } from "../../../redux/manager/Building/getVehicleTypeList/getVehicleTypeListSlice";
 import { getAllVehicleRequest } from "../../../redux/manager/Vehicle/getAllVehicle/getAllVehicleSlice";
+import { changeStatusVehicleRequest } from "../../../redux/manager/Vehicle/changeStatusVehicle/changeStatusVehicleSlice";
+
+/** Set true to show ACTIVE/INACTIVE column on vehicle table. */
+const SHOW_VEHICLE_STATUS_COLUMN = false;
 
 const VehicleManagement = () => {
   const dispatch = useDispatch();
@@ -150,7 +151,6 @@ const VehicleManagement = () => {
     dispatch(getVehicleTypeListRequest());
   }, [dispatch]);
 
-  // --- HANDLERS (TAB 1) ---
   const handleToggleStatus = (vehicleId, currentStatus, userId) => {
     const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     dispatch(
@@ -336,6 +336,7 @@ const VehicleManagement = () => {
     {
       title: "Status",
       key: "status",
+      hidden: !SHOW_VEHICLE_STATUS_COLUMN,
       sorter: (a, b) => (a.status || "").localeCompare(b.status || ""),
       render: (_, record) => {
         const isCurrentlyActive = record.status === "ACTIVE";
@@ -365,6 +366,8 @@ const VehicleManagement = () => {
       },
     },
   ];
+
+  const visibleVehicleColumns = vehicleColumns.filter((col) => !col.hidden);
 
   // --- COLUMNS T2 ---
   const vehicleTypeColumns = [
@@ -684,7 +687,7 @@ const VehicleManagement = () => {
                 </div>
               </div>
               <Table
-                columns={vehicleColumns}
+                columns={visibleVehicleColumns}
                 dataSource={vehiclesList}
                 rowKey="vehicleId"
                 loading={isVehiclesLoading || isChangingStatus}
