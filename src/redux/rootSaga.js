@@ -77,6 +77,7 @@ import {watchGuestCheckoutOcr} from "./staff/guest_parking/checkout_guest_ocr/gu
 import {watchUnifiedCheckin} from "./staff/parking_session/checkin/unifiedCheckinSaga";
 import {watchUnifiedCheckout} from "./staff/parking_session/checkout/unifiedCheckoutSaga";
 import { watchPlateLookup } from "./staff/parking_session/plateLookup/plateLookupSaga";
+import { watchExitLookup } from "./staff/parking_session/exitLookup/exitLookupSaga";
 import {watchCancelReservations} from "./driver/reservationManagement/cancelReservations/cancelReservationsSaga";
 import { watchIncident } from "./incident/incidentSaga";
 import { watchBuildingRules } from "./manager/Building/buildingRules/buildingRulesSaga";
@@ -154,6 +155,7 @@ export default function* rootSaga() {
     watchUnifiedCheckin(),
     watchUnifiedCheckout(),
     watchPlateLookup(),
+    watchExitLookup(),
     watchCancelReservations(),
     //driver
     watchGetAllVehicle(),

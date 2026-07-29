@@ -1,14 +1,14 @@
 import api from "../api";
 import { normalizePlate } from "../../utils/plateUtils";
 import {
-  enrichCheckoutSession,
-  normalizePlateLookupResponse,
+  normalizeTicketLookupResponse,
+  resolveTicketCheckoutSession,
 } from "../../utils/plateLookupUtils";
 
 const encodePlate = (plateNumber) =>
   encodeURIComponent(normalizePlate(plateNumber));
 
-/** Staff plate lookup before check-in / check-out. */
+/** Staff plate lookup — entry check-in only. */
 export const plateLookupForCheckinApi = (data) => {
   const plate = encodePlate(data.plateNumber);
   const params = {};
@@ -16,12 +16,31 @@ export const plateLookupForCheckinApi = (data) => {
   return api.get(`sessions/plate/${plate}/lookup`, { params });
 };
 
+/** Resolve active session ticket from plate (staff checkout). */
+export const resolveTicketCodeByPlateApi = (data) => {
+  const plate = encodePlate(data.plateNumber);
+  return api.get(`sessions/plate/${plate}/ticket-code`);
+};
+
+/** Staff checkout lookup by ticket code (guest + driver walk-in). */
+export const ticketLookupApi = (ticketCode) =>
+  api.get(`sessions/ticket/${encodeURIComponent(ticketCode)}/lookup`);
+
 export const getSessionByPlateNumberApi = async (data) => {
-  const lookup = await plateLookupForCheckinApi(data);
-  const normalized = normalizePlateLookupResponse(
-    lookup.data?.data ?? lookup.data,
+  const ticketResponse = await resolveTicketCodeByPlateApi(data);
+  const ticketData = ticketResponse?.data?.data ?? ticketResponse?.data;
+
+  if (!ticketData?.found || !ticketData?.ticketCode) {
+    const error = new Error("Session not found");
+    error.response = { status: 404, data: { message: "Session not found" } };
+    throw error;
+  }
+
+  const lookupResponse = await ticketLookupApi(ticketData.ticketCode);
+  const lookup = normalizeTicketLookupResponse(
+    lookupResponse?.data?.data ?? lookupResponse?.data,
   );
-  const session = enrichCheckoutSession(normalized);
+  const session = resolveTicketCheckoutSession(lookup);
 
   if (!session) {
     const error = new Error("Session not found");
