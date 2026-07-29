@@ -30,7 +30,7 @@ const ExitSessionInfoCard = ({
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-2">
         <div>
           <p className="text-[10px] font-bold uppercase text-slate-400">Ticket Code</p>
-          <p className="font-mono text-lg font-black text-emerald-700">
+          <p className={`font-mono text-lg font-black ${theme.accentTextDark}`}>
             {normalizedSession.ticketCode}
           </p>
         </div>
@@ -42,14 +42,17 @@ const ExitSessionInfoCard = ({
         </div>
       </div>
 
-      <div className="rounded-xl bg-linear-to-r from-emerald-600 to-teal-700 p-4 text-white mb-4">
+      <div
+        className="rounded-xl p-4 text-white mb-4"
+        style={{ background: theme.buttonGradient, boxShadow: theme.buttonShadow }}
+      >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Estimated Fee</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Estimated Fee</p>
             <p className="text-2xl font-black">{formatCurrency(amount)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Check-in</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Check-in</p>
             <p className="text-sm font-semibold">{formatDateTime(normalizedSession.checkinTime)}</p>
           </div>
         </div>
@@ -107,11 +110,11 @@ const ExitSessionInfoCard = ({
 
       {isGuest && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <div className="rounded-lg border border-orange-100 bg-orange-50 p-2.5">
-            <p className="text-[9px] font-bold uppercase text-orange-400 flex items-center gap-1 mb-0.5">
+          <div className={`rounded-lg border p-2.5 ${theme.panelBg}`}>
+            <p className={`text-[9px] font-bold uppercase flex items-center gap-1 mb-0.5 ${theme.panelLabel}`}>
               <Clock size={10} /> Parking Duration
             </p>
-            <p className="text-xs font-bold text-orange-700 truncate">
+            <p className={`text-xs font-bold truncate ${theme.panelValue}`}>
               {formatParkingDurationLabel(normalizedSession)}
             </p>
           </div>
