@@ -3,7 +3,13 @@ import { Button, Form, Input, InputNumber, Modal, TimePicker } from "antd";
 
 const CreateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
   return (
-    <Modal title="Create Building" open={open} onCancel={onCancel} footer={null} width={720}>
+    <Modal
+      title="Create Building"
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={720}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -16,7 +22,10 @@ const CreateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           label="Building Name"
           rules={[
             { required: true, message: "Please enter building name." },
-            { max: 120, message: "Building name must be under 120 characters." },
+            {
+              max: 120,
+              message: "Building name must be under 120 characters.",
+            },
           ]}
         >
           <Input
@@ -46,7 +55,11 @@ const CreateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           label="Total Floors"
           rules={[
             { required: true, message: "Please enter total floors." },
-            { type: "number", min: 1, message: "Total floors must be at least 1." },
+            {
+              type: "number",
+              min: 1,
+              message: "Total floors must be at least 1.",
+            },
           ]}
         >
           <InputNumber
@@ -63,16 +76,31 @@ const CreateBuildingModal = ({ open, onCancel, form, loading, onSubmit }) => {
           <Form.Item
             name="operatingStartTime"
             label="Operating Start Time"
-            rules={[{ required: true, message: "Please select operating start time." }]}
+            rules={[
+              {
+                required: true,
+                message: "Please select operating start time.",
+              },
+            ]}
           >
-            <TimePicker format="HH:mm:ss" className="w-full" placeholder="Select start time" />
+            <TimePicker
+              format="HH:mm:ss"
+              className="w-full"
+              placeholder="Select start time"
+            />
           </Form.Item>
           <Form.Item
             name="operatingEndTime"
             label="Operating End Time"
-            rules={[{ required: true, message: "Please select operating end time." }]}
+            rules={[
+              { required: true, message: "Please select operating end time." },
+            ]}
           >
-            <TimePicker format="HH:mm:ss" className="w-full" placeholder="Select end time" />
+            <TimePicker
+              format="HH:mm:ss"
+              className="w-full"
+              placeholder="Select end time"
+            />
           </Form.Item>
         </div>
 
