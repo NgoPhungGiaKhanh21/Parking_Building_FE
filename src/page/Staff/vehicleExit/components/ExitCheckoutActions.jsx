@@ -1,6 +1,6 @@
 import { Spin, Radio } from "antd";
 import { Banknote, CreditCard, CheckCircle2, LogOut } from "lucide-react";
-import { getCheckModeTheme, CHECK_MODES } from "../../shared/checkModeTheme";
+import { getCheckModeTheme } from "../../shared/checkModeTheme";
 
 const ExitCheckoutActions = ({
   checkMode,
@@ -22,7 +22,6 @@ const ExitCheckoutActions = ({
   if (!normalizedSession) return null;
 
   const theme = getCheckModeTheme(checkMode);
-  const guestTheme = getCheckModeTheme(CHECK_MODES.GUEST);
 
   return (
     <div className="space-y-3">
@@ -77,8 +76,8 @@ const ExitCheckoutActions = ({
           onClick={onGoPayment}
           icon={<CreditCard size={22} />}
           label="Proceed to Payment"
-          gradient={getCheckModeTheme(CHECK_MODES.DRIVER_WALK_IN).buttonGradient}
-          shadow={getCheckModeTheme(CHECK_MODES.DRIVER_WALK_IN).buttonShadow}
+          gradient={theme.buttonGradient}
+          shadow={theme.buttonShadow}
         />
       )}
 
@@ -93,18 +92,18 @@ const ExitCheckoutActions = ({
               ? "Collect Cash & Check-out"
               : "Confirm Check-out"
           }
-          gradient={hasCheckoutImage ? guestTheme.buttonGradient : "#94a3b8"}
-          shadow={hasCheckoutImage ? guestTheme.buttonShadow : "none"}
+          gradient={hasCheckoutImage ? theme.buttonGradient : "#94a3b8"}
+          shadow={hasCheckoutImage ? theme.buttonShadow : "none"}
         />
       )}
 
       {isPaid && !showCheckout && (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+        <div className={`rounded-2xl border p-4 ${theme.panelBg}`}>
           <div className="flex items-center gap-3 mb-3">
-            <CheckCircle2 className="text-emerald-600" size={20} />
+            <CheckCircle2 className={theme.accentText} size={20} />
             <div>
-              <p className="font-bold text-emerald-800 text-sm">Payment completed</p>
-              <p className="text-xs text-emerald-600">
+              <p className={`font-bold text-sm ${theme.accentTextDark}`}>Payment completed</p>
+              <p className={`text-xs ${theme.accentText}`}>
                 Upload plate image (if not done) and proceed to check out.
               </p>
             </div>
@@ -114,7 +113,8 @@ const ExitCheckoutActions = ({
             onClick={onStartCheckout}
             className="w-full flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white cursor-pointer transition-colors"
             style={{
-              background: guestTheme.buttonGradient,
+              background: theme.buttonGradient,
+              boxShadow: theme.buttonShadow,
             }}
           >
             <LogOut size={16} />
