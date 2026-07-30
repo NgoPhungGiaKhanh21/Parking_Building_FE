@@ -47,7 +47,7 @@ const VehicleEntry = () => {
   const [plateInput, setPlateInput] = useState("");
   const [checkinImageUrl, setCheckinImageUrl] = useState("");
   const [isUploadingCheckin, setIsUploadingCheckin] = useState(false);
-  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState(null);
+  const [guestVehicleTypeId, setGuestVehicleTypeId] = useState(null);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [reservationSubTab, setReservationSubTab] = useState("CHECKED_IN");
 
@@ -66,7 +66,7 @@ const VehicleEntry = () => {
     setPlateInput("");
     setCheckinImageUrl("");
     checkinImageFileRef.current = null;
-    setSelectedVehicleTypeId(null);
+    setGuestVehicleTypeId(null);
     dispatch(ocrPlateReset());
     dispatch(plateLookupReset());
   }, [dispatch]);
@@ -190,7 +190,11 @@ const VehicleEntry = () => {
     );
   }, [walkInVehicle, vehicleTypes]);
 
-  const checkMode = resolveEntryCheckMode({ driverReservation, isDriverWalkIn });
+  const checkMode = resolveEntryCheckMode({
+    driverReservation,
+    isDriverWalkIn,
+    hasPlate: Boolean(plateInput) && !lookupLoading,
+  });
 
   useEffect(() => {
     if (!plateInput) {
@@ -212,19 +216,7 @@ const VehicleEntry = () => {
     return () => clearTimeout(handler);
   }, [plateInput, buildingId, dispatch]);
 
-  useEffect(() => {
-    if (!isActiveRef.current || !plateLookup) return;
-
-    if (isWalkInDriverLookup(plateLookup) && plateLookup.vehicle) {
-      const vtId = plateLookup.vehicle.vehicleTypeId ?? plateLookup.vehicle.floorVehicleTypeId;
-      if (vtId) setSelectedVehicleTypeId(vtId);
-      return;
-    }
-
-    if (plateLookup.lookupType === "NOT_FOUND") {
-      setSelectedVehicleTypeId(null);
-    }
-  }, [plateLookup, plateInput]);
+  const effectiveVehicleTypeId = isDriverWalkIn ? walkInVehicleTypeId : guestVehicleTypeId;
 
   useEffect(() => {
     if (!isActiveRef.current || !isAlreadyParked || !plateInput) return;
@@ -240,9 +232,10 @@ const VehicleEntry = () => {
     clearEntryForm();
   }, [isAlreadyParked, plateLookup, checkedInDriverByPlate, plateInput, clearEntryForm]);
 
-  useEffect(() => {
-    if (isDriverWalkIn && walkInVehicleTypeId) setSelectedVehicleTypeId(walkInVehicleTypeId);
-  }, [isDriverWalkIn, walkInVehicleTypeId]);
+  const handlePlateChange = useCallback((value) => {
+    setPlateInput(value);
+    setGuestVehicleTypeId(null);
+  }, []);
 
   const handlePlateUpload = useCallback(
     async (options) => {
@@ -346,9 +339,7 @@ const VehicleEntry = () => {
       message.error("Building not found");
       return;
     }
-    const vehicleTypeId = isDriverWalkIn
-      ? walkInVehicleTypeId ?? selectedVehicleTypeId
-      : selectedVehicleTypeId;
+    const vehicleTypeId = effectiveVehicleTypeId;
     if (!vehicleTypeId) {
       message.error(
         isDriverWalkIn
@@ -374,10 +365,9 @@ const VehicleEntry = () => {
     driverReservation,
     plateInput,
     buildingId,
-    selectedVehicleTypeId,
+    effectiveVehicleTypeId,
     isAlreadyParked,
     isDriverWalkIn,
-    walkInVehicleTypeId,
     dispatch,
   ]);
 
@@ -392,7 +382,7 @@ const VehicleEntry = () => {
             isUploadingPlate={isUploadingPlate}
             ocrLoading={ocrLoading}
             plateInput={plateInput}
-            onPlateChange={setPlateInput}
+            onPlateChange={handlePlateChange}
             onPlateUpload={handlePlateUpload}
             onRemovePlateImage={handleRemovePlateImage}
           />
@@ -406,8 +396,8 @@ const VehicleEntry = () => {
               buildingName={buildingName}
               vehicleTypes={vehicleTypes}
               walkInVehicleTypeId={walkInVehicleTypeId}
-              selectedVehicleTypeId={selectedVehicleTypeId}
-              onVehicleTypeChange={setSelectedVehicleTypeId}
+              selectedVehicleTypeId={effectiveVehicleTypeId}
+              onVehicleTypeChange={setGuestVehicleTypeId}
               lookupLoading={lookupLoading}
               checkinImageUrl={checkinImageUrl}
               isUploadingCheckin={isUploadingCheckin}
@@ -425,7 +415,7 @@ const VehicleEntry = () => {
           walkInVehicle={walkInVehicle}
           vehicleTypes={vehicleTypes}
           walkInVehicleTypeId={walkInVehicleTypeId}
-          selectedVehicleTypeId={selectedVehicleTypeId}
+          selectedVehicleTypeId={effectiveVehicleTypeId}
           plateImageUrl={plateImageUrl}
           checkinImageUrl={checkinImageUrl}
           lookupLoading={lookupLoading}
