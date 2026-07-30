@@ -19,7 +19,7 @@ const EntryCheckinSummary = ({
   checkinLoading,
   onSubmit,
 }) => {
-  const theme = getCheckModeTheme(checkMode);
+  const theme = checkMode ? getCheckModeTheme(checkMode) : null;
   const vehicleTypeId = isDriverWalkIn ? walkInVehicleTypeId : selectedVehicleTypeId;
   const vehicleTypeName =
     vehicleTypes?.find((v) => String(v.vehicleTypeId) === String(vehicleTypeId))?.typeName || "—";
@@ -43,8 +43,8 @@ const EntryCheckinSummary = ({
           <SummaryRow label="Plate Number" value={plateInput || "—"} mono />
           <SummaryRow
             label="Mode"
-            value={theme.summaryLabel}
-            valueClass={`font-bold ${theme.accentText}`}
+            value={theme?.summaryLabel ?? "—"}
+            valueClass={theme ? `font-bold ${theme.accentText}` : "text-slate-400"}
           />
           {!driverReservation && (
             <SummaryRow label="Vehicle Type" value={vehicleTypeName} />
@@ -76,10 +76,11 @@ const EntryCheckinSummary = ({
         onClick={onSubmit}
         disabled={!canSubmit}
         className="w-full flex items-center justify-center gap-3 rounded-2xl py-4 text-lg font-bold text-white transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-        style={{
-          background: theme.buttonGradient,
-          boxShadow: theme.buttonShadow,
-        }}
+        style={
+          theme
+            ? { background: theme.buttonGradient, boxShadow: theme.buttonShadow }
+            : { background: "#94a3b8", boxShadow: "none" }
+        }
       >
         {checkinLoading && <Spin size="small" />}
         <LogIn size={22} />

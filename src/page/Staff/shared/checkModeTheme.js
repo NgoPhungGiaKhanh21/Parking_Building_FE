@@ -5,7 +5,8 @@ export const CHECK_MODES = {
   GUEST: "GUEST",
 };
 
-export const resolveEntryCheckMode = ({ driverReservation, isDriverWalkIn }) => {
+export const resolveEntryCheckMode = ({ driverReservation, isDriverWalkIn, hasPlate }) => {
+  if (!hasPlate) return null;
   if (driverReservation) return CHECK_MODES.DRIVER_RESERVATION;
   if (isDriverWalkIn) return CHECK_MODES.DRIVER_WALK_IN;
   return CHECK_MODES.GUEST;
