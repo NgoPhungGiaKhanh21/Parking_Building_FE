@@ -707,28 +707,6 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-
-          {/* Staff / users footer strip */}
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {[
-              { label: "Staff", value: users.totalStaff },
-              { label: "Managers", value: users.totalManagers },
-              { label: "New users (month)", value: users.newUsersThisMonth },
-              { label: "Sessions (month)", value: sessions.sessionsThisMonth },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-center"
-              >
-                <p className="text-[10px] font-semibold uppercase text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-lg font-black text-slate-700">
-                  {formatCount(item.value)}
-                </p>
-              </div>
-            ))}
-          </div>
         </>
       )}
     </div>
